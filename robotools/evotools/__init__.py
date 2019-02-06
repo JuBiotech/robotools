@@ -13,7 +13,7 @@ class Labwares(str, enum.Enum):
     SystemLiquid = 'Systemliquid'
 
 
-class Tip(enum.IntFlag):
+class Tip(enum.IntEnum):
     Any = -1
     T1 = 1
     T2 = 2
@@ -29,7 +29,7 @@ class InvalidOperationError(Exception):
     pass
 
 
-def __prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:float,
+def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:float,
         liquid_class:str='',
         tip:Tip=Tip.Any,
         rack_id:str='', tube_id:str='',
@@ -41,7 +41,7 @@ def __prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:
         position (int): number of the well
         volume (float): volume in microliters (will be rounded to the 1 decimal places)
         liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-        tip (Tip): (optional) tip that will be selected
+        tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
         rack_id (str): (optional) barcode of the labware (max 32 characters)
         tube_id (str): (optional) barcode of the tube (max 32 characters)
         rack_type (str): (optional) configuration name of the labware (max 32 characters).
@@ -51,45 +51,60 @@ def __prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:
     # required parameters
     if rack_label is None:
         raise ValueError('Missing required paramter: rack_label')
-    if not isinstance(rack_label, str) or len(rack_label) > 32:
+    if not isinstance(rack_label, str) or len(rack_label) > 32 or ';' in rack_label:
         raise ValueError(f'Invalid rack_label: {rack_label}')
 
     if position is None:
         raise ValueError('Missing required paramter: position')
-    if not isinstance(position, int):
-        raise TypeError(f'Invalid position: {position}')
+    if not isinstance(position, int) or position < 0:
+        raise ValueError(f'Invalid position: {position}')
 
     if volume is None:
         raise ValueError('Missing required paramter: volume')
     if not isinstance(volume, (int, float)) or volume < 0 or volume > 7158278:
-        raise TypeError(f'Invalid volume: {volume}')
+        raise ValueError(f'Invalid volume: {volume}')
 
     # optional parameters
-    if not isinstance(liquid_class, str) or len(liquid_class) > 32:
+    if not isinstance(liquid_class, str) or len(liquid_class) > 32 or ';' in liquid_class:
         raise ValueError(f'Invalid liquid_class: {liquid_class}')
+    if isinstance(tip, int):
+        if tip == 1:
+            tip = Tip.T1
+        elif tip == 2:
+            tip = Tip.T2
+        elif tip == 3:
+            tip = Tip.T3
+        elif tip == 4:
+            tip = Tip.T4
+        elif tip == 5:
+            tip = Tip.T5
+        elif tip == 6:
+            tip = Tip.T6
+        elif tip == 7:
+            tip = Tip.T7
+        elif tip == 8:
+            tip = Tip.T8
     if not isinstance(tip, Tip):
-        raise ValueError(f'Invalid tip: {tip}')        
-    if rack_id and (not isinstance(rack_id, str) or len(rack_label) > 32):
+        raise ValueError(f'Invalid tip: {tip}')
+    if not isinstance(rack_id, str) or len(rack_id) > 32 or ';' in rack_id:
         raise ValueError(f'Invalid rack_id: {rack_id}')
-    if rack_type and (not isinstance(rack_type, str) or len(rack_label) > 32):
+    if not isinstance(rack_type, str) or len(rack_type) > 32 or ';' in rack_type:
         raise ValueError(f'Invalid rack_type: {rack_type}')
-    if forced_rack_type and (not isinstance(forced_rack_type, str) or len(forced_rack_type) > 32):
-        raise TypeError(f'Invalid forced_rack_type: {forced_rack_type}')
+    if not isinstance(forced_rack_type, str) or len(forced_rack_type) > 32 or ';' in forced_rack_type:
+        raise ValueError(f'Invalid forced_rack_type: {forced_rack_type}')
 
     # apply rounding and corrections for the right string formatting
     volume = numpy.round(volume, decimals=1)
-    tip_type = ''
-    tip_mask = '' is tip_mask is None else tip_mask
+    tip = '' if tip == -1 else tip
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
 class Worklist(list):
     def __init__(self):
-        self._lines = None
         return super().__init__()
     
     def __enter__(self):
-        self._lines = []
+        self.clear()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -114,8 +129,12 @@ class Worklist(list):
         Args:
             comment (str): A single- or multi-line comment. Be nice and avoid special characters.
         """
+        if ';' in comment:
+            raise ValueError('Illegal semicolon in comment.')
         for cline in comment.split('\n'):
-            self.append(f'C;{comment.strip()}')
+            cline = cline.strip()
+            if cline:
+                self.append(f'C;{cline}')
         return
     
     def wash(self, scheme:int=1):
@@ -177,7 +196,7 @@ class Worklist(list):
         Args:
             diti_index (int): type of DiTis to use in subsequent steps
         """
-        if not (len(self._lines) == 0 or self._lines[-1][0] == 'B'):
+        if not (len(self) == 0 or self[-1][0] == 'B'):
             raise InvalidOperationError('DiTi type can only be switched at the beginning or after a Break/commit step. Read the docstring.')
         self.append(f'S;{diti_index}')
         return
@@ -195,7 +214,7 @@ class Worklist(list):
             position (int): number of the well
             volume (float): volume in microliters (will be rounded to the 1 decimal places)
             liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-            tip (Tip): (optional) tip that will be selected
+            tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
             rack_id (str): (optional) barcode of the labware (max 32 characters)
             tube_id (str): (optional) barcode of the tube (max 32 characters)
             rack_type (str): (optional) configuration name of the labware (max 32 characters).
@@ -203,10 +222,10 @@ class Worklist(list):
             forced_rack_type (str): (optional) overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = __prepate_aspirate_dispense_parameters(*args)
-
-        self._lines.append(
-            f'A;{rack_label};{rack_id};{rack_type};{position};{tube_id};volume;{liquid_class};{tip_type};{tip_mask};{forced_rack_type}'
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args)
+        tip_type = ''
+        self.append(
+            f'A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
         )
         return
     
@@ -224,7 +243,7 @@ class Worklist(list):
             position (int): number of the well
             volume (float): volume in microliters (will be rounded to the 1 decimal places)
             liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-            tip (Tip): (optional) tip that will be selected
+            tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
             rack_id (str): (optional) barcode of the labware (max 32 characters)
             tube_id (str): (optional) barcode of the tube (max 32 characters)
             rack_type (str): (optional) configuration name of the labware (max 32 characters).
@@ -232,10 +251,10 @@ class Worklist(list):
             forced_rack_type (str): (optional) overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = __prepate_aspirate_dispense_parameters(*args)
-
-        self._lines.append(
-            f'D;{rack_label};{rack_id};{rack_type};{position};{tube_id};volume;{liquid_class};{tip_type};{tip_mask};{forced_rack_type}'
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args)
+        tip_type = ''
+        self.append(
+            f'D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
         )
         return
         
