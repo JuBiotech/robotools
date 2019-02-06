@@ -84,7 +84,7 @@ class Labware(object):
             label (str): description of the operation
         """
         wells = numpy.array(wells).flatten()
-        if numpy.isscalar(volumes):
+        if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
@@ -104,7 +104,7 @@ class Labware(object):
             label (str): description of the operation
         """
         wells = numpy.array(wells).flatten()
-        if not hasattr(volumes, '__iter__'):
+        if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
