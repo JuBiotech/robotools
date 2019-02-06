@@ -71,7 +71,7 @@ class Labware(object):
         
         # initialize state variables
         self._volumes = initial_volumes.copy()
-        self._history = [self.current]
+        self._history = [self.volumes]
         self._labels = ['initial']
         return
     
@@ -117,7 +117,7 @@ class Labware(object):
     
     def log(self, label):
         """Logs the current volumes to the history."""
-        self._history.append(self.current)
+        self._history.append(self.volumes)
         self._labels.append(label)
         return
     
@@ -132,7 +132,7 @@ class Labware(object):
         return report
     
     def __repr__(self):
-        return f'{self.name}\n{numpy.round(self.current, decimals=1)}'
+        return f'{self.name}\n{numpy.round(self.volumes, decimals=1)}'
     
     def __str__(self):
         return self.__repr__()
