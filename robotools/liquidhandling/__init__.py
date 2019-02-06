@@ -15,22 +15,27 @@ class VolumeUnderflowError(Exception):
 class Labware(object):
     @property
     def history(self):
+        """List of label/volumes history."""
         return list(zip(self._labels, self._history))
         
     @property
-    def current(self):
-        return self._current.copy()
+    def volumes(self):
+        """Current volumes in the labware."""
+        return self._volumes.copy()
     
     @property
-    def wells(self):
+    def wells(self) -> numpy.ndarray:
+        """Array of well ids."""
         return self._wells
     
     @property
-    def indices(self):
+    def indices(self) -> dict:
+        """Mapping of well-ids to numpy indices."""
         return self._indices
     
     @property
-    def positions(self):
+    def positions(self) -> dict:
+        """Mapping of well-ids to EVOware-compatible position numbers."""
         return self._positions
     
     def __init__(self, name, rows, columns, min_volume, max_volume, initial_volumes=None):
@@ -65,43 +70,59 @@ class Labware(object):
         }
         
         # initialize state variables
-        self._current = initial_volumes.copy()
+        self._volumes = initial_volumes.copy()
         self._history = [self.current]
         self._labels = ['initial']
         return
     
-    def add(self, wells, volumes, label=None):
+    def add(self, wells, volumes:float, label:str=None):
+        """Adds volumes to wells.
+
+        Args:
+            wells: iterable of well ids
+            volumes (int or float): scalar or iterable of volumes
+            label (str): description of the operation
+        """
         wells = numpy.array(wells).flatten()
         if numpy.isscalar(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
         for well, volume in zip(wells, volumes):
-            self._current[self.indices[well]] += volume
-            if self._current[self.indices[well]] > self.max_volume:
+            self._volumes[self.indices[well]] += volume
+            if self._volumes[self.indices[well]] > self.max_volume:
                 raise VolumeOverflowError(f'Step "{label}": {well} has exceeded the maximum volume')
         self.log(label)
         return
     
-    def remove(self, wells, volumes, label=None):
+    def remove(self, wells, volumes:float, label=None):
+        """Removes volumes from wells.
+
+        Args:
+            wells: iterable of well ids
+            volumes (int or float): scalar or iterable of volumes
+            label (str): description of the operation
+        """
         wells = numpy.array(wells).flatten()
         if not hasattr(volumes, '__iter__'):
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
         for well, volume in zip(wells, volumes):
-            self._current[self.indices[well]] -= volume
-            if self._current[self.indices[well]] < self.min_volume:
+            self._volumes[self.indices[well]] -= volume
+            if self._volumes[self.indices[well]] < self.min_volume:
                 raise VolumeUnderflowError(f'Step "{label}": {well} has undershot the minimum volume')
         self.log(label)
         return
     
     def log(self, label):
+        """Logs the current volumes to the history."""
         self._history.append(self.current)
         self._labels.append(label)
         return
     
     def report(self):
+        """Generates a printable report of the labware history."""
         report = self.name
         for label, state in self.history:
             if label:
