@@ -10,7 +10,7 @@ class TestLabware(unittest.TestCase):
     def test_init(self):
         plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250, initial_volumes=30)
         self.assertEqual(plate.name, 'TestPlate')
-        self.assertTrue(numpy.array_equal(plate.current, numpy.array([
+        self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [30,30,30],
             [30,30,30]
         ])))
@@ -24,7 +24,7 @@ class TestLabwareAddRemove(unittest.TestCase):
         wells = ['A01', 'A02', 'B04']
         plate.add(wells, 150)
         for well in wells:
-            assert plate.current[plate.indices[well]] == 150
+            assert plate.volumes[plate.indices[well]] == 150
         return
     
     def test_add_too_much(self):
@@ -38,7 +38,7 @@ class TestLabwareAddRemove(unittest.TestCase):
         plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250, initial_volumes=200)
         wells = ['A01', 'A02', 'B03']
         plate.remove(wells, 50)
-        self.assertTrue(numpy.array_equal(plate.current, numpy.array([
+        self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [150,150,200],
             [200,200,150]
         ])))
@@ -64,23 +64,23 @@ class TestWorklist(unittest.TestCase):
         wells = ['A01', 'B01']
         with evotools.Worklist() as worklist:
             worklist.transfer(A, wells, B, wells, 50)
-            self.assertTrue(numpy.array_equal(A.current, numpy.array([
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [150,200,200,200],
                 [150,200,200,200],
                 [200,200,200,200],
             ])))
-            self.assertTrue(numpy.array_equal(B.current, numpy.array([
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
                 [50,0,0,0],
                 [50,0,0,0],
                 [0,0,0,0],
             ])))
             worklist.transfer(A, ['A03', 'B04'], B, ['A04', 'B04'], 50)
-            self.assertTrue(numpy.array_equal(A.current, numpy.array([
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [150,200,150,200],
                 [150,200,200,150],
                 [200,200,200,200],
             ])))
-            self.assertTrue(numpy.array_equal(B.current, numpy.array([
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
                 [50,0,0,50],
                 [50,0,0,50],
                 [0,0,0,0],
@@ -92,12 +92,12 @@ class TestWorklist(unittest.TestCase):
         B = liquidhandling.Labware('A', 3, 4, 50, 250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, ['A01'], B, ['B01', 'B02', 'B03'], 25)
-            self.assertTrue(numpy.array_equal(A.current, numpy.array([
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [125,200,200,200],
                 [200,200,200,200],
                 [200,200,200,200],
             ])))
-            self.assertTrue(numpy.array_equal(B.current, numpy.array([
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
                 [0,0,0,0],
                 [25,25,25,0],
                 [0,0,0,0],
@@ -109,15 +109,169 @@ class TestWorklist(unittest.TestCase):
         B = liquidhandling.Labware('A', 3, 4, 50, 250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, ['A01', 'A02', 'A03'], B, 'B01', 25)
-            self.assertTrue(numpy.array_equal(A.current, numpy.array([
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [175,175,175,200],
                 [200,200,200,200],
                 [200,200,200,200],
             ])))
-            self.assertTrue(numpy.array_equal(B.current, numpy.array([
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
                 [0,0,0,0],
                 [75,0,0,0],
                 [0,0,0,0],
             ])))
         return
 
+    def test_parameter_validation(self):
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label=15, position=1, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='thisisaveryverylongracklabelthatexceedsthemaximumlength', position=1, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='rack label; with semicolon', position=1, volume=15)
+        evotools._prepate_aspirate_dispense_parameters(rack_label='valid rack label', position=1, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=None, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position='3', volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=-1, volume=15)
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='15')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=-15.4)
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=23.78)
+        
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='thisisaveryverylongliquidclassthatexceedsthemaximumlength')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='liquid;class')
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='valid liquid class')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=12)
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=4)
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.T5)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='invalid;rack')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='thisisaveryverylongrackthatexceedsthemaximumlength')
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='1235464')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='invalid;rack type')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='thisisaveryverylongracktypethatexceedsthemaximumlength')
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='valid rack type')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type=None)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='invalid;forced rack type')
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='thisisaveryverylongforcedracktypethatexceedsthemaximumlength')
+        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='valid forced rack type')
+        return
+
+    def test_comment(self):
+        with evotools.Worklist() as wl:
+            wl.comment('This is a simple comment')
+            with self.assertRaises(ValueError):
+                wl.comment('It must not contain ; semicolons')
+            wl.comment("""
+            But it may very well be
+            a multiline comment
+            """)
+            self.assertEqual(wl, [
+                'C;This is a simple comment',
+                'C;But it may very well be',
+                'C;a multiline comment'
+            ])
+        return
+
+    def test_wash(self):
+        with evotools.Worklist() as wl:
+            wl.wash()
+            with self.assertRaises(ValueError):
+                wl.wash(scheme=15)
+            with self.assertRaises(ValueError):
+                wl.wash(scheme='2')
+            wl.wash(scheme=1)
+            wl.wash(scheme=2)
+            wl.wash(scheme=3)
+            wl.wash(scheme=4)
+            self.assertEqual(wl, [
+                'W1;',
+                'W1;',
+                'W2;',
+                'W3;',
+                'W4;',
+            ])
+        return
+
+    def test_decontaminate(self):
+        with evotools.Worklist() as wl:
+            wl.decontaminate()
+            self.assertEqual(wl, [
+                'WD;',
+            ])
+        return
+
+    def test_flush(self):
+        with evotools.Worklist() as wl:
+            wl.flush()
+            self.assertEqual(wl, [
+                'F;',
+            ])
+        return
+
+    def test_commit(self):
+        with evotools.Worklist() as wl:
+            wl.commit()
+            self.assertEqual(wl, [
+                'B;',
+            ])
+        return
+
+    def test_set_diti(self):
+        with evotools.Worklist() as wl:
+            wl.set_diti(diti_index=1)
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.set_diti(diti_index=2)
+            wl.commit()
+            wl.set_diti(diti_index=2)
+            self.assertEqual(wl, [
+                'S;1',
+                'B;',
+                'S;2',
+            ])
+        return
+
+    def test_aspirate_raw(self):
+        with evotools.Worklist() as wl:
+            wl._aspirate('WaterTrough', 1, 200)
+            self.assertEqual(wl[-1], 'A;WaterTrough;;;1;;200;;;;')
+            wl._aspirate('WaterTrough', 1, 200, rack_id='12345', rack_type='my_rack_id', tube_id='my_tube_id')
+            self.assertEqual(wl[-1], 'A;WaterTrough;12345;my_rack_id;1;my_tube_id;200;;;;')
+            wl._aspirate('WaterTrough', 1, 200, liquid_class='my_liquid_class', tip=8, forced_rack_type='forced_rack')
+            self.assertEqual(wl[-1], 'A;WaterTrough;;;1;;200;my_liquid_class;;128;forced_rack')
+        return
+
+    def test_dispense_raw(self):
+        with evotools.Worklist() as wl:
+            wl._dispense('WaterTrough', 1, 200)
+            self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200;;;;')
+            wl._dispense('WaterTrough', 1, 200, rack_id='12345', rack_type='my_rack_id', tube_id='my_tube_id')
+            self.assertEqual(wl[-1], 'D;WaterTrough;12345;my_rack_id;1;my_tube_id;200;;;;')
+            wl._dispense('WaterTrough', 1, 200, liquid_class='my_liquid_class', tip=8, forced_rack_type='forced_rack')
+            self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200;my_liquid_class;;128;forced_rack')
+        return
