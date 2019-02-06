@@ -1,0 +1,26 @@
+stages:
+  - build
+  - test
+  - release
+
+
+test-robotools:
+  stage: test
+  image: python:3.6
+  script:
+    - python setup.py bdist_wheel && pip install dist/*.whl
+    - cd tests && python -m unittest -v
+
+release-robotools:
+  stage: release
+  image: python:3.6
+  script:
+    - python setup.py bdist_wheel && cp dist/*.whl ..
+  artifacts:
+    paths:
+      - ./*.whl
+  only:
+    # only run on refs that are named like v1.2 or v1.2.3
+    - /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
+  except:
+    - branches
