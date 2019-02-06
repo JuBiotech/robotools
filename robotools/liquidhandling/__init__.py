@@ -30,8 +30,8 @@ class Labware(object):
         return self._indices
     
     @property
-    def numbers(self):
-        return self._numbers
+    def positions(self):
+        return self._positions
     
     def __init__(self, name, rows, columns, min_volume, max_volume, initial_volumes=None):
         # explode convenience parameters
@@ -58,7 +58,7 @@ class Labware(object):
             for r, row in enumerate(self.row_ids)
             for c, column in enumerate(self.column_ids)
         }
-        self._numbers = {
+        self._positions = {
             f'{row}{column:02d}' : 1 + c * rows + r
             for r, row in enumerate(self.row_ids)
             for c, column in enumerate(self.column_ids)
