@@ -61,7 +61,11 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
 
     if volume is None:
         raise ValueError('Missing required paramter: volume')
-    if not isinstance(volume, (int, float)) or volume < 0 or volume > 7158278:
+    try:
+        volume = float(volume)
+    except:
+        raise ValueError(f'Invalid volume: {volume}')
+    if  volume < 0 or volume > 7158278 or numpy.isnan(volume):
         raise ValueError(f'Invalid volume: {volume}')
 
     # optional parameters
@@ -94,7 +98,7 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
         raise ValueError(f'Invalid forced_rack_type: {forced_rack_type}')
 
     # apply rounding and corrections for the right string formatting
-    volume = numpy.round(volume, decimals=1)
+    volume = f'{numpy.round(volume, decimals=1):.1f}'
     tip = '' if tip == -1 else tip
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
