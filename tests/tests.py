@@ -283,14 +283,21 @@ class TestWorklist(unittest.TestCase):
 
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=3, columns=2, min_volume=10, max_volume=200, initial_volumes=200)
-        destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
             wl.aspirate(source, ['A01', 'A02', 'C02'], 150)
-            wl.dispense(destination, ['A01', 'A02', 'A03'], 150)
             self.assertEqual(wl, [
                 'A;SourceLW;;;1;;150.0;;;;',
                 'A;SourceLW;;;4;;150.0;;;;',
                 'A;SourceLW;;;6;;150.0;;;;',
+            ])
+            pass
+        return
+
+    def test_aspirate(self):
+        destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
+        with evotools.Worklist() as wl:
+            wl.dispense(destination, ['A01', 'A02', 'A03'], 150)
+            self.assertEqual(wl, [
                 'D;DestinationLW;;;1;;150.0;;;;',
                 'D;DestinationLW;;;3;;150.0;;;;',
                 'D;DestinationLW;;;5;;150.0;;;;',
