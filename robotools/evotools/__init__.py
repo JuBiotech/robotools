@@ -210,7 +210,7 @@ class Worklist(list):
         )
         return
     
-    def _aspirate(self, rack_label:str, position:int, volume:float,
+    def _dispense(self, rack_label:str, position:int, volume:float,
                   liquid_class:str='', tip:Tip=Tip.Any,
                   rack_id:str='', tube_id:str='',
                   rack_type:str='', forced_rack_type:str=''):
@@ -242,7 +242,38 @@ class Worklist(list):
     def _reagent_distribution(self):
         raise NotImplementedError()
     
-    def aspirate(self, labware, volumes):
+    def aspirate(self, labware:liquidhandling.Labware, wells:list, volumes:float, label=None, **kwargs):
+        """Performs aspiration from the provided labware.
+
+        Args:
+            labware (liquidhandling.Labware): source labware
+            wells (str or iterable): list of well ids
+            volumes (float or iterable): volume(s) to aspirate
+            kwargs: additional keyword arguments to pass to _aspirate
+        """
+        wells = numpy.array(wells).flatten()
+        if not numpy.iterable(volumes):
+            volumes = numpy.repeat(volumes, len(wells))
+        labware.remove(wells, volumes, label)
+        for well, volume in zip(wells, volumes):
+            self._aspirate(labware.name, labware.positions[well], volume, **kwargs)
+        return
+
+    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, label=None, **kwargs):
+        """Performs dispensing from the provided labware.
+
+        Args:
+            labware (liquidhandling.Labware): source labware
+            wells (str or iterable): list of well ids
+            volumes (float or iterable): volume(s) to dispense
+            kwargs: additional keyword arguments to pass to _dispense
+        """
+        wells = numpy.array(wells).flatten()
+        if not numpy.iterable(volumes):
+            volumes = numpy.repeat(volumes, len(wells))
+        labware.add(wells, volumes, label)
+        for well, volume in zip(wells, volumes):
+            self._dispense(labware.name, labware.positions[well], volume, **kwargs)
         return
     
     def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None):
