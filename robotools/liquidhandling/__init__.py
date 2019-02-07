@@ -124,8 +124,8 @@ class Labware(object):
             volumes (int or float): scalar or iterable of volumes
             label (str): description of the operation
         """
-        wells = numpy.array(wells).flatten()
-        volumes = numpy.array(volumes).flatten()
+        wells = numpy.array(wells).flatten('F')
+        volumes = numpy.array(volumes).flatten('F')
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
@@ -145,8 +145,8 @@ class Labware(object):
             volumes (int or float): scalar or iterable of volumes
             label (str): description of the operation
         """
-        wells = numpy.array(wells).flatten()
-        volumes = numpy.array(volumes).flatten()
+        wells = numpy.array(wells).flatten('F')
+        volumes = numpy.array(volumes).flatten('F')
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'

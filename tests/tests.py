@@ -398,6 +398,39 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'D;B;;;11;;50.00;;;;',
             ])
         return
+
+    def test_transfer_many_many_2d(self):
+        A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        wells = A.wells[:,:2]
+        with evotools.Worklist() as worklist:
+            worklist.transfer(A, wells, B, wells, 50)
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
+                [150,150,200,200],
+                [150,150,200,200],
+                [150,150,200,200],
+            ])))
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
+                [50,50,0,0],
+                [50,50,0,0],
+                [50,50,0,0],
+            ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;50.00;;;;',
+                'D;B;;;1;;50.00;;;;',
+                'A;A;;;2;;50.00;;;;',
+                'D;B;;;2;;50.00;;;;',
+                'A;A;;;3;;50.00;;;;',
+                'D;B;;;3;;50.00;;;;',
+                'A;A;;;4;;50.00;;;;',
+                'D;B;;;4;;50.00;;;;',
+                'A;A;;;5;;50.00;;;;',
+                'D;B;;;5;;50.00;;;;',
+                'A;A;;;6;;50.00;;;;',
+                'D;B;;;6;;50.00;;;;',
+            ])
+        return
     
     def test_transfer_one_many(self):
         A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)

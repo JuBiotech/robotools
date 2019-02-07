@@ -275,7 +275,7 @@ class Worklist(list):
             label (str): label of the operation to log into labware history
             kwargs: additional keyword arguments to pass to _aspirate
         """
-        wells = numpy.array(wells).flatten()
+        wells = numpy.array(wells).flatten('F')
         if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         labware.remove(wells, volumes, label)
@@ -293,7 +293,7 @@ class Worklist(list):
             label (str): label of the operation to log into labware history
             kwargs: additional keyword arguments to pass to _dispense
         """
-        wells = numpy.array(wells).flatten()
+        wells = numpy.array(wells).flatten('F')
         if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         labware.add(wells, volumes, label)
@@ -314,9 +314,9 @@ class Worklist(list):
             kwargs: additional keyword arguments to pass to aspirate and dispense
         """
         # reformat the convenience parameters
-        source_wells = numpy.array(source_wells).flatten()
-        destination_wells = numpy.array(destination_wells).flatten()
-        volumes = numpy.array(volumes).flatten()
+        source_wells = numpy.array(source_wells).flatten('F')
+        destination_wells = numpy.array(destination_wells).flatten('F')
+        volumes = numpy.array(volumes).flatten('F')
         n_vol = len(volumes)
         
         if len(source_wells) == 1:
