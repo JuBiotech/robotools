@@ -215,10 +215,10 @@ class Worklist(list):
         self.append(f'S;{diti_index}')
         return
     
-    def _aspirate(self, rack_label:str, position:int, volume:float,
-                  liquid_class:str='', tip:Tip=Tip.Any,
-                  rack_id:str='', tube_id:str='',
-                  rack_type:str='', forced_rack_type:str=''):
+    def aspirate_well(self, rack_label:str, position:int, volume:float,
+            liquid_class:str='', tip:Tip=Tip.Any,
+            rack_id:str='', tube_id:str='',
+            rack_type:str='', forced_rack_type:str=''):
         """Command for aspirating with a single tip.
 
         Each Aspirate record specifies the aspiration parameters for a single tip (the next unused tip from the tip selection you have specified).
@@ -243,10 +243,10 @@ class Worklist(list):
         )
         return
     
-    def _dispense(self, rack_label:str, position:int, volume:float,
-                  liquid_class:str='', tip:Tip=Tip.Any,
-                  rack_id:str='', tube_id:str='',
-                  rack_type:str='', forced_rack_type:str=''):
+    def dispense_well(self, rack_label:str, position:int, volume:float,
+            liquid_class:str='', tip:Tip=Tip.Any,
+            rack_id:str='', tube_id:str='',
+            rack_type:str='', forced_rack_type:str=''):
         """Command for dispensing with a single tip.
 
         Each Dispense record specifies the dispense parameters for a single tip.
@@ -283,7 +283,7 @@ class Worklist(list):
             wells (str or iterable): list of well ids
             volumes (float or iterable): volume(s) to aspirate
             label (str): label of the operation to log into labware history
-            kwargs: additional keyword arguments to pass to _aspirate
+            kwargs: additional keyword arguments to pass to `aspirate_well`
         """
         wells = numpy.array(wells).flatten('F')
         if not numpy.iterable(volumes):
@@ -291,7 +291,7 @@ class Worklist(list):
         labware.remove(wells, volumes, label)
         self.comment(label)
         for well, volume in zip(wells, volumes):
-            self._aspirate(labware.name, labware.positions[well], volume, **kwargs)
+            self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
     def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, label=None, **kwargs):
@@ -302,7 +302,7 @@ class Worklist(list):
             wells (str or iterable): list of well ids
             volumes (float or iterable): volume(s) to dispense
             label (str): label of the operation to log into labware history
-            kwargs: additional keyword arguments to pass to _dispense
+            kwargs: additional keyword arguments to pass to `dispense_well`
         """
         wells = numpy.array(wells).flatten('F')
         if not numpy.iterable(volumes):
@@ -310,7 +310,7 @@ class Worklist(list):
         labware.add(wells, volumes, label)
         self.comment(label)
         for well, volume in zip(wells, volumes):
-            self._dispense(labware.name, labware.positions[well], volume, **kwargs)
+            self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
     def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None, **kwargs):
