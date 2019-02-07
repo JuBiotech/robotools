@@ -279,6 +279,10 @@ class TestWorklist(unittest.TestCase):
 
     def test_comment(self):
         with evotools.Worklist() as wl:
+            # empty and None comments should be ignored
+            wl.comment('')
+            wl.comment(None)
+            # this will be the first actual comment
             wl.comment('This is a simple comment')
             with self.assertRaises(ValueError):
                 wl.comment('It must not contain ; semicolons')
@@ -419,12 +423,13 @@ class TestStandardLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         with evotools.Worklist() as wl:
-            wl.aspirate(source, ['A01', 'A02', 'C02'], 50)
-            wl.aspirate(source, ['A03', 'B03', 'C03'], [10,20,30.5])
+            wl.aspirate(source, ['A01', 'A02', 'C02'], 50, label=None)
+            wl.aspirate(source, ['A03', 'B03', 'C03'], [10,20,30.5], label='second aspirate')
             self.assertEqual(wl, [
                 'A;SourceLW;;;1;;50.00;;;;',
                 'A;SourceLW;;;4;;50.00;;;;',
                 'A;SourceLW;;;6;;50.00;;;;',
+                'C;second aspirate',
                 'A;SourceLW;;;7;;10.00;;;;',
                 'A;SourceLW;;;8;;20.00;;;;',
                 'A;SourceLW;;;9;;30.50;;;;',
@@ -440,12 +445,13 @@ class TestStandardLabwareWorklist(unittest.TestCase):
     def test_dispense(self):
         destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
-            wl.dispense(destination, ['A01', 'A02', 'A03'], 150)
-            wl.dispense(destination, ['B01', 'B02', 'B03'], [10,20,30.5])
+            wl.dispense(destination, ['A01', 'A02', 'A03'], 150, label=None)
+            wl.dispense(destination, ['B01', 'B02', 'B03'], [10,20,30.5], label='second dispense')
             self.assertEqual(wl, [
                 'D;DestinationLW;;;1;;150.00;;;;',
                 'D;DestinationLW;;;3;;150.00;;;;',
                 'D;DestinationLW;;;5;;150.00;;;;',
+                'C;second dispense',
                 'D;DestinationLW;;;2;;10.00;;;;',
                 'D;DestinationLW;;;4;;20.00;;;;',
                 'D;DestinationLW;;;6;;30.50;;;;',
@@ -462,7 +468,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         B = liquidhandling.Labware('B', 3, 4, 50, 250)
         wells = ['A01', 'B01']
         with evotools.Worklist() as worklist:
-            worklist.transfer(A, wells, B, wells, 50)
+            worklist.transfer(A, wells, B, wells, 50, label='first transfer')
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [150,200,200,200],
                 [150,200,200,200],
@@ -473,7 +479,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [50,0,0,0],
                 [0,0,0,0],
             ])))
-            worklist.transfer(A, ['A03', 'B04'], B, ['A04', 'B04'], 50)
+            worklist.transfer(A, ['A03', 'B04'], B, ['A04', 'B04'], 50, label='second transfer')
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [150,200,150,200],
                 [150,200,200,150],
@@ -485,12 +491,12 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [0,0,0,0],
             ])))
             self.assertEqual(worklist, [
-                # first transfer
+                'C;first transfer',
                 'A;A;;;1;;50.00;;;;',
                 'D;B;;;1;;50.00;;;;',
                 'A;A;;;2;;50.00;;;;',
                 'D;B;;;2;;50.00;;;;',
-                # second transfer
+                'C;second transfer',
                 'A;A;;;7;;50.00;;;;',
                 'D;B;;;10;;50.00;;;;',
                 'A;A;;;11;;50.00;;;;',

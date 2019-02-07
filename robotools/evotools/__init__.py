@@ -141,6 +141,8 @@ class Worklist(list):
         Args:
             comment (str): A single- or multi-line comment. Be nice and avoid special characters.
         """
+        if not comment:
+            return
         if ';' in comment:
             raise ValueError('Illegal semicolon in comment.')
         for cline in comment.split('\n'):
@@ -287,6 +289,7 @@ class Worklist(list):
         if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         labware.remove(wells, volumes, label)
+        self.comment(label)
         for well, volume in zip(wells, volumes):
             self._aspirate(labware.name, labware.positions[well], volume, **kwargs)
         return
@@ -305,6 +308,7 @@ class Worklist(list):
         if not numpy.iterable(volumes):
             volumes = numpy.repeat(volumes, len(wells))
         labware.add(wells, volumes, label)
+        self.comment(label)
         for well, volume in zip(wells, volumes):
             self._dispense(labware.name, labware.positions[well], volume, **kwargs)
         return
@@ -336,11 +340,20 @@ class Worklist(list):
         lengths = (len(source_wells), len(destination_wells), len(volumes))
         assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
         
+        # the label applies to the entire transfer operation and is not logged at individual aspirate/dispense steps
+        self.comment(label)
         for ws, wd, v in zip(source_wells, destination_wells, volumes):
-            self.aspirate(source, ws, v, **kwargs)
-            self.dispense(destination, wd, v, **kwargs)
+            self.aspirate(source, ws, v, label=None, **kwargs)
+            self.dispense(destination, wd, v, label=None, **kwargs)
+
         # condense the labware logs into one operation
+        # this is done after creating the worklist to facilitate debugging
         source.log_condense(len(volumes), label=label)
         destination.log_condense(len(volumes), label=label)
         return
         
+    def __repr__(self):
+        return '\n'.join(self)
+    
+    def __str__(self):
+        return self.__repr__()
