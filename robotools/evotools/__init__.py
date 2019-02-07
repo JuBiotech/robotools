@@ -39,7 +39,7 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
     Args:
         rack_label (str): user-defined labware name (max 32 characters)
         position (int): number of the well
-        volume (float): volume in microliters (will be rounded to the 1 decimal places)
+        volume (float): volume in microliters (will be rounded to 2 decimal places)
         liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
         tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
         rack_id (str): (optional) barcode of the labware (max 32 characters)
@@ -98,7 +98,7 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
         raise ValueError(f'Invalid forced_rack_type: {forced_rack_type}')
 
     # apply rounding and corrections for the right string formatting
-    volume = f'{numpy.round(volume, decimals=1):.1f}'
+    volume = f'{numpy.round(volume, decimals=2):.2f}'
     tip = '' if tip == -1 else tip
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
@@ -216,7 +216,7 @@ class Worklist(list):
         Args:
             rack_label (str): user-defined labware name (max 32 characters)
             position (int): number of the well
-            volume (float): volume in microliters (will be rounded to the 1 decimal places)
+            volume (float): volume in microliters (will be rounded to 2 decimal places)
             liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
             tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
             rack_id (str): (optional) barcode of the labware (max 32 characters)
@@ -245,7 +245,7 @@ class Worklist(list):
         Args:
             rack_label (str): user-defined labware name (max 32 characters)
             position (int): number of the well
-            volume (float): volume in microliters (will be rounded to the 1 decimal places)
+            volume (float): volume in microliters (will be rounded to 2 decimal places)
             liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
             tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
             rack_id (str): (optional) barcode of the labware (max 32 characters)

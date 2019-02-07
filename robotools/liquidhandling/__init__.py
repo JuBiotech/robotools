@@ -38,17 +38,38 @@ class Labware(object):
         """Mapping of well-ids to EVOware-compatible position numbers."""
         return self._positions
     
-    def __init__(self, name, rows, columns, min_volume, max_volume, initial_volumes=None):
+    def __init__(self, name:str, rows:int, columns:int, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
+        # sanity checking
+        if not isinstance(rows, int) or rows < 1:
+            raise ValueError(f'Invalid rows: {rows}')
+        if not isinstance(columns, int) or columns < 1:
+            raise ValueError(f'Invalid columns: {columns}')
+        if min_volume is None or min_volume < 0:
+            raise ValueError(f'Invalid min_volume: {min_volume}')
+        if max_volume is None or max_volume <= min_volume:
+            raise ValueError(f'Invalid max_volume: {max_volume}')
+        if virtual_rows is not None and rows != 1:
+            raise ValueError('When using virtual_rows, the number of rows must be == 1')
+        if virtual_rows is not None and virtual_rows < 1:
+            raise ValueError(f'Invalid virtual_rows: {virtual_rows}')
+                
         # explode convenience parameters
-        if not initial_volumes:
+        if initial_volumes is None:
             initial_volumes = 0
-        if numpy.isscalar(initial_volumes):
+        initial_volumes = numpy.array(initial_volumes)
+        if initial_volumes.shape == ():
             initial_volumes = numpy.full((rows, columns), initial_volumes)
-        assert initial_volumes.shape == (rows, columns)
+        else:
+            initial_volumes = initial_volumes.reshape((rows, columns))
+        assert initial_volumes.shape == (rows, columns), f'Invalid shape of initial_volumes: {initial_volumes.shape}'
+        if numpy.any(initial_volumes < 0):
+            raise ValueError('initial_volume cannot be negative')
+        if numpy.any(initial_volumes > max_volume):
+            raise ValueError('initial_volume cannot be above max_volume')
         
         # initialize properties
         self.name = name
-        self.row_ids = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[:rows]
+        self.row_ids = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[:rows if not virtual_rows else virtual_rows])
         self.column_ids = list(range(1, columns + 1))
         self.min_volume = min_volume
         self.max_volume = max_volume
@@ -58,19 +79,31 @@ class Labware(object):
             [f'{row}{column:02d}' for column in self.column_ids]
             for row in self.row_ids
         ])
-        self._indices = {
-            f'{row}{column:02d}' : (r, c)
-            for r, row in enumerate(self.row_ids)
-            for c, column in enumerate(self.column_ids)
-        }
-        self._positions = {
-            f'{row}{column:02d}' : 1 + c * rows + r
-            for r, row in enumerate(self.row_ids)
-            for c, column in enumerate(self.column_ids)
-        }
+        if virtual_rows is None:
+            self._indices = {
+                f'{row}{column:02d}' : (r, c)
+                for r, row in enumerate(self.row_ids)
+                for c, column in enumerate(self.column_ids)
+            }
+            self._positions = {
+                f'{row}{column:02d}' : 1 + c * rows + r
+                for r, row in enumerate(self.row_ids)
+                for c, column in enumerate(self.column_ids)
+            }
+        else:
+            self._indices = {
+                f'{vrow}{column:02d}' : (0, c)
+                for vr, vrow in enumerate(self.row_ids)
+                for c, column in enumerate(self.column_ids)
+            }
+            self._positions = {
+                f'{vrow}{column:02d}' : 1 + c * virtual_rows + vr
+                for vr, vrow in enumerate(self.row_ids)
+                for c, column in enumerate(self.column_ids)
+            }
         
         # initialize state variables
-        self._volumes = initial_volumes.copy()
+        self._volumes = initial_volumes.copy().astype(float)
         self._history = [self.volumes]
         self._labels = ['initial']
         return
@@ -84,7 +117,8 @@ class Labware(object):
             label (str): description of the operation
         """
         wells = numpy.array(wells).flatten()
-        if not numpy.iterable(volumes):
+        volumes = numpy.array(volumes).flatten()
+        if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
@@ -104,7 +138,8 @@ class Labware(object):
             label (str): description of the operation
         """
         wells = numpy.array(wells).flatten()
-        if not numpy.iterable(volumes):
+        volumes = numpy.array(volumes).flatten()
+        if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
