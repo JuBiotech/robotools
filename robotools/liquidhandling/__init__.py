@@ -163,6 +163,26 @@ class Labware(object):
         self._history.append(self.volumes)
         self._labels.append(label)
         return
+
+    def log_condense(self, n:int, label='last'):
+        """Condense the last n log entries.
+
+        Args:
+            n (int): number of log entries to condense
+            label (str): 'first', 'last' or label of the condensed entry (default: label of the last entry in the condensate)
+        """
+        if label == 'first':
+            label = self._labels[len(self._labels)-n]
+        if label == 'last':
+            label = self._labels[-1]
+        state = self._history[-1]
+        # cut away the history
+        self._labels = self._labels[:-n]
+        self._history = self._history[:-n]
+        # append the last state
+        self._labels.append(label)
+        self._history.append(state)
+        return
     
     def report(self):
         """Generates a printable report of the labware history."""

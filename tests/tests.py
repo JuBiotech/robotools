@@ -14,6 +14,7 @@ class TestStandardLabware(unittest.TestCase):
         self.assertEqual(plate.column_ids, [1,2,3])
         self.assertEqual(plate.min_volume, 50)
         self.assertEqual(plate.max_volume, 250)
+        self.assertEqual(len(plate.history), 1)
         self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [30,30,30],
             [30,30,30]
@@ -47,11 +48,57 @@ class TestStandardLabware(unittest.TestCase):
         ])))
         return
 
+    def test_logging(self):
+        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250)
+        plate.add(plate.wells, 25)
+        plate.add(plate.wells, 25)
+        plate.add(plate.wells, 25)
+        plate.add(plate.wells, 25)
+        self.assertEqual(len(plate.history), 5)
+        return
+
+    def test_log_condensation_first(self):
+        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250)
+        plate.add(plate.wells, 25, label='A')
+        plate.add(plate.wells, 25, label='B')
+        plate.add(plate.wells, 25, label='C')
+        plate.add(plate.wells, 25, label='D')
+        self.assertEqual(len(plate.history), 5)
+
+        # condense the last two as 'D'
+        plate.log_condense(2, label='last')
+        self.assertEqual(len(plate.history), 4)
+        self.assertEqual(plate.history[-1][0], 'D')
+        self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
+            [100,100,100],
+            [100,100,100],
+        ])))
+
+        # condense the last three as 'A'
+        plate.log_condense(3, label='first')
+        self.assertEqual(len(plate.history), 2)
+        self.assertEqual(plate.history[-1][0], 'A')
+        self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
+            [100,100,100],
+            [100,100,100],
+        ])))
+
+        # condense the remaining two as 'prepared'
+        plate.log_condense(3, label='prepared')
+        self.assertEqual(len(plate.history), 1)
+        self.assertEqual(plate.history[-1][0], 'prepared')
+        self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
+            [100,100,100],
+            [100,100,100],
+        ])))
+        return
+
     def test_add_valid(self):
         plate = liquidhandling.Labware('TestPlate', 4, 6, 100, 250)
         wells = ['A01', 'A02', 'B04']
         plate.add(wells, 150)
         plate.add(wells, 3.5)
+        self.assertEqual(len(plate.history), 3)
         for well in wells:
             assert plate.volumes[plate.indices[well]] == 153.5
         return
@@ -67,6 +114,7 @@ class TestStandardLabware(unittest.TestCase):
         plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250, initial_volumes=200)
         wells = ['A01', 'A02', 'B03']
         plate.remove(wells, 50)
+        self.assertEqual(len(plate.history), 2)
         self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [150,150,200],
             [200,200,150]
@@ -78,6 +126,7 @@ class TestStandardLabware(unittest.TestCase):
         wells = ['A01', 'A02', 'B04']
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
             plate.remove(wells, 500)
+        self.assertEqual(len(plate.history), 1)
         return
         
 
@@ -89,6 +138,7 @@ class TestTroughLabware(unittest.TestCase):
         self.assertEqual(trough.column_ids, [1,2,3,4])
         self.assertEqual(trough.min_volume, 1000)
         self.assertEqual(trough.max_volume, 50*1000)
+        self.assertEqual(len(trough.history), 1)
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
             [30*1000,30*1000,30*1000,30*1000]
         ])))
@@ -120,6 +170,7 @@ class TestTroughLabware(unittest.TestCase):
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
             [150, 50, 50, 0]
         ])))
+        self.assertEqual(len(trough.history), 3)
         return
 
     def test_trough_add_too_much(self):
@@ -141,6 +192,7 @@ class TestTroughLabware(unittest.TestCase):
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
             [2850, 2950, 2950, 3000]
         ])))
+        self.assertEqual(len(trough.history), 3)
         return
 
     def test_trough_remove_too_much(self):
@@ -337,6 +389,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [200,200,180],
                 [200,150,169.5],
             ]))
+            self.assertEqual(len(source.history), 3)
         return
 
     def test_dispense(self):
@@ -356,6 +409,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [150,150,150],
                 [10,20,30.5],
             ]))
+            self.assertEqual(len(destination.history), 3)
         return
 
     def test_transfer_many_many(self):
@@ -397,6 +451,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'A;A;;;11;;50.00;;;;',
                 'D;B;;;11;;50.00;;;;',
             ])
+            self.assertEqual(len(A.history), 3)
+            self.assertEqual(len(B.history), 3)
         return
 
     def test_transfer_many_many_2d(self):
@@ -430,6 +486,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'A;A;;;6;;50.00;;;;',
                 'D;B;;;6;;50.00;;;;',
             ])
+            self.assertEqual(len(A.history), 2)
+            self.assertEqual(len(B.history), 2)
         return
     
     def test_transfer_one_many(self):
@@ -474,6 +532,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;8;;25.00;;;;',
             ])
+            self.assertEqual(len(A.history), 3)
+            self.assertEqual(len(B.history), 3)
         return
     
     def test_transfer_many_one(self):
@@ -500,6 +560,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'A;A;;;7;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
             ])
+            self.assertEqual(len(A.history), 2)
+            self.assertEqual(len(B.history), 2)
         return
 
 
@@ -520,6 +582,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertTrue(numpy.array_equal(source.volumes, [
                 [149,95,200]
             ]))
+            self.assertEqual(len(source.history), 3)
         return
 
     def test_dispense(self):
@@ -539,6 +602,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertTrue(numpy.array_equal(destination.volumes, [
                 [101,55,50]
             ]))
+            self.assertEqual(len(destination.history), 3)
         return
 
     def test_transfer_many_many(self):
@@ -575,6 +639,8 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 'A;A;;;11;;75.00;;;;',
                 'D;B;;;11;;75.00;;;;',
             ])
+            self.assertEqual(len(A.history), 3)
+            self.assertEqual(len(B.history), 3)
         return
     
     def test_transfer_one_many(self):
@@ -625,6 +691,8 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 'A;A;;;1;;35.00;;;;',
                 'D;B;;;8;;35.00;;;;',
             ])
+            self.assertEqual(len(A.history), 3)
+            self.assertEqual(len(B.history), 3)
         return
     
     def test_transfer_many_one(self):
@@ -675,4 +743,6 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 'A;B;;;9;;70.00;;;;',
                 'D;A;;;12;;70.00;;;;',
             ])
+            self.assertEqual(len(A.history), 3)
+            self.assertEqual(len(B.history), 3)
         return

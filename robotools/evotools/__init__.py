@@ -327,10 +327,12 @@ class Worklist(list):
             volumes = numpy.repeat(volumes, len(destination_wells))
         lengths = (len(source_wells), len(destination_wells), len(volumes))
         assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
-
+        
         for ws, wd, v in zip(source_wells, destination_wells, volumes):
             self.aspirate(source, ws, v, **kwargs)
             self.dispense(destination, wd, v, **kwargs)
-            
+        # condense the labware logs into one operation
+        source.log_condense(len(volumes), label=label)
+        destination.log_condense(len(volumes), label=label)
         return
         
