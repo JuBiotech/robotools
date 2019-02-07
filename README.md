@@ -1,6 +1,5 @@
-[![coverage report](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/badges/master/coverage.svg)](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/commits/master)
-
 [![pipeline status](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/badges/master/pipeline.svg)](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/commits/master)
+[![coverage report](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/badges/master/coverage.svg)](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/commits/master)
 
 # Robotools
 This is a package for debugging and planning liquid handling operations.
