@@ -160,6 +160,12 @@ class TestTroughLabware(unittest.TestCase):
         })
         return
 
+    def test_initial_volumes(self):
+        trough = liquidhandling.Labware('TestTrough', 1, 4, 1000, 50*1000, initial_volumes=[30*1000, 20*1000, 20*1000, 20*1000], virtual_rows=5)
+        self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
+            [30*1000, 20*1000, 20*1000, 20*1000],
+        ])))
+        return
     def test_trough_add_valid(self):
         trough = liquidhandling.Labware('TestTrough', 1, 4, 100, 250, virtual_rows=3)
         # adding into the first column (which is actually one well)
