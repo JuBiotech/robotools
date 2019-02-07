@@ -133,7 +133,7 @@ class Labware(object):
         for well, volume in zip(wells, volumes):
             self._volumes[self.indices[well]] += volume
             if self._volumes[self.indices[well]] > self.max_volume:
-                raise VolumeOverflowError(f'Step "{label}": {well} has exceeded the maximum volume')
+                raise VolumeOverflowError(f'Step "{label}": {self.name}.{well} has exceeded the maximum volume')
         self.log(label)
         return
     
@@ -154,7 +154,7 @@ class Labware(object):
         for well, volume in zip(wells, volumes):
             self._volumes[self.indices[well]] -= volume
             if self._volumes[self.indices[well]] < self.min_volume:
-                raise VolumeUnderflowError(f'Step "{label}": {well} has undershot the minimum volume')
+                raise VolumeUnderflowError(f'Step "{label}": {self.name}.{well} has undershot the minimum volume')
         self.log(label)
         return
     
