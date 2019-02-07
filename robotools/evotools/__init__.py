@@ -272,6 +272,7 @@ class Worklist(list):
             labware (liquidhandling.Labware): source labware
             wells (str or iterable): list of well ids
             volumes (float or iterable): volume(s) to aspirate
+            label (str): label of the operation to log into labware history
             kwargs: additional keyword arguments to pass to _aspirate
         """
         wells = numpy.array(wells).flatten()
@@ -289,6 +290,7 @@ class Worklist(list):
             labware (liquidhandling.Labware): source labware
             wells (str or iterable): list of well ids
             volumes (float or iterable): volume(s) to dispense
+            label (str): label of the operation to log into labware history
             kwargs: additional keyword arguments to pass to _dispense
         """
         wells = numpy.array(wells).flatten()
@@ -299,28 +301,36 @@ class Worklist(list):
             self._dispense(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None):
+    def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None, **kwargs):
+        """Transfer operation between two labwares.
+
+        Args:
+            source (liquidhandling.Labware): source labware
+            source_wells (str or iterable): list of source well ids
+            destination (liquidhandling.Labware): destination labware
+            destination_wells (str or iterable): list of destination well ids
+            volumes (float or iterable): volume(s) to transfer
+            label (str): label of the operation to log into labware history
+            kwargs: additional keyword arguments to pass to aspirate and dispense
+        """
         # reformat the convenience parameters
         source_wells = numpy.array(source_wells).flatten()
         destination_wells = numpy.array(destination_wells).flatten()
-        n_source = len(source_wells)
-        n_destination = len(destination_wells)
-        if numpy.isscalar(volumes):
-            volumes = numpy.repeat(volumes, max(n_source, n_destination))
+        volumes = numpy.array(volumes).flatten()
         n_vol = len(volumes)
         
-        if not n_source == n_destination:
-            assert n_source == 1 or n_destination == 1, 'Number of source & destination wells must be equal or 1'
-            
-        if n_source == 1:
-            source.remove(source_wells, numpy.sum(volumes), label=label)
-        else:
-            source.remove(source_wells, volumes, label=label)
-        
-        if n_destination == 1:
-            destination.add(destination_wells, numpy.sum(volumes), label=label)
-        else:
-            destination.add(destination_wells, volumes, label=label)
+        if len(source_wells) == 1:
+            source_wells = numpy.repeat(source_wells, len(destination_wells))
+        if len(destination_wells) == 1:
+            destination_wells = numpy.repeat(destination_wells, len(source_wells))
+        if len(volumes) == 1:
+            volumes = numpy.repeat(volumes, len(destination_wells))
+        lengths = (len(source_wells), len(destination_wells), len(volumes))
+        assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
 
+        for ws, wd, v in zip(source_wells, destination_wells, volumes):
+            self.aspirate(source, ws, v, **kwargs)
+            self.dispense(destination, wd, v, **kwargs)
+            
         return
         

@@ -385,6 +385,18 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [50,0,0,50],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;50.00;;;;',
+                'D;B;;;1;;50.00;;;;',
+                'A;A;;;2;;50.00;;;;',
+                'D;B;;;2;;50.00;;;;',
+                # second transfer
+                'A;A;;;7;;50.00;;;;',
+                'D;B;;;10;;50.00;;;;',
+                'A;A;;;11;;50.00;;;;',
+                'D;B;;;11;;50.00;;;;',
+            ])
         return
     
     def test_transfer_one_many(self):
@@ -413,6 +425,22 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [50,50,50,0],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;5;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;8;;25.00;;;;',
+                # second transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;5;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;8;;25.00;;;;',
+            ])
         return
     
     def test_transfer_many_one(self):
@@ -430,6 +458,15 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [75,0,0,0],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;4;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;7;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+            ])
         return
 
 
@@ -493,6 +530,18 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 [50,0,0,75],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;50.00;;;;',
+                'D;B;;;1;;50.00;;;;',
+                'A;A;;;2;;50.00;;;;',
+                'D;B;;;2;;50.00;;;;',
+                # second transfer
+                'A;A;;;7;;50.00;;;;',
+                'D;B;;;10;;50.00;;;;',
+                'A;A;;;11;;75.00;;;;',
+                'D;B;;;11;;75.00;;;;',
+            ])
         return
     
     def test_transfer_one_many(self):
@@ -508,6 +557,16 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 [25,25,25,0],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;5;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;8;;25.00;;;;',
+            ])
+
             worklist.transfer(A, ['A01'], B, ['B01', 'B02', 'B03'], [25,30,35])
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [1835,2000,2000,2000],
@@ -517,6 +576,22 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 [50,55,60,0],
                 [0,0,0,0],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;5;;25.00;;;;',
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;8;;25.00;;;;',
+                # second transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;1;;30.00;;;;',
+                'D;B;;;5;;30.00;;;;',
+                'A;A;;;1;;35.00;;;;',
+                'D;B;;;8;;35.00;;;;',
+            ])
         return
     
     def test_transfer_many_one(self):
@@ -532,6 +607,16 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 [175,100,100,100],
                 [100,100,100,100],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;4;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;7;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+            ])
+
             worklist.transfer(B, B.wells[:,2], A, A.wells[:,3], [50,60,70])
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
                 [1975,1475,975,680],
@@ -541,4 +626,20 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 [175,100,40,100],
                 [100,100,30,100],
             ])))
+            self.assertEqual(worklist, [
+                # first transfer
+                'A;A;;;1;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;4;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                'A;A;;;7;;25.00;;;;',
+                'D;B;;;2;;25.00;;;;',
+                # second transfer
+                'A;B;;;7;;50.00;;;;',
+                'D;A;;;10;;50.00;;;;',
+                'A;B;;;8;;60.00;;;;',
+                'D;A;;;11;;60.00;;;;',
+                'A;B;;;9;;70.00;;;;',
+                'D;A;;;12;;70.00;;;;',
+            ])
         return
