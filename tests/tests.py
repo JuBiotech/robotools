@@ -1,5 +1,7 @@
 import unittest
 import numpy
+import os
+import tempfile
 
 from robotools import liquidhandling
 from robotools import evotools
@@ -367,6 +369,49 @@ class TestWorklist(unittest.TestCase):
             self.assertEqual(wl[-1], 'D;WaterTrough;12345;my_rack_id;1;my_tube_id;200.00;;;;')
             wl._dispense('WaterTrough', 1, 200, liquid_class='my_liquid_class', tip=8, forced_rack_type='forced_rack')
             self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200.00;my_liquid_class;;128;forced_rack')
+        return
+
+    def test_save(self):
+        tf = tempfile.mktemp() + '.gwl'
+        error = None
+        try:
+            with evotools.Worklist() as worklist:
+                worklist.flush()
+                worklist.save(tf)
+            self.assertTrue(os.path.exists(tf))
+            with open(tf) as file:
+                lines = file.readlines()
+                self.assertEqual(lines, [
+                    'F;'
+                ])
+        except Exception as ex:
+            error = ex
+        finally:
+            os.remove(tf)
+        self.assertFalse(os.path.exists(tf))
+        if error:
+            raise error
+        return
+
+    def test_autosave(self):
+        tf = tempfile.mktemp() + '.gwl'
+        error = None
+        try:
+            with evotools.Worklist(tf) as worklist:
+                worklist.flush()
+            self.assertTrue(os.path.exists(tf))
+            with open(tf) as file:
+                lines = file.readlines()
+                self.assertEqual(lines, [
+                    'F;'
+                ])
+        except Exception as ex:
+            error = ex
+        finally:
+            os.remove(tf)
+        self.assertFalse(os.path.exists(tf))
+        if error:
+            raise error
         return
 
 

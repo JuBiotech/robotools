@@ -104,7 +104,13 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
 
 
 class Worklist(list):
-    def __init__(self):
+    def __init__(self, filepath:str=None):
+        """Creates a worklist writer.
+
+        Args:
+            filepath (str): optional filename/filepath to write when the context is exited (must include a .gwl extension)
+        """
+        self._filepath = filepath
         return super().__init__()
     
     def __enter__(self):
@@ -112,10 +118,12 @@ class Worklist(list):
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._filepath:
+            self.save(self._filepath)
         return
     
-    def save(self, filepath):
-        """Writes the worklist to the filename.
+    def save(self, filepath:str):
+        """Writes the worklist to the filepath.
 
         Args:
             filepath (str): file name or path to write (must include a .gwl extension)
@@ -124,7 +132,7 @@ class Worklist(list):
         if os.path.exists(filepath):
             os.remove(filepath)
         with open(filepath, 'w') as file:
-            file.writelines(self.lines)
+            file.writelines(self)
         return
     
     def comment(self, comment:str):
