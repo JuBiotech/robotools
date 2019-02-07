@@ -11,6 +11,14 @@ test-robotools:
     - python setup.py bdist_wheel && pip install dist/*.whl
     - cd tests && python -m unittest -v
 
+coverage-robotools:
+  stage: test
+  image: python:3.6
+  script:
+    - python setup.py bdist_wheel && pip install dist/*.whl
+    - pip install coverage
+    - cd tests && coverage run tests.py && coverage report -m
+
 release-robotools:
   stage: release
   image: python:3.6
