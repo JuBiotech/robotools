@@ -14,6 +14,8 @@ class TestStandardLabware(unittest.TestCase):
         self.assertEqual(plate.name, 'TestPlate')
         self.assertEqual(plate.row_ids, tuple('AB'))
         self.assertEqual(plate.column_ids, [1,2,3])
+        self.assertEqual(plate.n_rows, 2)
+        self.assertEqual(plate.n_columns, 3)
         self.assertEqual(plate.min_volume, 50)
         self.assertEqual(plate.max_volume, 250)
         self.assertEqual(len(plate.history), 1)
@@ -29,6 +31,17 @@ class TestStandardLabware(unittest.TestCase):
             'A01': 1, 'A02': 3, 'A03': 5,
             'B01': 2, 'B02': 4, 'B03': 6,
         })
+        return
+
+    def test_invalid_init(self):
+        with self.assertRaises(ValueError):
+            _ = liquidhandling.Labware('A', 0, 3, 10, 250)
+        with self.assertRaises(ValueError):
+            _ = liquidhandling.Labware('A', 3, 0, 10, 250)
+        with self.assertRaises(ValueError):
+            _ = liquidhandling.Labware('A', 3, 4, 10, 250, virtual_rows=2)
+        with self.assertRaises(ValueError):
+            _ = liquidhandling.Labware('A', 1, 4, 10, 250, virtual_rows=0)
         return
 
     def test_volume_limits(self):
@@ -243,6 +256,8 @@ class TestWorklist(unittest.TestCase):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=float('nan'))
         with self.assertRaises(ValueError):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=-15.4)
+        with self.assertRaises(ValueError):
+            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='bla')
         evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='15')
         evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=20)
         evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=23.78)
@@ -395,6 +410,9 @@ class TestWorklist(unittest.TestCase):
             with evotools.Worklist() as worklist:
                 worklist.flush()
                 worklist.save(tf)
+                self.assertTrue(os.path.exists(tf))
+                # also check that the file can be overwritten if it exists already
+                worklist.save(tf)
             self.assertTrue(os.path.exists(tf))
             with open(tf) as file:
                 lines = file.readlines()
@@ -430,6 +448,13 @@ class TestWorklist(unittest.TestCase):
         if error:
             raise error
         return
+
+    def test_reagent_distribution(self):
+        with evotools.Worklist() as wl:
+            with self.assertRaises(NotImplementedError):
+                wl._reagent_distribution()
+        return
+
 
 
 class TestStandardLabwareWorklist(unittest.TestCase):
@@ -708,19 +733,35 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             wl.aspirate(A, 'A01', 10, tip=2)
             wl.aspirate(A, 'A01', 10, tip=3)
             wl.aspirate(A, 'A01', 10, tip=4)
+            wl.aspirate(A, 'A01', 10, tip=5)
+            wl.aspirate(A, 'A01', 10, tip=6)
+            wl.aspirate(A, 'A01', 10, tip=7)
+            wl.aspirate(A, 'A01', 10, tip=8)
             wl.dispense(A, 'B01', 10, tip=evotools.Tip.T1)
             wl.dispense(A, 'B02', 10, tip=evotools.Tip.T2)
             wl.dispense(A, 'B03', 10, tip=evotools.Tip.T3)
             wl.dispense(A, 'B04', 10, tip=evotools.Tip.T4)
+            wl.dispense(A, 'B04', 10, tip=evotools.Tip.T5)
+            wl.dispense(A, 'B04', 10, tip=evotools.Tip.T6)
+            wl.dispense(A, 'B04', 10, tip=evotools.Tip.T7)
+            wl.dispense(A, 'B04', 10, tip=evotools.Tip.T8)
             self.assertEqual(wl, [
                 'A;A;;;1;;10.00;;;1;',
                 'A;A;;;1;;10.00;;;2;',
                 'A;A;;;1;;10.00;;;4;',
                 'A;A;;;1;;10.00;;;8;',
+                'A;A;;;1;;10.00;;;16;',
+                'A;A;;;1;;10.00;;;32;',
+                'A;A;;;1;;10.00;;;64;',
+                'A;A;;;1;;10.00;;;128;',
                 'D;A;;;2;;10.00;;;1;',
                 'D;A;;;5;;10.00;;;2;',
                 'D;A;;;8;;10.00;;;4;',
                 'D;A;;;11;;10.00;;;8;',
+                'D;A;;;11;;10.00;;;16;',
+                'D;A;;;11;;10.00;;;32;',
+                'D;A;;;11;;10.00;;;64;',
+                'D;A;;;11;;10.00;;;128;',
             ])
         return
 
