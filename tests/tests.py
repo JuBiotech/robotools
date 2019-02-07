@@ -906,3 +906,6 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
         return
+
+if __name__ == '__main__':
+    unittest.main()
