@@ -286,7 +286,8 @@ class Worklist(list):
             kwargs: additional keyword arguments to pass to `aspirate_well`
         """
         wells = numpy.array(wells).flatten('F')
-        if not numpy.iterable(volumes):
+        volumes = numpy.array(volumes).flatten('F')
+        if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         labware.remove(wells, volumes, label)
         self.comment(label)
@@ -305,7 +306,8 @@ class Worklist(list):
             kwargs: additional keyword arguments to pass to `dispense_well`
         """
         wells = numpy.array(wells).flatten('F')
-        if not numpy.iterable(volumes):
+        volumes = numpy.array(volumes).flatten('F')
+        if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         labware.add(wells, volumes, label)
         self.comment(label)

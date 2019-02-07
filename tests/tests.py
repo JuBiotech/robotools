@@ -382,6 +382,12 @@ class TestWorklist(unittest.TestCase):
             self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200.00;my_liquid_class;;128;forced_rack')
         return
 
+    def test_aspirate_systemliquid(self):
+        with evotools.Worklist() as wl:
+            wl.aspirate_well(evotools.Labwares.SystemLiquid, 1, 200)
+            self.assertEqual(wl[-1], 'A;Systemliquid;;;1;;200.00;;;;')
+        return
+
     def test_save(self):
         tf = tempfile.mktemp() + '.gwl'
         error = None
@@ -449,6 +455,26 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(source.history), 3)
         return
 
+    def test_aspirate_2d_volumes(self):
+        source = liquidhandling.Labware('SourceLW', rows=2, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
+        with evotools.Worklist() as wl:
+            wl.aspirate(source, source.wells[:,:2], volumes=numpy.array([
+                [20,30],
+                [15.3,17.53],
+            ]))
+            self.assertEqual(wl, [
+                'A;SourceLW;;;1;;20.00;;;;',
+                'A;SourceLW;;;2;;15.30;;;;',
+                'A;SourceLW;;;3;;30.00;;;;',
+                'A;SourceLW;;;4;;17.53;;;;',
+            ])
+            self.assertTrue(numpy.array_equal(source.volumes, [
+                [180,170,200],
+                [200-15.3,200-17.53,200]
+            ]))
+            self.assertEqual(len(source.history), 2)
+        return
+
     def test_dispense(self):
         destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
@@ -468,6 +494,59 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 [10,20,30.5],
             ]))
             self.assertEqual(len(destination.history), 3)
+        return
+
+    def test_dispense_2d_volumes(self):
+        destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
+        with evotools.Worklist() as wl:
+            wl.dispense(destination, destination.wells[:,:2], volumes=numpy.array([
+                [20,30],
+                [15.3,17.53],
+            ]))
+            self.assertEqual(wl, [
+                'D;DestinationLW;;;1;;20.00;;;;',
+                'D;DestinationLW;;;2;;15.30;;;;',
+                'D;DestinationLW;;;3;;30.00;;;;',
+                'D;DestinationLW;;;4;;17.53;;;;',
+            ])            
+            self.assertTrue(numpy.array_equal(destination.volumes, [
+                [20,30,0],
+                [15.3,17.53,0]
+            ]))
+            self.assertEqual(len(destination.history), 2)
+        return
+
+    def test_transfer_2d_volumes(self):
+        A = liquidhandling.Labware('A', 2, 4, 50, 250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 2, 4, 50, 250)
+        with evotools.Worklist() as wl:
+            wl.transfer(
+                A, A.wells[:,:2],
+                B, B.wells[:,:2], volumes=numpy.array([
+                    [20,30],
+                    [15.3,17.53],
+                ]),
+            )
+            self.assertEqual(wl, [
+                'A;A;;;1;;20.00;;;;',
+                'D;B;;;1;;20.00;;;;',
+                'A;A;;;2;;15.30;;;;',
+                'D;B;;;2;;15.30;;;;',
+                'A;A;;;3;;30.00;;;;',
+                'D;B;;;3;;30.00;;;;',
+                'A;A;;;4;;17.53;;;;',
+                'D;B;;;4;;17.53;;;;',
+            ])            
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
+                [180,170,200,200],
+                [200-15.3,200-17.53,200,200],
+            ])))
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
+                [20,30,0,0],
+                [15.3,17.53,0,0],
+            ])))
+            self.assertEqual(len(A.history), 2)
+            self.assertEqual(len(B.history), 2)
         return
 
     def test_transfer_many_many(self):
