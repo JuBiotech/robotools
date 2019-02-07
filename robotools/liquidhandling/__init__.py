@@ -37,6 +37,14 @@ class Labware(object):
     def positions(self) -> dict:
         """Mapping of well-ids to EVOware-compatible position numbers."""
         return self._positions
+
+    @property
+    def n_rows(self) -> int:
+        return len(self.row_ids)
+    
+    @property
+    def n_columns(self) -> int:
+        return len(self.column_ids)
     
     def __init__(self, name:str, rows:int, columns:int, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
         # sanity checking
