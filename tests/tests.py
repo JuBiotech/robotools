@@ -166,6 +166,7 @@ class TestTroughLabware(unittest.TestCase):
             [30*1000, 20*1000, 20*1000, 20*1000],
         ])))
         return
+        
     def test_trough_add_valid(self):
         trough = liquidhandling.Labware('TestTrough', 1, 4, 100, 250, virtual_rows=3)
         # adding into the first column (which is actually one well)
