@@ -17,6 +17,17 @@ class Labware(object):
     def history(self):
         """List of label/volumes history."""
         return list(zip(self._labels, self._history))
+
+    @property
+    def report(self):
+        """A printable report of the labware history."""
+        report = self.name
+        for label, state in self.history:
+            if label:
+                report += f'\n{label}'
+            report += f'\n{numpy.round(state, decimals=1)}'
+            report += '\n'
+        return report
         
     @property
     def volumes(self):
@@ -164,7 +175,7 @@ class Labware(object):
         self._labels.append(label)
         return
 
-    def log_condense(self, n:int, label='last'):
+    def condense_log(self, n:int, label='last'):
         """Condense the last n log entries.
 
         Args:
@@ -183,17 +194,7 @@ class Labware(object):
         self._labels.append(label)
         self._history.append(state)
         return
-    
-    def report(self):
-        """Generates a printable report of the labware history."""
-        report = self.name
-        for label, state in self.history:
-            if label:
-                report += f'\n{label}'
-            report += f'\n{numpy.round(state, decimals=1)}'
-            report += '\n'
-        return report
-    
+        
     def __repr__(self):
         return f'{self.name}\n{numpy.round(self.volumes, decimals=1)}'
     

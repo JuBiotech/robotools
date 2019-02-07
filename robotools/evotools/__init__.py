@@ -348,8 +348,8 @@ class Worklist(list):
 
         # condense the labware logs into one operation
         # this is done after creating the worklist to facilitate debugging
-        source.log_condense(len(volumes), label=label)
-        destination.log_condense(len(volumes), label=label)
+        source.condense_log(len(volumes), label=label)
+        destination.condense_log(len(volumes), label=label)
         return
         
     def __repr__(self):

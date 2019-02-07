@@ -68,7 +68,7 @@ class TestStandardLabware(unittest.TestCase):
         self.assertEqual(len(plate.history), 5)
 
         # condense the last two as 'D'
-        plate.log_condense(2, label='last')
+        plate.condense_log(2, label='last')
         self.assertEqual(len(plate.history), 4)
         self.assertEqual(plate.history[-1][0], 'D')
         self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
@@ -77,7 +77,7 @@ class TestStandardLabware(unittest.TestCase):
         ])))
 
         # condense the last three as 'A'
-        plate.log_condense(3, label='first')
+        plate.condense_log(3, label='first')
         self.assertEqual(len(plate.history), 2)
         self.assertEqual(plate.history[-1][0], 'A')
         self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
@@ -86,7 +86,7 @@ class TestStandardLabware(unittest.TestCase):
         ])))
 
         # condense the remaining two as 'prepared'
-        plate.log_condense(3, label='prepared')
+        plate.condense_log(3, label='prepared')
         self.assertEqual(len(plate.history), 1)
         self.assertEqual(plate.history[-1][0], 'prepared')
         self.assertTrue(numpy.array_equal(plate.history[-1][1], numpy.array([
@@ -166,7 +166,7 @@ class TestTroughLabware(unittest.TestCase):
             [30*1000, 20*1000, 20*1000, 20*1000],
         ])))
         return
-        
+
     def test_trough_add_valid(self):
         trough = liquidhandling.Labware('TestTrough', 1, 4, 100, 250, virtual_rows=3)
         # adding into the first column (which is actually one well)
