@@ -701,6 +701,29 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 2)
         return
 
+    def test_tip_selection(self):
+        A = liquidhandling.Labware('A', 3, 4, 10, 250, initial_volumes=100)
+        with evotools.Worklist() as wl:
+            wl.aspirate(A, 'A01', 10, tip=1)
+            wl.aspirate(A, 'A01', 10, tip=2)
+            wl.aspirate(A, 'A01', 10, tip=3)
+            wl.aspirate(A, 'A01', 10, tip=4)
+            wl.dispense(A, 'B01', 10, tip=evotools.Tip.T1)
+            wl.dispense(A, 'B02', 10, tip=evotools.Tip.T2)
+            wl.dispense(A, 'B03', 10, tip=evotools.Tip.T3)
+            wl.dispense(A, 'B04', 10, tip=evotools.Tip.T4)
+            self.assertEqual(wl, [
+                'A;A;;;1;;10.00;;;1;',
+                'A;A;;;1;;10.00;;;2;',
+                'A;A;;;1;;10.00;;;4;',
+                'A;A;;;1;;10.00;;;8;',
+                'D;A;;;2;;10.00;;;1;',
+                'D;A;;;5;;10.00;;;2;',
+                'D;A;;;8;;10.00;;;4;',
+                'D;A;;;11;;10.00;;;8;',
+            ])
+        return
+
 
 class TestTroughLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):

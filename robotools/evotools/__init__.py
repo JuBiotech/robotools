@@ -71,7 +71,7 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
     # optional parameters
     if not isinstance(liquid_class, str) or len(liquid_class) > 32 or ';' in liquid_class:
         raise ValueError(f'Invalid liquid_class: {liquid_class}')
-    if isinstance(tip, int):
+    if isinstance(tip, int) and not isinstance(tip, Tip):
         if tip == 1:
             tip = Tip.T1
         elif tip == 2:
