@@ -315,7 +315,7 @@ class Worklist(list):
             self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None, **kwargs):
+    def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None, wash_scheme=1, **kwargs):
         """Transfer operation between two labwares.
 
         Args:
@@ -325,6 +325,7 @@ class Worklist(list):
             destination_wells (str or iterable): list of destination well ids
             volumes (float or iterable): volume(s) to transfer
             label (str): label of the operation to log into labware history
+            wash_scheme (int): wash scheme to apply after every every
             kwargs: additional keyword arguments to pass to aspirate and dispense
         """
         # reformat the convenience parameters
@@ -347,6 +348,8 @@ class Worklist(list):
         for ws, wd, v in zip(source_wells, destination_wells, volumes):
             self.aspirate(source, ws, v, label=None, **kwargs)
             self.dispense(destination, wd, v, label=None, **kwargs)
+            if wash_scheme is not None:
+                self.wash(scheme=wash_scheme)
 
         # condense the labware logs into one operation
         # this is done after creating the worklist to facilitate debugging

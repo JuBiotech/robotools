@@ -456,7 +456,6 @@ class TestWorklist(unittest.TestCase):
         return
 
 
-
 class TestStandardLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
@@ -555,6 +554,44 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(wl, [
                 'A;A;;;1;;20.00;;;;',
                 'D;B;;;1;;20.00;;;;',
+                'W1;',
+                'A;A;;;2;;15.30;;;;',
+                'D;B;;;2;;15.30;;;;',
+                'W1;',
+                'A;A;;;3;;30.00;;;;',
+                'D;B;;;3;;30.00;;;;',
+                'W1;',
+                'A;A;;;4;;17.53;;;;',
+                'D;B;;;4;;17.53;;;;',
+                'W1;',
+            ])            
+            self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
+                [180,170,200,200],
+                [200-15.3,200-17.53,200,200],
+            ])))
+            self.assertTrue(numpy.array_equal(B.volumes, numpy.array([
+                [20,30,0,0],
+                [15.3,17.53,0,0],
+            ])))
+            self.assertEqual(len(A.history), 2)
+            self.assertEqual(len(B.history), 2)
+        return
+
+    def test_transfer_2d_volumes_no_wash(self):
+        A = liquidhandling.Labware('A', 2, 4, 50, 250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 2, 4, 50, 250)
+        with evotools.Worklist() as wl:
+            wl.transfer(
+                A, A.wells[:,:2],
+                B, B.wells[:,:2], volumes=numpy.array([
+                    [20,30],
+                    [15.3,17.53],
+                ]),
+                wash_scheme=None
+            )
+            self.assertEqual(wl, [
+                'A;A;;;1;;20.00;;;;',
+                'D;B;;;1;;20.00;;;;',
                 'A;A;;;2;;15.30;;;;',
                 'D;B;;;2;;15.30;;;;',
                 'A;A;;;3;;30.00;;;;',
@@ -605,13 +642,17 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 'C;first transfer',
                 'A;A;;;1;;50.00;;;;',
                 'D;B;;;1;;50.00;;;;',
+                'W1;',
                 'A;A;;;2;;50.00;;;;',
                 'D;B;;;2;;50.00;;;;',
+                'W1;',
                 'C;second transfer',
                 'A;A;;;7;;50.00;;;;',
                 'D;B;;;10;;50.00;;;;',
+                'W1;',
                 'A;A;;;11;;50.00;;;;',
                 'D;B;;;11;;50.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
@@ -637,16 +678,22 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;50.00;;;;',
                 'D;B;;;1;;50.00;;;;',
+                'W1;',
                 'A;A;;;2;;50.00;;;;',
                 'D;B;;;2;;50.00;;;;',
+                'W1;',
                 'A;A;;;3;;50.00;;;;',
                 'D;B;;;3;;50.00;;;;',
+                'W1;',
                 'A;A;;;4;;50.00;;;;',
                 'D;B;;;4;;50.00;;;;',
+                'W1;',
                 'A;A;;;5;;50.00;;;;',
                 'D;B;;;5;;50.00;;;;',
+                'W1;',
                 'A;A;;;6;;50.00;;;;',
                 'D;B;;;6;;50.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 2)
             self.assertEqual(len(B.history), 2)
@@ -682,17 +729,23 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;5;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;8;;25.00;;;;',
+                'W1;',
                 # second transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;5;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;8;;25.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
@@ -717,10 +770,13 @@ class TestStandardLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;4;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;7;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 2)
             self.assertEqual(len(B.history), 2)
@@ -832,13 +888,17 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;50.00;;;;',
                 'D;B;;;1;;50.00;;;;',
+                'W1;',
                 'A;A;;;2;;50.00;;;;',
                 'D;B;;;2;;50.00;;;;',
+                'W1;',
                 # second transfer
                 'A;A;;;7;;50.00;;;;',
                 'D;B;;;10;;50.00;;;;',
+                'W1;',
                 'A;A;;;11;;75.00;;;;',
                 'D;B;;;11;;75.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
@@ -861,10 +921,13 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;5;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;8;;25.00;;;;',
+                'W1;',
             ])
 
             worklist.transfer(A, ['A01'], B, ['B01', 'B02', 'B03'], [25,30,35])
@@ -880,17 +943,23 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;5;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;8;;25.00;;;;',
+                'W1;',
                 # second transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;1;;30.00;;;;',
                 'D;B;;;5;;30.00;;;;',
+                'W1;',
                 'A;A;;;1;;35.00;;;;',
                 'D;B;;;8;;35.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
@@ -913,10 +982,13 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;4;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;7;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
             ])
 
             worklist.transfer(B, B.wells[:,2], A, A.wells[:,3], [50,60,70])
@@ -932,17 +1004,23 @@ class TestTroughLabwareWorklist(unittest.TestCase):
                 # first transfer
                 'A;A;;;1;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;4;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 'A;A;;;7;;25.00;;;;',
                 'D;B;;;2;;25.00;;;;',
+                'W1;',
                 # second transfer
                 'A;B;;;7;;50.00;;;;',
                 'D;A;;;10;;50.00;;;;',
+                'W1;',
                 'A;B;;;8;;60.00;;;;',
                 'D;A;;;11;;60.00;;;;',
+                'W1;',
                 'A;B;;;9;;70.00;;;;',
                 'D;A;;;12;;70.00;;;;',
+                'W1;',
             ])
             self.assertEqual(len(A.history), 3)
             self.assertEqual(len(B.history), 3)
