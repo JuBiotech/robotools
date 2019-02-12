@@ -10,7 +10,7 @@ from robotools import janustools
 
 class TestStandardLabware(unittest.TestCase):
     def test_init(self):
-        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250, initial_volumes=30)
+        plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=30)
         self.assertEqual(plate.name, 'TestPlate')
         self.assertEqual(plate.row_ids, tuple('AB'))
         self.assertEqual(plate.column_ids, [1,2,3])
@@ -35,13 +35,13 @@ class TestStandardLabware(unittest.TestCase):
 
     def test_invalid_init(self):
         with self.assertRaises(ValueError):
-            _ = liquidhandling.Labware('A', 0, 3, 10, 250)
+            _ = liquidhandling.Labware('A', 0, 3, min_volume=10, max_volume=250)
         with self.assertRaises(ValueError):
-            _ = liquidhandling.Labware('A', 3, 0, 10, 250)
+            _ = liquidhandling.Labware('A', 3, 0, min_volume=10, max_volume=250)
         with self.assertRaises(ValueError):
-            _ = liquidhandling.Labware('A', 3, 4, 10, 250, virtual_rows=2)
+            _ = liquidhandling.Labware('A', 3, 4, min_volume=10, max_volume=250, virtual_rows=2)
         with self.assertRaises(ValueError):
-            _ = liquidhandling.Labware('A', 1, 4, 10, 250, virtual_rows=0)
+            _ = liquidhandling.Labware('A', 1, 4, min_volume=10, max_volume=250, virtual_rows=0)
         return
 
     def test_volume_limits(self):
@@ -57,14 +57,14 @@ class TestStandardLabware(unittest.TestCase):
         return
 
     def test_initial_volumes(self):
-        plate = liquidhandling.Labware('TestPlate', 1, 3, 50, 250, initial_volumes=[20,30,40])
+        plate = liquidhandling.Labware('TestPlate', 1, 3, min_volume=50, max_volume=250, initial_volumes=[20,30,40])
         self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [20,30,40],
         ])))
         return
 
     def test_logging(self):
-        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250)
+        plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250)
         plate.add(plate.wells, 25)
         plate.add(plate.wells, 25)
         plate.add(plate.wells, 25)
@@ -73,7 +73,7 @@ class TestStandardLabware(unittest.TestCase):
         return
 
     def test_log_condensation_first(self):
-        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250)
+        plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250)
         plate.add(plate.wells, 25, label='A')
         plate.add(plate.wells, 25, label='B')
         plate.add(plate.wells, 25, label='C')
@@ -109,7 +109,7 @@ class TestStandardLabware(unittest.TestCase):
         return
 
     def test_add_valid(self):
-        plate = liquidhandling.Labware('TestPlate', 4, 6, 100, 250)
+        plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         plate.add(wells, 150)
         plate.add(wells, 3.5)
@@ -119,14 +119,14 @@ class TestStandardLabware(unittest.TestCase):
         return
     
     def test_add_too_much(self):
-        plate = liquidhandling.Labware('TestPlate', 4, 6, 100, 250)
+        plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         with self.assertRaises(liquidhandling.VolumeOverflowError):
             plate.add(wells, 500)
         return
 
     def test_remove_valid(self):
-        plate = liquidhandling.Labware('TestPlate', 2, 3, 50, 250, initial_volumes=200)
+        plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=200)
         wells = ['A01', 'A02', 'B03']
         plate.remove(wells, 50)
         self.assertEqual(len(plate.history), 2)
@@ -137,7 +137,7 @@ class TestStandardLabware(unittest.TestCase):
         return
     
     def test_remove_too_much(self):
-        plate = liquidhandling.Labware('TestPlate', 4, 6, 100, 250)
+        plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
             plate.remove(wells, 500)
@@ -147,7 +147,7 @@ class TestStandardLabware(unittest.TestCase):
 
 class TestTroughLabware(unittest.TestCase):
     def test_init_trough(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 1000, 50*1000, initial_volumes=30*1000, virtual_rows=5)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=50*1000, initial_volumes=30*1000, virtual_rows=5)
         self.assertEqual(trough.name, 'TestTrough')
         self.assertEqual(trough.row_ids, tuple('ABCDE'))
         self.assertEqual(trough.column_ids, [1,2,3,4])
@@ -174,14 +174,14 @@ class TestTroughLabware(unittest.TestCase):
         return
 
     def test_initial_volumes(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 1000, 50*1000, initial_volumes=[30*1000, 20*1000, 20*1000, 20*1000], virtual_rows=5)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=50*1000, initial_volumes=[30*1000, 20*1000, 20*1000, 20*1000], virtual_rows=5)
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
             [30*1000, 20*1000, 20*1000, 20*1000],
         ])))
         return
 
     def test_trough_add_valid(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 100, 250, virtual_rows=3)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=100, max_volume=250, virtual_rows=3)
         # adding into the first column (which is actually one well)
         trough.add(['A01', 'B01'], 50)
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
@@ -196,14 +196,14 @@ class TestTroughLabware(unittest.TestCase):
         return
 
     def test_trough_add_too_much(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 100, 1000, virtual_rows=3)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=100, max_volume=1000, virtual_rows=3)
         # adding into the first column (which is actually one well)
         with self.assertRaises(liquidhandling.VolumeOverflowError):
             trough.add(['A01', 'B01'], 600)
         return
 
     def test_trough_remove_valid(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 1000, 30000, virtual_rows=3, initial_volumes=3000)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=30000, virtual_rows=3, initial_volumes=3000)
         # adding into the first column (which is actually one well)
         trough.remove(['A01', 'B01'], 50)
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
@@ -218,7 +218,7 @@ class TestTroughLabware(unittest.TestCase):
         return
 
     def test_trough_remove_too_much(self):
-        trough = liquidhandling.Labware('TestTrough', 1, 4, 1000, 30000, virtual_rows=3, initial_volumes=3000)
+        trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=30*1000, virtual_rows=3, initial_volumes=3000)
         # adding into the first column (which is actually one well)
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
             trough.remove(['A01', 'B01'], 2000)
@@ -541,8 +541,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
 
     def test_transfer_2d_volumes(self):
-        A = liquidhandling.Labware('A', 2, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 2, 4, 50, 250)
+        A = liquidhandling.Labware('A', 2, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 2, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as wl:
             wl.transfer(
                 A, A.wells[:,:2],
@@ -578,8 +578,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
 
     def test_transfer_2d_volumes_no_wash(self):
-        A = liquidhandling.Labware('A', 2, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 2, 4, 50, 250)
+        A = liquidhandling.Labware('A', 2, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 2, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as wl:
             wl.transfer(
                 A, A.wells[:,:2],
@@ -612,8 +612,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
 
     def test_transfer_many_many(self):
-        A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         wells = ['A01', 'B01']
         with evotools.Worklist() as worklist:
             worklist.transfer(A, wells, B, wells, 50, label='first transfer')
@@ -659,8 +659,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
 
     def test_transfer_many_many_2d(self):
-        A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         wells = A.wells[:,:2]
         with evotools.Worklist() as worklist:
             worklist.transfer(A, wells, B, wells, 50)
@@ -700,8 +700,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
     
     def test_transfer_one_many(self):
-        A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, 'A01', B, ['B01', 'B02', 'B03'], 25)
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
@@ -752,8 +752,8 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
     
     def test_transfer_many_one(self):
-        A = liquidhandling.Labware('A', 3, 4, 50, 250, initial_volumes=200)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, ['A01', 'A02', 'A03'], B, 'B01', 25)
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
@@ -783,7 +783,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         return
 
     def test_tip_selection(self):
-        A = liquidhandling.Labware('A', 3, 4, 10, 250, initial_volumes=100)
+        A = liquidhandling.Labware('A', 3, 4, min_volume=10, max_volume=250, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.aspirate(A, 'A01', 10, tip=1)
             wl.aspirate(A, 'A01', 10, tip=2)
@@ -863,8 +863,8 @@ class TestTroughLabwareWorklist(unittest.TestCase):
         return
 
     def test_transfer_many_many(self):
-        A = liquidhandling.Labware('A', 1, 4, 50, 2500, initial_volumes=2000, virtual_rows=3)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 1, 4, min_volume=50, max_volume=2500, initial_volumes=2000, virtual_rows=3)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, ['A01', 'B01'], B, ['A01', 'B01'], 50)
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
@@ -905,8 +905,8 @@ class TestTroughLabwareWorklist(unittest.TestCase):
         return
     
     def test_transfer_one_many(self):
-        A = liquidhandling.Labware('A', 1, 4, 50, 2500, initial_volumes=2000, virtual_rows=3)
-        B = liquidhandling.Labware('B', 3, 4, 50, 250)
+        A = liquidhandling.Labware('A', 1, 4, min_volume=50, max_volume=2500, initial_volumes=2000, virtual_rows=3)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, 'A01', B, ['B01', 'B02', 'B03'], 25)
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([
@@ -966,8 +966,8 @@ class TestTroughLabwareWorklist(unittest.TestCase):
         return
     
     def test_transfer_many_one(self):
-        A = liquidhandling.Labware('A', 1, 4, 50, 2500, initial_volumes=[2000,1500,1000,500], virtual_rows=3)
-        B = liquidhandling.Labware('B', 3, 4, 10, 250, initial_volumes=100)
+        A = liquidhandling.Labware('A', 1, 4, min_volume=50, max_volume=2500, initial_volumes=[2000,1500,1000,500], virtual_rows=3)
+        B = liquidhandling.Labware('B', 3, 4, min_volume=10, max_volume=250, initial_volumes=100)
         with evotools.Worklist() as worklist:
             worklist.transfer(A, ['A01', 'A02', 'A03'], B, 'B01', 25)
             self.assertTrue(numpy.array_equal(A.volumes, numpy.array([

@@ -57,7 +57,7 @@ class Labware(object):
     def n_columns(self) -> int:
         return len(self.column_ids)
     
-    def __init__(self, name:str, rows:int, columns:int, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
+    def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
             raise ValueError(f'Invalid rows: {rows}')

@@ -215,7 +215,7 @@ class Worklist(list):
         self.append(f'S;{diti_index}')
         return
     
-    def aspirate_well(self, rack_label:str, position:int, volume:float,
+    def aspirate_well(self, rack_label:str, position:int, volume:float, *,
             liquid_class:str='', tip:Tip=Tip.Any,
             rack_id:str='', tube_id:str='',
             rack_type:str='', forced_rack_type:str=''):
@@ -243,7 +243,7 @@ class Worklist(list):
         )
         return
     
-    def dispense_well(self, rack_label:str, position:int, volume:float,
+    def dispense_well(self, rack_label:str, position:int, volume:float, *,
             liquid_class:str='', tip:Tip=Tip.Any,
             rack_id:str='', tube_id:str='',
             rack_type:str='', forced_rack_type:str=''):
@@ -275,7 +275,7 @@ class Worklist(list):
     def _reagent_distribution(self):
         raise NotImplementedError()
     
-    def aspirate(self, labware:liquidhandling.Labware, wells:list, volumes:float, label=None, **kwargs):
+    def aspirate(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
         """Performs aspiration from the provided labware.
 
         Args:
@@ -295,7 +295,7 @@ class Worklist(list):
             self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
-    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, label=None, **kwargs):
+    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
         """Performs dispensing from the provided labware.
 
         Args:
@@ -315,7 +315,7 @@ class Worklist(list):
             self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source, source_wells, destination, destination_wells, volumes, label=None, wash_scheme=1, **kwargs):
+    def transfer(self, source, source_wells, destination, destination_wells, volumes, *, label=None, wash_scheme=1, **kwargs):
         """Transfer operation between two labwares.
 
         Args:
