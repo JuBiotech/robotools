@@ -340,14 +340,14 @@ class Worklist(list):
         source_wells = numpy.array(source_wells).flatten('F')
         destination_wells = numpy.array(destination_wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
-        n_vol = len(volumes)
+        nmax = max((len(source_wells), len(destination_wells), len(volumes)))
         
         if len(source_wells) == 1:
-            source_wells = numpy.repeat(source_wells, len(destination_wells))
+            source_wells = numpy.repeat(source_wells, nmax)
         if len(destination_wells) == 1:
-            destination_wells = numpy.repeat(destination_wells, len(source_wells))
+            destination_wells = numpy.repeat(destination_wells, nmax)
         if len(volumes) == 1:
-            volumes = numpy.repeat(volumes, len(destination_wells))
+            volumes = numpy.repeat(volumes, nmax)
         lengths = (len(source_wells), len(destination_wells), len(volumes))
         assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
         

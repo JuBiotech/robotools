@@ -1036,7 +1036,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         self.assertEqual([667, 667, 666], evotools._split_volume(2000, max_volume=950))
         return
 
-    def tets_worklist_constructor(self):
+    def test_worklist_constructor(self):
         with self.assertRaises(ValueError):
             with evotools.Worklist(max_volume=None) as wl:
                 pass
