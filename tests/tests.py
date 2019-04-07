@@ -455,7 +455,6 @@ class TestWorklist(unittest.TestCase):
                 wl._reagent_distribution()
         return
 
-
 class TestStandardLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
@@ -536,6 +535,30 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertTrue(numpy.array_equal(destination.volumes, [
                 [20,30,0],
                 [15.3,17.53,0]
+            ]))
+            self.assertEqual(len(destination.history), 2)
+        return
+
+    def test_skip_zero_volumes(self):
+        source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
+        destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
+        with evotools.Worklist() as wl:
+            wl.aspirate(source, ['A03', 'B03', 'C03'], [10,0,30.5])
+            wl.dispense(destination, ['B01', 'B02', 'B03'], [10,0,30.5])
+            self.assertEqual(wl, [
+                'A;SourceLW;;;7;;10.00;;;;',
+                'A;SourceLW;;;9;;30.50;;;;',
+                'D;DestinationLW;;;2;;10.00;;;;',
+                'D;DestinationLW;;;6;;30.50;;;;',
+            ])
+            self.assertTrue(numpy.array_equal(source.volumes, [
+                [200,200,190],
+                [200,200,200],
+                [200,200,169.5],
+            ]))
+            self.assertTrue(numpy.array_equal(destination.volumes, [
+                [0,0,0],
+                [10,0,30.5],
             ]))
             self.assertEqual(len(destination.history), 2)
         return

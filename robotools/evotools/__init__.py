@@ -300,6 +300,7 @@ class Worklist(list):
         labware.remove(wells, volumes, label)
         self.comment(label)
         for well, volume in zip(wells, volumes):
+            if volume > 0:
             self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
@@ -320,6 +321,7 @@ class Worklist(list):
         labware.add(wells, volumes, label)
         self.comment(label)
         for well, volume in zip(wells, volumes):
+            if volume > 0:
             self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
