@@ -33,7 +33,8 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
         liquid_class:str='',
         tip:Tip=Tip.Any,
         rack_id:str='', tube_id:str='',
-        rack_type:str='', forced_rack_type:str=''):
+        rack_type:str='', forced_rack_type:str='',
+        max_volume:int=None):
     """Validates and prepares aspirate/dispense parameters.
 
     Args:
@@ -47,6 +48,7 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
         rack_type (str): (optional) configuration name of the labware (max 32 characters).
             An error is raised if it missmatches with the underlying worktable.
         forced_rack_type (str): (optional) overrides rack_type from worktable
+        max_volume (int): (optional) maximum allowed volume
     """
     # required parameters
     if rack_label is None:
@@ -65,8 +67,10 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
         volume = float(volume)
     except:
         raise ValueError(f'Invalid volume: {volume}')
-    if  volume < 0 or volume > 7158278 or numpy.isnan(volume):
+    if volume < 0 or volume > 7158278 or numpy.isnan(volume):
         raise ValueError(f'Invalid volume: {volume}')
+    if max_volume is not None and volume > max_volume:
+        raise InvalidOperationError(f'Volume of {volume} exceeds max_volume.')
 
     # optional parameters
     if not isinstance(liquid_class, str) or len(liquid_class) > 32 or ';' in liquid_class:
@@ -104,13 +108,17 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
 
 
 class Worklist(list):
-    def __init__(self, filepath:str=None):
+    def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True):
         """Creates a worklist writer.
 
         Args:
             filepath (str): optional filename/filepath to write when the context is exited (must include a .gwl extension)
+            max_volume (int): maximum aspiration volume in µl
         """
         self._filepath = filepath
+        if max_volume is None:
+            raise ValueError('The `max_volume` parameter is required.')
+        self.max_volume = max_volume
         return super().__init__()
     
     def __enter__(self):
@@ -236,7 +244,7 @@ class Worklist(list):
             forced_rack_type (str): (optional) overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args)
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
         tip_type = ''
         self.append(
             f'A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
@@ -265,7 +273,7 @@ class Worklist(list):
             forced_rack_type (str): (optional) overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args)
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
         tip_type = ''
         self.append(
             f'D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'

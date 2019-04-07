@@ -1026,5 +1026,51 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 3)
         return
 
+
+class TestLargeVolumeHandling(unittest.TestCase):
+    def test_split_volume_helper(self):
+        self.assertEqual([], evotools._split_volume(0, max_volume=950))
+        self.assertEqual([550.3], evotools._split_volume(550.3, max_volume=950))
+        self.assertEqual([500, 500], evotools._split_volume(1000, max_volume=950))
+        self.assertEqual([500, 499], evotools._split_volume(999, max_volume=950))
+        self.assertEqual([667, 667, 666], evotools._split_volume(2000, max_volume=950))
+        return
+
+    def tets_worklist_constructor(self):
+        with self.assertRaises(ValueError):
+            with evotools.Worklist(max_volume=None) as wl:
+                pass
+        with evotools.Worklist(max_volume=800, auto_split=True) as wl:
+            self.assertEqual(wl.max_volume, 800)
+            self.assertEqual(wl.auto_split, True)
+        with evotools.Worklist(max_volume=800, auto_split=False) as wl:
+            self.assertEqual(wl.max_volume, 800)
+            self.assertEqual(wl.auto_split, False)
+        return
+
+    def test_max_volume_checking(self):
+        source = liquidhandling.Labware('WaterTrough', rows=1, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000, virtual_rows=3)
+        destination = liquidhandling.Labware('WaterTrough', rows=1, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000, virtual_rows=3)
+        with evotools.Worklist(max_volume=900, auto_split=False) as wl:
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.aspirate_well('WaterTrough', 1, 1000)
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.dispense_well('WaterTrough', 1, 1000)
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)                
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.dispense(source, ['A01', 'A02', 'C02'], 1000)
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
+        
+        source = liquidhandling.Labware('WaterTrough', rows=1, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000, virtual_rows=3)
+        destination = liquidhandling.Labware('WaterTrough', rows=1, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000, virtual_rows=3)
+        with evotools.Worklist(max_volume=1200) as wl:
+            wl.aspirate_well('WaterTrough', 1, 1000)
+            wl.dispense_well('WaterTrough', 1, 1000)
+            wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)                
+            wl.dispense(source, ['A01', 'A02', 'C02'], 1000)
+            wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
+        return
 if __name__ == '__main__':
     unittest.main()
