@@ -1051,12 +1051,12 @@ class TestTroughLabwareWorklist(unittest.TestCase):
 
 
 class TestLargeVolumeHandling(unittest.TestCase):
-    def test_split_volume_helper(self):
-        self.assertEqual([], evotools._split_volume(0, max_volume=950))
-        self.assertEqual([550.3], evotools._split_volume(550.3, max_volume=950))
-        self.assertEqual([500, 500], evotools._split_volume(1000, max_volume=950))
-        self.assertEqual([500, 499], evotools._split_volume(999, max_volume=950))
-        self.assertEqual([667, 667, 666], evotools._split_volume(2000, max_volume=950))
+    def test_partition_volume_helper(self):
+        self.assertEqual([], evotools._partition_volume(0, max_volume=950))
+        self.assertEqual([550.3], evotools._partition_volume(550.3, max_volume=950))
+        self.assertEqual([500, 500], evotools._partition_volume(1000, max_volume=950))
+        self.assertEqual([500, 499], evotools._partition_volume(999, max_volume=950))
+        self.assertEqual([667, 667, 666], evotools._partition_volume(2000, max_volume=950))
         return
 
     def test_worklist_constructor(self):
@@ -1095,5 +1095,166 @@ class TestLargeVolumeHandling(unittest.TestCase):
             wl.dispense(source, ['A01', 'A02', 'C02'], 1000)
             wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
         return
+
+    def test_partition_by_columns(self):
+        column_groups = evotools._partition_by_column(
+            ['A01', 'B01', 'A03', 'B03', 'C02'],
+            ['A01', 'B01', 'C01', 'D01', 'E01'],
+            [2500, 3500, 1000, 500, 2000],
+        )
+        self.assertEqual(len(column_groups), 3)
+        self.assertEqual(column_groups[0], (
+            ['A01', 'B01'],
+            ['A01', 'B01'],
+            [2500, 3500],
+        ))
+        self.assertEqual(column_groups[1], (
+            ['C02'],
+            ['E01'],
+            [2000],
+        ))
+        self.assertEqual(column_groups[2], (
+            ['A03', 'B03'],
+            ['C01', 'D01'],
+            [1000, 500],
+        ))
+        return
+
+    def test_single_split(self):
+        src = liquidhandling.Labware('A', 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
+        dst = liquidhandling.Labware('B', 3, 2, min_volume=1000, max_volume=25000)
+        with evotools.Worklist(auto_split=True) as wl:
+            wl.transfer(
+                src, 'A01',
+                dst, 'A01',
+                2000
+            )
+            self.assertEqual(wl, [
+                'A;A;;;1;;667.00;;;;',
+                'D;B;;;1;;667.00;;;;',
+                'W1;',
+                        # no breaks when pipetting single wells
+                'A;A;;;1;;667.00;;;;',
+                'D;B;;;1;;667.00;;;;',
+                'W1;',
+                        # no breaks when pipetting single wells
+                'A;A;;;1;;666.00;;;;',
+                'D;B;;;1;;666.00;;;;',
+                'W1;',
+                'B;',   # always break after partitioning
+            ])
+        self.assertTrue(numpy.array_equal(src.volumes, [
+            [12000-2000, 12000],
+            [12000, 12000],
+            [12000, 12000],
+        ]))
+        self.assertTrue(numpy.array_equal(dst.volumes, [
+            [2000, 0],
+            [0, 0],
+            [0, 0],
+        ]))
+        return
+
+    def test_column_split(self):
+        src = liquidhandling.Labware('A', 4, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
+        dst = liquidhandling.Labware('B', 4, 2, min_volume=1000, max_volume=25000)
+        with evotools.Worklist(auto_split=True) as wl:
+            wl.transfer(
+                src, ['A01', 'B01', 'D01', 'C01'],
+                dst, ['A01', 'B01', 'D01', 'C01'],
+                [1500, 250, 0, 1200]
+            )
+            self.assertEqual(wl, [
+                'A;A;;;1;;750.00;;;;',
+                'D;B;;;1;;750.00;;;;',
+                'W1;',
+                'A;A;;;2;;250.00;;;;',
+                'D;B;;;2;;250.00;;;;',
+                'W1;',
+                        # D01 is ignored because the volume is 0
+                'A;A;;;3;;600.00;;;;',
+                'D;B;;;3;;600.00;;;;',
+                'W1;',
+                'B;',   # within-column break
+                'A;A;;;1;;750.00;;;;',
+                'D;B;;;1;;750.00;;;;',
+                'W1;',
+                'A;A;;;3;;600.00;;;;',
+                'D;B;;;3;;600.00;;;;',
+                'W1;',
+                'B;',   # tailing break after partitioning
+            ])
+        self.assertTrue(numpy.array_equal(src.volumes, [
+            [12000-1500, 12000],
+            [12000-250, 12000],
+            [12000-1200, 12000],
+            [12000, 12000],
+        ]))
+        self.assertTrue(numpy.array_equal(dst.volumes, [
+            [1500, 0],
+            [250, 0],
+            [1200, 0],
+            [0, 0],
+        ]))
+        return
+
+    def test_block_split(self):
+        src = liquidhandling.Labware('A', 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
+        dst = liquidhandling.Labware('B', 3, 2, min_volume=1000, max_volume=25000)
+        with evotools.Worklist(auto_split=True) as wl:
+            wl.transfer(
+                     # A01, B01, A02, B02
+                src, src.wells[:2,:],
+                dst, ['A01', 'B01', 'C01', 'A02'],
+                [1500, 250, 1200, 3000]
+            )
+            self.assertEqual(wl, [
+                'A;A;;;1;;750.00;;;;',
+                'D;B;;;1;;750.00;;;;',
+                'W1;',
+                'A;A;;;2;;250.00;;;;',
+                'D;B;;;2;;250.00;;;;',
+                'W1;',
+                'B;',   # within-column 1 break
+                'A;A;;;1;;750.00;;;;',
+                'D;B;;;1;;750.00;;;;',
+                'W1;',
+                'B;',   # between-column 1/2 break
+                'A;A;;;4;;600.00;;;;',
+                'D;B;;;3;;600.00;;;;',
+                'W1;',
+                'A;A;;;5;;750.00;;;;',
+                'D;B;;;4;;750.00;;;;',
+                'W1;',
+                'B;',   # within-column 2 break
+                'A;A;;;4;;600.00;;;;',
+                'D;B;;;3;;600.00;;;;',
+                'W1;',
+                'A;A;;;5;;750.00;;;;',
+                'D;B;;;4;;750.00;;;;',
+                'W1;',
+                'B;',   # within-column 2 break
+                'A;A;;;5;;750.00;;;;',
+                'D;B;;;4;;750.00;;;;',
+                'W1;',
+                        # no break because only one well is accessed in this partition
+                'A;A;;;5;;750.00;;;;',
+                'D;B;;;4;;750.00;;;;',
+                'W1;',
+                'B;',   # tailing break after partitioning
+            ])
+        self.assertTrue(numpy.array_equal(src.volumes, [
+            [12000-1500, 12000-1200],
+            [12000-250, 12000-3000],
+            [12000, 12000],
+        ]))
+        self.assertTrue(numpy.array_equal(dst.volumes, [
+            [1500, 3000],
+            [250, 0],
+            [1200, 0],
+        ]))
+        return
+
+
 if __name__ == '__main__':
     unittest.main()

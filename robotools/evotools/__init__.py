@@ -1,6 +1,8 @@
+import collections
 import enum
-import numpy
 import logging
+import math
+import numpy
 import os
 
 from .. import liquidhandling
@@ -107,6 +109,48 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
+def _partition_volume(volume:float, *, max_volume:int):
+    """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
+
+    Args:
+        volume (float): a volume to partition
+        max_volume (int): maximum volume of a pipetting step
+
+    Returns:
+        volumes (list): partitioned volumes
+    """
+    if volume == 0:
+        return []
+    if volume < max_volume:
+        return [volume]
+    isteps = math.ceil(volume / max_volume)
+    step_volume = math.ceil(volume / isteps)
+    volumes = [step_volume] * (isteps - 1)
+    volumes.append(volume - numpy.sum(volumes))
+    return volumes
+
+
+def _partition_by_column(sources, destinations, volumes):
+    """Partitions sources/destinations/volumes by the source column.
+
+    Returns:
+        list of (sources, destinations, volumnes)
+    """
+    column_groups = collections.defaultdict(lambda: ([], [], []))
+    for s, d, v in zip(sources, destinations, volumes):
+        # group by source columns
+        group = s[1:]
+        column_groups[group][0].append(s)
+        column_groups[group][1].append(d)
+        column_groups[group][2].append(v)
+
+    column_groups = [
+        column_groups[col]
+        for col in sorted(column_groups.keys())
+    ]
+    return column_groups
+
+
 class Worklist(list):
     def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True):
         """Creates a worklist writer.
@@ -114,11 +158,14 @@ class Worklist(list):
         Args:
             filepath (str): optional filename/filepath to write when the context is exited (must include a .gwl extension)
             max_volume (int): maximum aspiration volume in µl
+            auto_split (bool): If True, large volumes in transfer operations are automatically splitted.
+                If set to False, InvalidOperationError is raised when a pipetting volume exceeds max_volume.
         """
         self._filepath = filepath
         if max_volume is None:
             raise ValueError('The `max_volume` parameter is required.')
         self.max_volume = max_volume
+        self.auto_split = auto_split
         return super().__init__()
     
     def __enter__(self):
@@ -301,7 +348,7 @@ class Worklist(list):
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
-            self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
+                self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
     def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
@@ -322,7 +369,7 @@ class Worklist(list):
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
-            self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
+                self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
     def transfer(self, source, source_wells, destination, destination_wells, volumes, *, label=None, wash_scheme=1, **kwargs):
@@ -355,16 +402,41 @@ class Worklist(list):
         
         # the label applies to the entire transfer operation and is not logged at individual aspirate/dispense steps
         self.comment(label)
-        for ws, wd, v in zip(source_wells, destination_wells, volumes):
-            self.aspirate(source, ws, v, label=None, **kwargs)
-            self.dispense(destination, wd, v, label=None, **kwargs)
-            if wash_scheme is not None:
-                self.wash(scheme=wash_scheme)
+        nsteps = 0
+
+        for srcs, dsts, vols in _partition_by_column(source_wells, destination_wells, volumes):
+            # make vector of volumes into vector of volume-lists
+            vols = [
+                _partition_volume(float(v), max_volume=self.max_volume) if self.auto_split else [v]
+                for v in vols
+            ]
+            # transfer from this source column until all wells are done
+            npartitions = max(map(len, vols))
+            for p in range(npartitions):
+                naccessed = 0
+                # iterate the rows
+                for s, d, vs in zip(srcs, dsts, vols):
+                    # transfer the next volume-fraction for this well
+                    if len(vs) > p:
+                        v = vs[p]
+                        if v > 0:
+                            self.aspirate(source, s, v, label=None, **kwargs)
+                            self.dispense(destination, d, v, label=None, **kwargs)
+                            nsteps += 1
+                            if wash_scheme is not None:
+                                self.wash(scheme=wash_scheme)
+                            naccessed += 1
+                # LVH: if multiple wells are accessed, don't group across partitions
+                if npartitions > 1 and naccessed > 1 and not p == npartitions - 1:
+                    self.commit()
+            # LVH: don't group across columns
+            if npartitions > 1:
+                self.commit()
 
         # condense the labware logs into one operation
         # this is done after creating the worklist to facilitate debugging
-        source.condense_log(len(volumes), label=label)
-        destination.condense_log(len(volumes), label=label)
+        source.condense_log(nsteps, label=label)
+        destination.condense_log(nsteps, label=label)
         return
         
     def __repr__(self):
