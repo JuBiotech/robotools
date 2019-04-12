@@ -130,16 +130,26 @@ def _partition_volume(volume:float, *, max_volume:int):
     return volumes
 
 
-def _partition_by_column(sources, destinations, volumes):
+def _partition_by_column(sources, destinations, volumes, partition_by:str='source'):
     """Partitions sources/destinations/volumes by the source column.
+
+    Args:
+        sources: list of source well ids
+        destinations: list of destination well ids
+        volumes: list of volumes
+        partition_by (str): either 'source' or 'destination'
 
     Returns:
         list of (sources, destinations, volumnes)
     """
     column_groups = collections.defaultdict(lambda: ([], [], []))
     for s, d, v in zip(sources, destinations, volumes):
-        # group by source columns
-        group = s[1:]
+        if partition_by == 'source':
+            group = s[1:]
+        elif partition_by == 'destination':
+            group = d[1:]
+        else:
+            raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
         column_groups[group][0].append(s)
         column_groups[group][1].append(d)
         column_groups[group][2].append(v)
@@ -372,7 +382,7 @@ class Worklist(list):
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source, source_wells, destination, destination_wells, volumes, *, label=None, wash_scheme=1, **kwargs):
+    def transfer(self, source, source_wells, destination, destination_wells, volumes, *, label=None, wash_scheme=1, partition_by:str='source', **kwargs):
         """Transfer operation between two labwares.
 
         Args:
@@ -383,6 +393,7 @@ class Worklist(list):
             volumes (float or iterable): volume(s) to transfer
             label (str): label of the operation to log into labware history
             wash_scheme (int): wash scheme to apply after every every
+            partition_by (str): either 'source' (default) or 'destination'
             kwargs: additional keyword arguments to pass to aspirate and dispense
         """
         # reformat the convenience parameters
@@ -404,7 +415,7 @@ class Worklist(list):
         self.comment(label)
         nsteps = 0
 
-        for srcs, dsts, vols in _partition_by_column(source_wells, destination_wells, volumes):
+        for srcs, dsts, vols in _partition_by_column(source_wells, destination_wells, volumes, partition_by):
             # make vector of volumes into vector of volume-lists
             vols = [
                 _partition_volume(float(v), max_volume=self.max_volume) if self.auto_split else [v]
