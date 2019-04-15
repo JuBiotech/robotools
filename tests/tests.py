@@ -1096,11 +1096,12 @@ class TestLargeVolumeHandling(unittest.TestCase):
             wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
         return
 
-    def test_partition_by_columns(self):
+    def test_partition_by_columns_source(self):
         column_groups = evotools._partition_by_column(
             ['A01', 'B01', 'A03', 'B03', 'C02'],
             ['A01', 'B01', 'C01', 'D01', 'E01'],
             [2500, 3500, 1000, 500, 2000],
+            partition_by='source'
         )
         self.assertEqual(len(column_groups), 3)
         self.assertEqual(column_groups[0], (
@@ -1117,6 +1118,26 @@ class TestLargeVolumeHandling(unittest.TestCase):
             ['A03', 'B03'],
             ['C01', 'D01'],
             [1000, 500],
+        ))
+        return
+
+    def test_partition_by_columns_destination(self):
+        column_groups = evotools._partition_by_column(
+            ['A01', 'B01', 'A03', 'B03', 'C02'],
+            ['A01', 'B01', 'C02', 'D01', 'E02'],
+            [2500, 3500, 1000, 500, 2000],
+            partition_by='destination'
+        )
+        self.assertEqual(len(column_groups), 2)
+        self.assertEqual(column_groups[0], (
+            ['A01', 'B01', 'B03'],
+            ['A01', 'B01', 'D01'],
+            [2500, 3500, 500],
+        ))
+        self.assertEqual(column_groups[1], (
+            ['A03', 'C02'],
+            ['C02', 'E02'],
+            [1000, 2000],
         ))
         return
 
