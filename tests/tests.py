@@ -294,8 +294,6 @@ class TestWorklist(unittest.TestCase):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type=None)
         with self.assertRaises(ValueError):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='invalid;forced rack type')
-        with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='thisisaveryverylongforcedracktypethatexceedsthemaximumlength')
         evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='valid forced rack type')
         return
 
