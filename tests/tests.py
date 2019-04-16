@@ -266,8 +266,6 @@ class TestWorklist(unittest.TestCase):
         with self.assertRaises(ValueError):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='thisisaveryverylongliquidclassthatexceedsthemaximumlength')
-        with self.assertRaises(ValueError):
             evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='liquid;class')
         evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='valid liquid class')
         with self.assertRaises(ValueError):
