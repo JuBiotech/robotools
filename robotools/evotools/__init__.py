@@ -446,8 +446,11 @@ class Worklist(list):
 
         # condense the labware logs into one operation
         # this is done after creating the worklist to facilitate debugging
-        source.condense_log(nsteps, label=label)
-        destination.condense_log(nsteps, label=label)
+        if destination == source:
+            source.condense_log(nsteps*2, label=label)
+        else:
+            source.condense_log(nsteps, label=label)
+            destination.condense_log(nsteps, label=label)
         return
         
     def __repr__(self):

@@ -451,6 +451,7 @@ class TestWorklist(unittest.TestCase):
                 wl._reagent_distribution()
         return
 
+
 class TestStandardLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
@@ -840,6 +841,54 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             ])
         return
 
+    def test_history_condensation(self):
+        A = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
+        B = liquidhandling.Labware('B', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
+
+        with evotools.Worklist() as wl:
+            wl.transfer(
+                A, ['A01', 'B01', 'C02'],
+                B, ['A01', 'B02', 'C01'],
+                [900, 100, 900],
+                label='transfer'
+            )
+
+        self.assertEqual(len(A.history), 2)
+        self.assertEqual(A.history[-1][0], 'transfer')
+        self.assertTrue(numpy.array_equal(A.history[-1][1], numpy.array([
+            [1500-900, 1500],
+            [1500-100, 1500],
+            [1500, 1500-900],
+        ])))
+
+        self.assertEqual(len(B.history), 2)
+        self.assertEqual(B.history[-1][0], 'transfer')
+        self.assertTrue(numpy.array_equal(B.history[-1][1], numpy.array([
+            [1500+900, 1500],
+            [1500, 1500+100],
+            [1500+900, 1500],
+        ])))
+        return
+
+    def test_history_condensation_within_labware(self):
+        A = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
+
+        with evotools.Worklist() as wl:
+            wl.transfer(
+                A, ['A01', 'B01', 'C02'],
+                A, ['A01', 'B02', 'C01'],
+                [900, 100, 900],
+                label='mix'
+            )
+
+        self.assertEqual(len(A.history), 2)
+        self.assertEqual(A.history[-1][0], 'mix')
+        self.assertTrue(numpy.array_equal(A.history[-1][1], numpy.array([
+            [1500-900+900, 1500],
+            [1500-100, 1500+100],
+            [1500+900, 1500-900],
+        ])))
+        return
 
 class TestTroughLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
