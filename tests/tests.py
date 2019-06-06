@@ -843,7 +843,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
 
     def test_history_condensation(self):
         A = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
-        B = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
+        B = liquidhandling.Labware('B', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
 
         with evotools.Worklist() as wl:
             wl.transfer(
