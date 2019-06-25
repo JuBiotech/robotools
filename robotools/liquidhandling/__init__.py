@@ -56,6 +56,10 @@ class Labware(object):
     @property
     def n_columns(self) -> int:
         return len(self.column_ids)
+
+    @property
+    def is_trough(self) -> bool:
+        return self.virtual_rows != None
     
     def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
         # sanity checking
@@ -92,7 +96,8 @@ class Labware(object):
         self.column_ids = list(range(1, columns + 1))
         self.min_volume = min_volume
         self.max_volume = max_volume
-        
+        self.virtual_rows = virtual_rows
+
         # generate arrays/mappings of well ids
         self._wells = numpy.array([
             [f'{row}{column:02d}' for column in self.column_ids]

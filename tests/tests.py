@@ -12,6 +12,7 @@ class TestStandardLabware(unittest.TestCase):
     def test_init(self):
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=30)
         self.assertEqual(plate.name, 'TestPlate')
+        self.assertFalse(plate.is_trough)
         self.assertEqual(plate.row_ids, tuple('AB'))
         self.assertEqual(plate.column_ids, [1,2,3])
         self.assertEqual(plate.n_rows, 2)
@@ -149,6 +150,7 @@ class TestTroughLabware(unittest.TestCase):
     def test_init_trough(self):
         trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=50*1000, initial_volumes=30*1000, virtual_rows=5)
         self.assertEqual(trough.name, 'TestTrough')
+        self.assertTrue(trough.is_trough)
         self.assertEqual(trough.row_ids, tuple('ABCDE'))
         self.assertEqual(trough.column_ids, [1,2,3,4])
         self.assertEqual(trough.min_volume, 1000)
