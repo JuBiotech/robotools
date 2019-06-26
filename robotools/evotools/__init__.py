@@ -337,8 +337,70 @@ class Worklist(list):
         )
         return
         
-    def _reagent_distribution(self):
-        raise NotImplementedError()
+    def reagent_distribution(self,
+            src_rack_label:str, src_start:int, src_end:int,
+            dst_rack_label:str, dst_start:int, dst_end:int,
+            *, volume:float, diti_reuse:int=1, multi_disp:int=1, exclude_wells:list=None,
+            liquid_class:str='', direction:str='left_to_right',
+            src_rack_id:str='', src_rack_type:str='',
+            dst_rack_id:str='', dst_rack_type:str='',
+        ):
+        """Transfers from a Trough into many destination wells using multi-pipetting.
+
+        Args:
+            src_rack_label (str): name of the source labware on the worktable
+            src_start (int): first well to be used in the source labware
+            end_start (int): last well to be used in the source labware
+            src_rack_label (str): name of the destination labware on the worktable
+            src_start (int): first well to be used in the destination labware
+            end_start (int): last well to be used in the destination labware
+            volume (float): microliters to dispense into each destination
+            diti_reuse (int): number of allowed re-uses for disposable tips
+            multi_disp (int): maximum number of allowed multi-dispenses
+            exclude_wells (list): numbers of destination wells to skip
+            liquid_class (str): liquid class to use for the operation
+            direction (str): moving direction on the destination ('left_to_right' or 'right_to_left')
+            src_rack_id (str): (optional) barcode of the source labware
+            src_rack_type (str): (optional) configuration name of the source labware
+            dst_rack_id (str): (optional) barcode of the destination labware
+            dst_rack_type (str): (optional) configuration name of the destination labware
+        """
+        # check & convert arguments
+        if not direction in {'left_to_right', 'right_to_left'}:
+            raise ValueError(f'"direction" must be either "left_to_right" or "right_to_left"')
+        direction = 0 if direction == 'left_to_right' else 1
+        
+        if exclude_wells is None:
+            exclude_wells = []
+        if len(exclude_wells) > 0:
+            # check that all excluded wells fall in the range
+            dst_range = set(range(dst_start, dst_end + 1))
+            invalid_exclusion_wells = set(exclude_wells).difference(dst_range)
+            if len(invalid_exclusion_wells) > 0:
+                raise ValueError(f'The excluded wells {invalid_exclusion_wells} are not in the destination interval [{dst_start},{dst_end}]')
+            # condense into ;-separated text
+            exclude_wells = ';' + ';'.join(map(str, sorted(exclude_wells)))
+        else:
+            exclude_wells = ''
+
+        src_args = (src_rack_label, 1, volume, '', Tip.Any, src_rack_id, '', src_rack_type, '')
+        (src_rack_label, _, _, _, _, src_rack_id, _, src_rack_type, _) = _prepate_aspirate_dispense_parameters(*src_args, max_volume=self.max_volume)
+
+        dst_args = (dst_rack_label, 1, volume, '', Tip.Any, dst_rack_id, '', dst_rack_type, '')
+        (dst_rack_label, _, _, _, _, dst_rack_id, _, dst_rack_type, _) = _prepate_aspirate_dispense_parameters(*dst_args, max_volume=self.max_volume)
+
+        # automatically decrease multi_disp to support the large volume
+        # at the expense of more washing
+        if multi_disp * volume > self.max_volume:
+            logger.warning('Decreasing `multi_disp` to account for a large dispense volume. The number of washs will increase.')
+            multi_disp = math.floor(self.max_volume / volume)
+        
+        src_parameters = f'{src_rack_label};{src_rack_id};{src_rack_type};{src_start};{src_end}'
+        dst_parameters = f'{dst_rack_label};{dst_rack_id};{dst_rack_type};{dst_start};{dst_end}'
+        self.append(
+            f'R;{src_parameters};{dst_parameters};{volume};{liquid_class};{diti_reuse};{multi_disp};{direction}{exclude_wells}'
+        )
+        return
     
     def aspirate(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
         """Performs aspiration from the provided labware.
@@ -453,6 +515,68 @@ class Worklist(list):
             destination.condense_log(nsteps, label=label)
         return
         
+    def distribute(self, 
+            source:liquidhandling.Labware, source_column:int,
+            destination:liquidhandling.Labware, destination_wells:list,
+            *, volume:float, diti_reuse:int=1, multi_disp:int=1,
+            liquid_class:str='', label:str='',
+            direction:str='left_to_right',
+            src_rack_id:str='', src_rack_type:str='',
+            dst_rack_id:str='', dst_rack_type:str=''
+        ):
+        """Transfers from a Trough into many destination wells using multi-pipetting.
+
+        Does NOT support large volume operations.
+
+        Args:
+            source (liquidhandling.Labware): source labware with virtual_rows (a Trough)
+            destination (liquidhandling.Labware): destination labware
+            destination_wells (array-like): list or array of destination wells
+            volume (float): microliters to dispense into each destination
+            multi_disp (int): maximum number of allowed multi-dispenses
+            liquid_class (str): liquid class to use for the operation
+            label (str): label of the operation
+            diti_reuse (int): number of allowed re-uses for disposable tips
+            direction (str): moving direction on the destination ('left_to_right' or 'right_to_left')
+            src_rack_id (str): (optional) barcode of the source labware
+            src_rack_type (str): (optional) configuration name of the source labware
+            dst_rack_id (str): (optional) barcode of the destination labware
+            dst_rack_type (str): (optional) configuration name of the destination labware
+        """
+        if source.virtual_rows is None:
+            raise ValueError(f'Reagent distribution only works with Trough sources. "{source.name}" is not a Trough.')
+
+        if volume > self.max_volume:
+            raise InvalidOperationError(f'Reagent distribution only works with volumes smaller than the diluter volume ({self.max_volume} µl)')
+
+        # always use the entire first column of the source
+        src_start = 1 + source.n_rows * source_column
+        src_end = src_start + source.n_rows - 1
+
+        # transform destination wells into range + mask
+        destination_wells = numpy.array(destination_wells).flatten('F')
+        dst_wells = list(sorted([destination.positions[w] for w in destination_wells]))
+        dst_start, dst_end = dst_wells[0], dst_wells[-1]
+        excluded_dst_wells = set(range(dst_start, dst_end + 1)).difference(dst_wells)
+        
+        # hand over to low-level command implementation
+        self.comment(label)
+        self.reagent_distribution(
+            source.name, src_start, src_end,
+            destination.name, dst_start, dst_end,
+            volume=volume, diti_reuse=diti_reuse, multi_disp=multi_disp,
+            exclude_wells=excluded_dst_wells,
+            liquid_class=liquid_class, direction=direction,
+            src_rack_id=src_rack_id, src_rack_type=src_rack_type,
+            dst_rack_id=dst_rack_id, dst_rack_type=dst_rack_type,
+        )
+
+        # update volume tracking
+        n_dst = len(dst_wells)
+        source.remove(source.wells[0,source_column], volume*n_dst, label=label)
+        destination.add(destination_wells, volume, label=label)
+        return
+    
     def __repr__(self):
         return '\n'.join(self)
     

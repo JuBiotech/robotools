@@ -12,6 +12,7 @@ class TestStandardLabware(unittest.TestCase):
     def test_init(self):
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=30)
         self.assertEqual(plate.name, 'TestPlate')
+        self.assertFalse(plate.is_trough)
         self.assertEqual(plate.row_ids, tuple('AB'))
         self.assertEqual(plate.column_ids, [1,2,3])
         self.assertEqual(plate.n_rows, 2)
@@ -149,6 +150,7 @@ class TestTroughLabware(unittest.TestCase):
     def test_init_trough(self):
         trough = liquidhandling.Labware('TestTrough', 1, 4, min_volume=1000, max_volume=50*1000, initial_volumes=30*1000, virtual_rows=5)
         self.assertEqual(trough.name, 'TestTrough')
+        self.assertTrue(trough.is_trough)
         self.assertEqual(trough.row_ids, tuple('ABCDE'))
         self.assertEqual(trough.column_ids, [1,2,3,4])
         self.assertEqual(trough.min_volume, 1000)
@@ -443,12 +445,6 @@ class TestWorklist(unittest.TestCase):
         self.assertFalse(os.path.exists(tf))
         if error:
             raise error
-        return
-
-    def test_reagent_distribution(self):
-        with evotools.Worklist() as wl:
-            with self.assertRaises(NotImplementedError):
-                wl._reagent_distribution()
         return
 
 
@@ -890,6 +886,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         ])))
         return
 
+
 class TestTroughLabwareWorklist(unittest.TestCase):
     def test_aspirate(self):
         source = liquidhandling.Labware('SourceLW', rows=1, columns=3, min_volume=10, max_volume=200, initial_volumes=200, virtual_rows=3)
@@ -1321,6 +1318,165 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ]))
         return
 
+
+class TestReagentDistribution(unittest.TestCase):
+    def test_parameter_validation(self):
+        with evotools.Worklist() as wl:
+            with self.assertRaises(ValueError):
+                wl.reagent_distribution(
+                    'S1', 1, 8,
+                    'D1', 1, 20,
+                    volume=50, direction='invalid'
+                )
+            with self.assertRaises(ValueError):
+                # one excluded well not in the destination range
+                wl.reagent_distribution(
+                    'S1', 1, 8,
+                    'D1', 1, 20,
+                    volume=50, exclude_wells=[18,19,23]
+                )
+        with self.assertRaises(evotools.InvalidOperationError):
+            with evotools.Worklist(max_volume=950) as wl:
+                # dispense more than diluter volume
+                wl.reagent_distribution(
+                    'S1', 1, 8,
+                    'D1', 1, 20,
+                    volume=1200
+                )
+        return
+
+    def test_default_parameterization(self):
+        with evotools.Worklist() as wl:
+            wl.reagent_distribution(
+                'S1', 1, 20,
+                'D1', 2, 21,
+                volume=50
+            )
+        self.assertEqual(wl[0], 'R;S1;;;1;20;D1;;;2;21;50;;1;1;0')
+        return
+
+    def test_full_parameterization(self):
+        with evotools.Worklist() as wl:
+            wl.reagent_distribution(
+                'S1', 1, 20,
+                'D1', 2, 21,
+                volume=50,
+                diti_reuse=2, multi_disp=3, exclude_wells=[2,4,8],
+                liquid_class='TestLC', direction='right_to_left',
+                src_rack_type='MP3Pos', dst_rack_type='MP4Pos',
+                src_rack_id='S1234', dst_rack_id='D1234'
+            )
+        self.assertEqual(wl[0], 'R;S1;S1234;MP3Pos;1;20;D1;D1234;MP4Pos;2;21;50;TestLC;2;3;1;2;4;8')
+        return
+
+    def test_large_volume_multi_disp_adaption(self):
+        with evotools.Worklist() as wl:
+            wl.reagent_distribution(
+                'S1', 1, 8,
+                'D1', 1, 96,
+                volume=400, multi_disp=6,
+            )
+        self.assertEqual(wl[0], 'R;S1;;;1;8;D1;;;1;96;400;;1;2;0')
+        return
+
+    def test_oo_parameter_validation(self):
+        with evotools.Worklist() as wl:
+            src = liquidhandling.Labware('NotATrough', 6, 2, min_volume=20, max_volume=1000)
+            dst = liquidhandling.Labware('48deep', 6, 8, min_volume=50, max_volume=4000)
+            with self.assertRaises(ValueError):
+                wl.distribute(
+                    src, 0,
+                    dst, dst.wells[:,:3],
+                    volume=50
+                )
+        with evotools.Worklist(max_volume=950) as wl:
+            src = liquidhandling.Labware('Water', 1, 2, min_volume=20, max_volume=1000, virtual_rows=8)
+            dst = liquidhandling.Labware('48deep', 6, 8, min_volume=50, max_volume=4000)
+            with self.assertRaises(evotools.InvalidOperationError):
+                wl.distribute(
+                    src, 0,
+                    dst, dst.wells[:,:3],
+                    volume=1200
+                )
+        return
+
+    def test_oo_example_1(self):
+        src = liquidhandling.Labware('T3', 1, 1,
+            min_volume=20, max_volume=100*1000,
+            virtual_rows=8, initial_volumes=100*1000,
+        )
+        dst = liquidhandling.Labware('MTP-96-3', 8, 12, min_volume=20, max_volume=300)
+        with evotools.Worklist() as wl:
+            all_dst_wells = set(dst.wells.flatten('F'))
+            skip_wells = set('C04,C07,E09,F06,B11'.split(','))
+            dst_wells = list(all_dst_wells.difference(skip_wells))
+            wl.distribute(
+                src, 0,
+                dst, dst_wells,
+                volume=100, liquid_class='Water',
+                diti_reuse=1, multi_disp=6,
+                direction='left_to_right',
+                src_rack_type='Trough 100ml',
+                dst_rack_type='96 Well Microplate',
+                label='Test Label'
+            )
+        self.assertEqual(wl[0], 'C;Test Label')
+        self.assertEqual(wl[1], 'R;T3;;Trough 100ml;1;8;MTP-96-3;;96 Well Microplate;1;96;100;Water;1;6;0;27;46;51;69;82')
+        self.assertEqual(src.volumes[0,0], 100*1000-91*100)
+        dst_exp = numpy.ones_like(dst.volumes) * 100
+        dst_exp[dst.indices['C04']] = 0
+        dst_exp[dst.indices['C07']] = 0
+        dst_exp[dst.indices['E09']] = 0
+        dst_exp[dst.indices['F06']] = 0
+        dst_exp[dst.indices['B11']] = 0
+        self.assertTrue(numpy.array_equal(dst.volumes, dst_exp))
+        return
+
+    def test_oo_example_2(self):
+        src = liquidhandling.Labware('T2', 1, 1,
+            min_volume=20, max_volume=100*1000,
+            virtual_rows=8, initial_volumes=100*1000,
+        )
+        dst = liquidhandling.Labware('MTP-96-2', 8, 12, min_volume=20, max_volume=300)
+        with evotools.Worklist() as wl:
+            wl.distribute(
+                src, 0,
+                dst, dst.wells,
+                volume=100, liquid_class='Water',
+                diti_reuse=2, multi_disp=5,
+                direction='left_to_right',
+                src_rack_type='Trough 100ml',
+                dst_rack_type='96 Well Microplate',
+                label='Test Label'
+            )
+        self.assertEqual(wl[0], 'C;Test Label')
+        self.assertEqual(wl[1], 'R;T2;;Trough 100ml;1;8;MTP-96-2;;96 Well Microplate;1;96;100;Water;2;5;0')
+        self.assertEqual(src.volumes[0,0], 100*1000-96*100)
+        self.assertTrue(numpy.array_equal(dst.volumes, numpy.ones_like(dst.volumes) * 100))
+        return
+
+    def test_oo_block_from_right(self):
+        src = liquidhandling.Labware('Water', 1, 1,
+            min_volume=20, max_volume=100*1000,
+            virtual_rows=8, initial_volumes=100*1000,
+        )
+        dst = liquidhandling.Labware('96mtp', 8, 12, min_volume=20, max_volume=300)
+        with evotools.Worklist() as wl:
+            wl.distribute(
+                src, 0,
+                dst, dst.wells[1:4, 2:7],
+                volume=50, liquid_class='TestLC',
+                diti_reuse=10, multi_disp=5,
+                direction='right_to_left',
+                label='Test Label'
+            )
+        self.assertEqual(wl[0], 'C;Test Label')
+        skip_pos = ';21;22;23;24;25;29;30;31;32;33;37;38;39;40;41;45;46;47;48;49'
+        self.assertEqual(wl[1], f'R;Water;;;1;8;96mtp;;;18;52;50;TestLC;10;5;1{skip_pos}')
+        self.assertEqual(src.volumes[0,0], 100*1000-15*50)
+        self.assertTrue(numpy.all(dst.volumes[1:4, 2:7] == 50))
+        return
+    
 
 if __name__ == '__main__':
     unittest.main()
