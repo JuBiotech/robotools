@@ -1478,5 +1478,125 @@ class TestReagentDistribution(unittest.TestCase):
         return
     
 
+class TestCompositionTracking(unittest.TestCase):
+    def test_combine_composition(self):
+        A = dict(water=1)
+        B = dict(water=0.5, glucose=0.5)
+        expected = {
+            'water': (1*10+0.5*15) / (10+15),
+            'glucose': 0.5*15 / (10+15)
+        }
+        actual = liquidhandling._combine_composition(10, A, 15, B)
+        self.assertDictEqual(actual, expected)
+        return
+
+    def test_labware_init(self):
+        # without initial volume, there's no entry in the composition
+        A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000)
+        self.assertIsInstance(A.composition, dict)
+        self.assertEqual(len(A.composition), 0)
+        self.assertDictEqual(A.get_well_composition('A01'), {})
+
+        # by seeting an initial volume, the name becomes the name of the liquid
+        A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000, initial_volumes=100)
+        self.assertIsInstance(A.composition, dict)
+        self.assertEqual(len(A.composition), 1)
+        self.assertIn('glc', A.composition)
+        self.assertIsInstance(A.composition['glc'], numpy.ndarray)
+        numpy.testing.assert_array_equal(A.composition['glc'], numpy.ones_like(A.volumes))
+        self.assertDictEqual(A.get_well_composition('A01'), dict(glc=1))
+        return
+
+    def test_get_well_composition(self):
+        A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000)
+        A._composition = {
+            'glc': 0.25 * numpy.ones_like(A.volumes),
+            'water': 0.75 * numpy.ones_like(A.volumes),
+        }
+        self.assertDictEqual(A.get_well_composition('A01'), {
+            'glc': 0.25,
+            'water': 0.75,
+        })
+        return
+        
+    def test_labware_add(self):
+        A = liquidhandling.Labware('water', 6, 8, min_volume=0, max_volume=4000, initial_volumes=10)
+        numpy.testing.assert_array_equal(A.composition['water'], numpy.ones_like(A.volumes))
+
+        A.add(
+            wells=['A01', 'B01'],
+            volumes=[10, 20],
+            compositions=[
+                dict(glc=0.5, water=0.5),
+                dict(glc=1),
+            ]
+        )
+
+        self.assertIn('water', A.composition)
+        self.assertIn('glc', A.composition)
+        self.assertDictEqual(A.get_well_composition('A01'), dict(water=0.75, glc=0.25))
+        self.assertDictEqual(A.get_well_composition('B01'), dict(water=1/3, glc=2/3))
+        return
+
+    def test_dilution_series(self):
+        A = liquidhandling.Labware('dilutions', 1, 3, min_volume=0, max_volume=100)
+        # 100 % in 1st column
+        A.add(
+            wells='A01',
+            volumes=100,
+            compositions=[dict(glucose=1)]
+        )
+        # 10x dilution to 2nd
+        A.add(
+            wells='A02',
+            volumes=10,
+            compositions=[A.get_well_composition('A01')]
+        )
+        A.add(
+            wells='A02',
+            volumes=90,
+            compositions=[dict(water=1)]
+        )
+        # 4x dilution to 3rd
+        A.add(
+            wells='A03',
+            volumes=2.5,
+            compositions=[A.get_well_composition('A02')]
+        )
+        A.add(
+            wells='A03',
+            volumes=7.5,
+            compositions=[dict(water=1)]
+        )
+
+        numpy.testing.assert_array_equal(A.volumes, [[100, 100, 10]])
+        numpy.testing.assert_array_equal(A.composition['water'], [[0, 0.9, 0.975]])
+        numpy.testing.assert_array_equal(A.composition['glucose'], [[1, 0.1, 0.025]])
+        self.assertDictEqual(A.get_well_composition('A01'), dict(glucose=1, water=0))
+        self.assertDictEqual(A.get_well_composition('A02'), dict(glucose=0.1, water=0.9))
+        self.assertDictEqual(A.get_well_composition('A03'), dict(glucose=0.025, water=0.975))
+        return
+
+    def test_trough_composition(self):
+        T = liquidhandling.Labware('media', 1, 1, min_volume=1000, max_volume=25000, virtual_rows=8)
+        T.add(
+            wells=T.wells,
+            volumes=100,
+            compositions=[
+                dict(glucose=1)
+            ]*8
+        )
+        T.add(
+            wells=T.wells,
+            volumes=900,
+            compositions=[
+                dict(water=1)
+            ]*8
+        )
+        numpy.testing.assert_array_equal(T.composition['water'], [[0.9]])
+        numpy.testing.assert_array_equal(T.composition['glucose'], [[0.1]])
+        self.assertDictEqual(T.get_well_composition('B01'), dict(water=0.9, glucose=0.1))
+        return
+
 if __name__ == '__main__':
     unittest.main()

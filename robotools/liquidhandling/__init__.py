@@ -12,6 +12,36 @@ class VolumeUnderflowError(Exception):
     pass
 
 
+def _combine_composition(original_volume:float, original_composition:dict, added_volume:float, added_composition:dict):
+    """Computes the composition of a liquid, created by the mixing of two liquids (A and B).
+
+    Args:
+        volume_A (float): volume of liquid A
+        composition_A (dict): relative composition of liquid A
+        volume_B (float): volume of liquid B
+        composition_B (dict): relative composition of liquid B
+
+    Returns:
+        composition (dict): composition of the new liquid created by mixing the given volumes of A and B
+    """
+    # convert to volumetric fractions
+    volumetric_fractions = {
+        k : f * original_volume
+        for k, f in original_composition.items()
+    }
+    # volumetrically add incoming fractions
+    for k, f in added_composition.items():
+        if not k in volumetric_fractions:
+            volumetric_fractions[k] = 0
+        volumetric_fractions[k] += f * added_volume
+    # convert back to relative fractions
+    new_composition = {
+        k : v / (original_volume + added_volume)
+        for k, v in volumetric_fractions.items()
+    }
+    return new_composition
+
+
 class Labware(object):
     @property
     def history(self):
@@ -60,6 +90,14 @@ class Labware(object):
     @property
     def is_trough(self) -> bool:
         return self.virtual_rows != None
+
+    @property
+    def composition(self) -> dict:
+        """Relative composition of the liquids.
+        
+        This dictionary maps liquid names (keys) to arrays of relative amounts in each well.
+        """
+        return self._composition
     
     def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
         # sanity checking
@@ -130,26 +168,65 @@ class Labware(object):
         self._volumes = initial_volumes.copy().astype(float)
         self._history = [self.volumes]
         self._labels = ['initial']
+        self._composition = {
+            self.name: numpy.ones_like(self.volumes)
+        } if numpy.any(initial_volumes > 0) else {}
         return
     
-    def add(self, wells, volumes:float, label:str=None):
+    def get_well_composition(self, well:str) -> dict:
+        """Retrieves the relative composition of a well.
+        
+        Keys: liquid names
+        Values: relative amount
+        """
+        idx = self.indices[well]
+        well_comp = {
+            k : f[idx]
+            for k, f in self.composition.items()
+        }
+        return well_comp
+
+    def add(self, wells, volumes:float, label:str=None, compositions:list=None):
         """Adds volumes to wells.
 
         Args:
             wells: iterable of well ids
             volumes (int or float): scalar or iterable of volumes
             label (str): description of the operation
+            compositions (iterable): list of composition dictionaries ({ name : relative amount })
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
-        assert len(volumes) == len(wells), 'Number of volumes must number of wells'
+        assert len(volumes) == len(wells), 'Number of volumes must equal the number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
-        for well, volume in zip(wells, volumes):
-            self._volumes[self.indices[well]] += volume
-            if self._volumes[self.indices[well]] > self.max_volume:
+        if compositions is not None:
+            assert len(compositions) == len(wells), 'Well compositions must be given for either all or none of the wells.'
+        else:
+            compositions = [None] * len(wells)
+
+        for well, volume, composition in zip(wells, volumes, compositions):
+            idx = self.indices[well]
+            v_original = self._volumes[idx]
+            v_new = v_original + volume
+
+            if v_new > self.max_volume:
                 raise VolumeOverflowError(f'Step "{label}": {self.name}.{well} has exceeded the maximum volume')
+
+            self._volumes[idx] = v_new
+
+            if composition is not None:
+                assert isinstance(composition, dict), 'Well compositions must be given as dicts'
+                # update the volumentric composition for this well
+                original_composition = self.get_well_composition(well)
+                new_composition = _combine_composition(v_original, original_composition, volume, composition)
+                for k, f in new_composition.items():
+                    if not k in self._composition:
+                        # a new liquid is being added
+                        self._composition[k] = numpy.zeros_like(self.volumes)
+                    self._composition[k][idx] = f
+
         self.log(label)
         return
     
