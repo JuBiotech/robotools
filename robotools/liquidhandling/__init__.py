@@ -12,7 +12,7 @@ class VolumeUnderflowError(Exception):
     pass
 
 
-def _combine_composition(original_volume:float, original_composition:dict, added_volume:float, added_composition:dict):
+def _combine_composition(volume_A:float, composition_A:dict, volume_B:float, composition_B:dict):
     """Computes the composition of a liquid, created by the mixing of two liquids (A and B).
 
     Args:
@@ -24,19 +24,21 @@ def _combine_composition(original_volume:float, original_composition:dict, added
     Returns:
         composition (dict): composition of the new liquid created by mixing the given volumes of A and B
     """
+    if composition_A is None or composition_B is None:
+        return None
     # convert to volumetric fractions
     volumetric_fractions = {
-        k : f * original_volume
-        for k, f in original_composition.items()
+        k : f * volume_A
+        for k, f in composition_A.items()
     }
     # volumetrically add incoming fractions
-    for k, f in added_composition.items():
+    for k, f in composition_B.items():
         if not k in volumetric_fractions:
             volumetric_fractions[k] = 0
-        volumetric_fractions[k] += f * added_volume
+        volumetric_fractions[k] += f * volume_B
     # convert back to relative fractions
     new_composition = {
-        k : v / (original_volume + added_volume)
+        k : v / (volume_A + volume_B)
         for k, v in volumetric_fractions.items()
     }
     return new_composition
@@ -179,6 +181,8 @@ class Labware(object):
         Keys: liquid names
         Values: relative amount
         """
+        if self._composition is None:
+            return None
         idx = self.indices[well]
         well_comp = {
             k : f[idx]
@@ -216,7 +220,7 @@ class Labware(object):
 
             self._volumes[idx] = v_new
 
-            if composition is not None:
+            if composition is not None and self._composition is not None:
                 assert isinstance(composition, dict), 'Well compositions must be given as dicts'
                 # update the volumentric composition for this well
                 original_composition = self.get_well_composition(well)

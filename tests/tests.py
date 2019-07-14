@@ -1490,6 +1490,14 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(actual, expected)
         return
 
+    def test_combine_unknown_composition(self):
+        A = dict(water=1)
+        B = None
+        expected = None
+        actual = liquidhandling._combine_composition(10, A, 15, B)
+        self.assertEqual(actual, expected)
+        return
+
     def test_labware_init(self):
         # without initial volume, there's no entry in the composition
         A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000)
