@@ -531,6 +531,7 @@ class Worklist(list):
 
         Args:
             source (liquidhandling.Labware): source labware with virtual_rows (a Trough)
+            source_column (int): column number of the reagent in the source labware
             destination (liquidhandling.Labware): destination labware
             destination_wells (array-like): list or array of destination wells
             volume (float): microliters to dispense into each destination
