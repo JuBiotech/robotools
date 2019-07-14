@@ -1606,5 +1606,100 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(T.get_well_composition('B01'), dict(water=0.9, glucose=0.1))
         return
 
+    def test_worklist_dilution(self):
+        W = liquidhandling.Labware('water', 1, 1, min_volume=0, max_volume=10000, initial_volumes=10000, virtual_rows=4)
+        G = liquidhandling.Labware('glucose', 1, 1, min_volume=0, max_volume=10000, initial_volumes=10000, virtual_rows=4)
+        D = liquidhandling.Labware('dilutions', 4, 2, min_volume=0, max_volume=10000)
+
+        with evotools.Worklist() as wl:
+            # 100 % in first column
+            wl.transfer(
+                G, G.wells,
+                D, D.wells[:,0],
+                volumes=[1000, 800, 600, 550]
+            )
+            wl.transfer(
+                W, W.wells,
+                D, D.wells[:,0],
+                volumes=[0, 200, 400, 450]
+            )
+            numpy.testing.assert_array_equal(D.volumes[:,0], [1000, 1000, 1000, 1000])
+            numpy.testing.assert_array_equal(D.composition['glucose'][:,0], [1, 0.8, 0.6, 0.55])
+            numpy.testing.assert_array_equal(D.composition['water'][:,0], [0, 0.2, 0.4, 0.45])
+            # 10x dilution to the 2nd column
+            wl.transfer(
+                D, D.wells[:,0],
+                D, D.wells[:,1],
+                volumes=100
+            )            
+            wl.transfer(
+                W, W.wells,
+                D, D.wells[:,1],
+                volumes=900
+            )
+            numpy.testing.assert_array_equal(D.volumes[:,1], [1000, 1000, 1000, 1000])
+            numpy.testing.assert_allclose(D.composition['glucose'][:,1], [0.1, 0.08, 0.06, 0.055])
+            numpy.testing.assert_allclose(D.composition['water'][:,1], [0.9, 0.92, 0.94, 0.945])
+            
+        return
+
+    def test_worklist_distribution(self):
+        W = liquidhandling.Labware('water', 1, 1, min_volume=0, max_volume=10000, initial_volumes=10000, virtual_rows=2)
+        G = liquidhandling.Labware('glucose', 1, 1, min_volume=0, max_volume=10000, initial_volumes=10000, virtual_rows=2)
+        D = liquidhandling.Labware('dilutions', 2, 4, min_volume=0, max_volume=10000)
+
+        with evotools.Worklist() as wl:
+            # transfer some glucose
+            wl.transfer(
+                G, G.wells[:,[0]*4],
+                D, D.wells,
+                volumes=numpy.array([
+                    [100, 80, 60, 55],
+                    [55, 60, 80, 100],
+                ])
+            )
+            # fill up to 100
+            wl.transfer(
+                W, W.wells[:,[0]*4],
+                D, D.wells,
+                volumes=100 - D.volumes
+            )
+            numpy.testing.assert_allclose(D.volumes, 100)
+            numpy.testing.assert_array_equal(D.composition['glucose'][0,:], [1, 0.8, 0.6, 0.55])
+            numpy.testing.assert_array_equal(D.composition['glucose'][1,:], [0.55, 0.6, 0.8, 1])
+            numpy.testing.assert_array_equal(D.composition['water'][0,:], [0, 0.2, 0.4, 0.45])
+            numpy.testing.assert_array_equal(D.composition['water'][1,:], [0.45, 0.4, 0.2, 0])
+            # dilute 2x with water
+            wl.distribute(
+                source=W, source_column=0,
+                destination=D, destination_wells=D.wells,
+                volume=100
+            )
+            numpy.testing.assert_allclose(D.volumes, 200)
+            numpy.testing.assert_array_equal(D.composition['glucose'][0,:], [0.5, 0.4, 0.3, 0.275])
+            numpy.testing.assert_array_equal(D.composition['glucose'][1,:], [0.275, 0.3, 0.4, 0.5])
+            numpy.testing.assert_array_equal(D.composition['water'][0,:], [0.5, 0.6, 0.7, 0.725])
+            numpy.testing.assert_array_equal(D.composition['water'][1,:], [0.725, 0.7, 0.6, 0.5])
+            
+            
+        return
+
+    def test_worklist_mix_no_composition_change(self):
+        A = liquidhandling.Labware('solution', 2, 3, min_volume=0, max_volume=1000)
+        A._composition['water'] = 0.25 * numpy.ones_like(A.volumes)
+        A._composition['salt'] = 0.75 * numpy.ones_like(A.volumes)
+        A._volumes = numpy.ones_like(A.volumes) * 500
+        with evotools.Worklist() as wl:
+            wl.transfer(
+                A, A.wells,
+                A, A.wells,
+                volumes=300
+            )
+        # make sure that the composition of the liquid is not changed
+        numpy.testing.assert_array_equal(A.composition['water'], 0.25 * numpy.ones_like(A.volumes))
+        numpy.testing.assert_array_equal(A.composition['salt'], 0.75 * numpy.ones_like(A.volumes))
+        return
+
+
 if __name__ == '__main__':
     unittest.main()

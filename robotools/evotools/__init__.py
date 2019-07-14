@@ -423,21 +423,22 @@ class Worklist(list):
                 self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
-    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
-        """Performs dispensing from the provided labware.
+    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, compositions:list=None, **kwargs):
+        """Performs dispensing into the provided labware.
 
         Args:
             labware (liquidhandling.Labware): source labware
             wells (str or iterable): list of well ids
             volumes (float or iterable): volume(s) to dispense
             label (str): label of the operation to log into labware history
+            compositions (list): iterable of liquid compositions
             kwargs: additional keyword arguments to pass to `dispense_well`
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
-        labware.add(wells, volumes, label)
+        labware.add(wells, volumes, label, compositions=compositions)
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
@@ -494,7 +495,7 @@ class Worklist(list):
                         v = vs[p]
                         if v > 0:
                             self.aspirate(source, s, v, label=None, **kwargs)
-                            self.dispense(destination, d, v, label=None, **kwargs)
+                            self.dispense(destination, d, v, label=None, compositions=[source.get_well_composition(s)], **kwargs)
                             nsteps += 1
                             if wash_scheme is not None:
                                 self.wash(scheme=wash_scheme)
@@ -574,7 +575,8 @@ class Worklist(list):
         # update volume tracking
         n_dst = len(dst_wells)
         source.remove(source.wells[0,source_column], volume*n_dst, label=label)
-        destination.add(destination_wells, volume, label=label)
+        src_composition = source.get_well_composition(source.wells[0,source_column])
+        destination.add(destination_wells, volume, label=label, compositions=[src_composition]*n_dst)
         return
     
     def __repr__(self):
