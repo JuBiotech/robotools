@@ -1183,6 +1183,61 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ))
         return
 
+    def test_partition_by_columns_sorting(self):
+        # within every column, the wells are supposed to be sorted by row
+        # The test source wells are partially sorted (col 1 is in the right order, col 3 in the reverse)
+        # The result is expected to always be sorted by row, either in the source (first case) or destination:
+
+        # by source
+        column_groups = evotools._partition_by_column(
+            ['A01', 'B01', 'B03', 'A03', 'C02'],
+            ['B01', 'A01', 'C01', 'D01', 'E01'],
+            [2500, 3500, 1000, 500, 2000],
+            partition_by='source'
+        )
+        self.assertEqual(len(column_groups), 3)
+        self.assertEqual(column_groups[0], (
+            ['A01', 'B01'],
+            ['B01', 'A01'],
+            [2500, 3500],
+        ))
+        self.assertEqual(column_groups[1], (
+            ['C02'],
+            ['E01'],
+            [2000],
+        ))
+        self.assertEqual(column_groups[2], (
+            ['A03', 'B03'],
+            ['D01', 'C01'],
+            [500, 1000],
+        ))
+
+        # by destination
+        # (destination wells are across 3 columns; reverse order in col 1, forward order in col 3)
+        column_groups = evotools._partition_by_column(
+            ['A01', 'B01', 'B03', 'A03', 'C02'],
+            ['B01', 'A01', 'C03', 'D03', 'E02'],
+            [2500, 3500, 1000, 500, 2000],
+            partition_by='destination'
+        )
+        self.assertEqual(len(column_groups), 3)
+        self.assertEqual(column_groups[0], (
+            ['B01', 'A01'],
+            ['A01', 'B01'],
+            [3500, 2500],
+        ))
+        self.assertEqual(column_groups[1], (
+            ['C02'],
+            ['E02'],
+            [2000],
+        ))
+        self.assertEqual(column_groups[2], (
+            ['B03', 'A03'],
+            ['C03', 'D03'],
+            [1000, 500],
+        ))
+        return
+
     def test_single_split(self):
         src = liquidhandling.Labware('A', 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = liquidhandling.Labware('B', 3, 2, min_volume=1000, max_volume=25000)
