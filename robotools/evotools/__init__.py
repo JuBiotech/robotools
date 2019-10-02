@@ -131,7 +131,7 @@ def _partition_volume(volume:float, *, max_volume:int):
 
 
 def _partition_by_column(sources, destinations, volumes, partition_by:str='source'):
-    """Partitions sources/destinations/volumes by the source column.
+    """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
     Args:
         sources: list of source well ids
@@ -140,8 +140,9 @@ def _partition_by_column(sources, destinations, volumes, partition_by:str='sourc
         partition_by (str): either 'source' or 'destination'
 
     Returns:
-        list of (sources, destinations, volumnes)
+        list of (sources, destinations, volumes)
     """
+    # first partition the wells into columns
     column_groups = collections.defaultdict(lambda: ([], [], []))
     for s, d, v in zip(sources, destinations, volumes):
         if partition_by == 'source':
@@ -153,11 +154,24 @@ def _partition_by_column(sources, destinations, volumes, partition_by:str='sourc
         column_groups[group][0].append(s)
         column_groups[group][1].append(d)
         column_groups[group][2].append(v)
-
+    # bring columns in the right order
     column_groups = [
         column_groups[col]
         for col in sorted(column_groups.keys())
     ]
+    # sort the rows within the column
+    for c, (srcs, dsts, vols) in enumerate(column_groups):
+        if partition_by == 'source':
+            order = numpy.argsort(srcs)
+        elif partition_by == 'destination':
+            order = numpy.argsort(dsts)
+        else:
+            raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
+        column_groups[c] = (
+            list(numpy.array(srcs)[order]),
+            list(numpy.array(dsts)[order]),
+            list(numpy.array(vols)[order])
+        )
     return column_groups
 
 
