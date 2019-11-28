@@ -109,6 +109,44 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
+def _optimize_partition_by(source:liquidhandling.Labware, destination:liquidhandling.Labware, partition_by:str, label:str=None):
+    """Determines optimal partitioning settings.
+
+    Args:
+        source (Labware): source labware object
+        destination (Labware): destination labware object
+        partition_by (str): user-provided partitioning settings
+        label (str): label of the operation (optional)
+
+    Returns:
+        partition_by (str): either 'source' or 'destination'
+    """
+    if not partition_by in {'auto', 'source', 'destination'}:
+        raise ValueError(f'Invalid partition_by argument: {partition_by}')
+    # automatic partitioning decision
+    if partition_by == 'auto':
+        if source.is_trough and not destination.is_trough:
+            logger.debug(f'')
+            partition_by = 'destination'
+        else:
+            partition_by = 'source'
+    else:
+        # log warnings about potentially inefficient partitioning settings
+        if partition_by == 'source' and source.is_trough and not destination.is_trough:
+            logger.warning(
+                f'Partitioning by "source" ({source.name}), which is a Trough while destination ({destination.name}) is not a Trough.'
+                ' This is potentially inefficient. Consider using partition_by="destination".'
+                f' (label={label})'
+            )
+        elif partition_by == 'destination' and destination.is_trough and not source.is_trough:
+            logger.warning(
+                f'Partitioning by "destination" ({destination.name}), which is a Trough while source ({source.name}) is not a Trough.'
+                ' This is potentially inefficient. Consider using partition_by="source"'
+                f' (label={label})'
+            )
+    return partition_by
+
+
 def _partition_volume(volume:float, *, max_volume:int):
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
@@ -130,7 +168,7 @@ def _partition_volume(volume:float, *, max_volume:int):
     return volumes
 
 
-def _partition_by_column(sources, destinations, volumes, partition_by:str='source'):
+def _partition_by_column(sources, destinations, volumes, partition_by:str):
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
     Args:
@@ -459,7 +497,7 @@ class Worklist(list):
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source, source_wells, destination, destination_wells, volumes, *, label=None, wash_scheme=1, partition_by:str='source', **kwargs):
+    def transfer(self, source:liquidhandling.Labware, source_wells, destination:liquidhandling.Labware, destination_wells, volumes, *, label=None, wash_scheme=1, partition_by:str='auto', **kwargs):
         """Transfer operation between two labwares.
 
         Args:
@@ -470,7 +508,10 @@ class Worklist(list):
             volumes (float or iterable): volume(s) to transfer
             label (str): label of the operation to log into labware history
             wash_scheme (int): wash scheme to apply after every every
-            partition_by (str): either 'source' (default) or 'destination'
+            partition_by (str): one of 'auto' (default), 'source' or 'destination'
+                'auto': partitioning by source unless the source is a Trough
+                'source': partitioning by source columns
+                'destination': partitioning by destination columns
             kwargs: additional keyword arguments to pass to aspirate and dispense
         """
         # reformat the convenience parameters
@@ -488,6 +529,9 @@ class Worklist(list):
         lengths = (len(source_wells), len(destination_wells), len(volumes))
         assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
         
+        # automatic partitioning
+        partition_by = _optimize_partition_by(source, destination, partition_by, label)
+
         # the label applies to the entire transfer operation and is not logged at individual aspirate/dispense steps
         self.comment(label)
         nsteps = 0

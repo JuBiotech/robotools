@@ -1,7 +1,8 @@
-import unittest
+import logging
 import numpy
 import os
 import tempfile
+import unittest
 
 from robotools import liquidhandling
 from robotools import evotools
@@ -1391,13 +1392,15 @@ class TestReagentDistribution(unittest.TestCase):
                     volume=50, exclude_wells=[18,19,23]
                 )
         with self.assertRaises(evotools.InvalidOperationError):
-            with evotools.Worklist(max_volume=950) as wl:
-                # dispense more than diluter volume
-                wl.reagent_distribution(
-                    'S1', 1, 8,
-                    'D1', 1, 20,
-                    volume=1200
-                )
+            evo_logger = logging.getLogger('evotools')
+            with self.assertLogs(logger=evo_logger, level=logging.WARNING):
+                with evotools.Worklist(max_volume=950) as wl:
+                    # dispense more than diluter volume
+                    wl.reagent_distribution(
+                        'S1', 1, 8,
+                        'D1', 1, 20,
+                        volume=1200
+                    )
         return
 
     def test_default_parameterization(self):
@@ -1755,6 +1758,39 @@ class TestCompositionTracking(unittest.TestCase):
         numpy.testing.assert_array_equal(A.composition['salt'], 0.75 * numpy.ones_like(A.volumes))
         return
 
+
+class TestFunctions(unittest.TestCase):
+    def test_automatic_partitioning(self):
+        evo_logger = logging.getLogger('evotools')
+        S = liquidhandling.Labware('S', 8, 2, min_volume=5000, max_volume=250*1000)
+        D = liquidhandling.Labware('D', 8, 2, min_volume=5000, max_volume=250*1000)
+        ST = liquidhandling.Labware('ST', 1, 2, min_volume=5000, max_volume=250*1000, virtual_rows=8)
+        DT = liquidhandling.Labware('DT', 1, 2, min_volume=5000, max_volume=250*1000, virtual_rows=8)
+
+        # Expected behaviors:
+        # + always keep settings other than 'auto'
+        # + warn user about inefficient configuration (when user selects to partition by the trough)
+
+        # automatic
+        self.assertEqual('source', evotools._optimize_partition_by(S, D, 'auto', 'No troughs at all'))
+        self.assertEqual('source', evotools._optimize_partition_by(S, DT, 'auto', 'Trough destination'))
+        self.assertEqual('destination', evotools._optimize_partition_by(ST, D, 'auto', 'Trough source'))
+        self.assertEqual('source', evotools._optimize_partition_by(ST, DT, 'auto', 'Trough source and destination'))
+
+        # fixed to source
+        self.assertEqual('source', evotools._optimize_partition_by(S, D, 'source', 'No troughs at all'))
+        self.assertEqual('source', evotools._optimize_partition_by(S, DT, 'source', 'Trough destination'))
+        with self.assertLogs(logger=evo_logger, level=logging.WARNING):
+            self.assertEqual('source', evotools._optimize_partition_by(ST, D, 'source', 'Trough source'))
+        self.assertEqual('source', evotools._optimize_partition_by(ST, DT, 'auto', 'Trough source and destination'))
+
+        # fixed to destination
+        self.assertEqual('destination', evotools._optimize_partition_by(S, D, 'destination', 'No troughs at all'))
+        with self.assertLogs(logger=evo_logger, level=logging.WARNING):
+            self.assertEqual('destination', evotools._optimize_partition_by(S, DT, 'destination', 'Trough destination'))
+        self.assertEqual('destination', evotools._optimize_partition_by(ST, D, 'destination', 'Trough source'))
+        self.assertEqual('destination', evotools._optimize_partition_by(ST, DT, 'destination', 'Trough source and destination'))
+        return
 
 if __name__ == '__main__':
     unittest.main()
