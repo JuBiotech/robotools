@@ -5,11 +5,20 @@ logger = logging.getLogger('liquidhandling')
 
 
 class VolumeOverflowError(Exception):
-    pass
-
+    """Error that indicates the planned overflow of a well."""
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:str=None):
+        if label:
+            super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold} in step {label}')
+        else:
+            super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold}')
 
 class VolumeUnderflowError(Exception):
-    pass
+    """Error that indicates the planned underflow of a well."""
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:str=None):
+        if label:
+            super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold} in step {label}')
+        else:
+            super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold}')
 
 
 def _combine_composition(volume_A:float, composition_A:dict, volume_B:float, composition_B:dict):
@@ -216,7 +225,7 @@ class Labware(object):
             v_new = v_original + volume
 
             if v_new > self.max_volume:
-                raise VolumeOverflowError(f'Step "{label}": {self.name}.{well} has exceeded the maximum volume')
+                raise VolumeOverflowError(self.name, well, v_original, volume, self.max_volume, label)
 
             self._volumes[idx] = v_new
 
@@ -249,9 +258,14 @@ class Labware(object):
         assert len(volumes) == len(wells), 'Number of volumes must number of wells'
         assert numpy.all(volumes >= 0), 'Volumes must be positive or zero.'
         for well, volume in zip(wells, volumes):
-            self._volumes[self.indices[well]] -= volume
-            if self._volumes[self.indices[well]] < self.min_volume:
-                raise VolumeUnderflowError(f'Step "{label}": {self.name}.{well} has undershot the minimum volume')
+            idx = self.indices[well]
+            v_original = self._volumes[idx]
+            v_new = v_original - volume
+
+            if v_new < self.min_volume:
+                raise VolumeUnderflowError(self.name, well, v_original, volume, self.min_volume, label)
+
+            self._volumes[idx] -= volume
         self.log(label)
         return
     
