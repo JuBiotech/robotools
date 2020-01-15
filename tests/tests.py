@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 
+import robotools
 from robotools import liquidhandling
 from robotools import evotools
 from robotools import janustools
@@ -1791,6 +1792,98 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual('destination', evotools._optimize_partition_by(ST, D, 'destination', 'Trough source'))
         self.assertEqual('destination', evotools._optimize_partition_by(ST, DT, 'destination', 'Trough source and destination'))
         return
+
+
+class TestDilutionPlan(unittest.TestCase):
+    def test_argchecking(self):
+        with self.assertRaises(ValueError):
+            robotools.DilutionPlan(
+                xmin=0.001, xmax=30,
+                R=8, C=12,
+                stock=20,
+                mode='log',
+                vmax=1000,
+                min_transfer=20
+            )
+
+        with self.assertRaises(ValueError):
+            robotools.DilutionPlan(
+                xmin=0.001, xmax=30,
+                R=8, C=12,
+                stock=30,
+                mode='invalid',
+                vmax=1000,
+                min_transfer=20
+            )
+
+        with self.assertRaises(ValueError):
+            robotools.DilutionPlan(
+                xmin=0.001, xmax=30,
+                R=6, C=4,
+                stock=30,
+                mode='linear',
+                vmax=1000,
+                min_transfer=20
+            )
+
+        return
+
+    def test_repr(self):
+        plan = robotools.DilutionPlan(
+            xmin=0.001, xmax=30,
+            R=8, C=12,
+            stock=30,
+            mode='log',
+            vmax=1000,
+            min_transfer=20
+        )
+
+        out = plan.__repr__()
+
+        self.assertIsNotNone(out)
+        self.assertIsInstance(out, str)
+        return
+
+    def test_linear_plan(self):
+        plan = robotools.DilutionPlan(
+            xmin=1, xmax=10,
+            R=10, C=1,
+            stock=20,
+            mode='linear',
+            vmax=1000,
+            min_transfer=20
+        )
+
+        self.assertTrue(numpy.array_equal(plan.x, plan.ideal_x))
+        self.assertEqual(plan.max_steps, 0)
+        self.assertEqual(plan.v_stock, 2750)
+        self.assertEqual(plan.instructions[0][0], 0)
+        self.assertEqual(plan.instructions[0][1], 0)
+        self.assertEqual(plan.instructions[0][2], 'stock')
+        self.assertTrue(numpy.array_equal(plan.instructions[0][3], [500, 450, 400, 350, 300, 250, 200, 150, 100,  50,]))
+        return
+
+    def test_log_plan(self):
+        plan = robotools.DilutionPlan(
+            xmin=0.01, xmax=10,
+            R=4, C=3,
+            stock=20,
+            mode='log',
+            vmax=1000,
+            min_transfer=20
+        )
+
+        self.assertTrue(numpy.allclose(plan.x, plan.ideal_x, rtol=0.05))
+        self.assertEqual(plan.max_steps, 2)
+        self.assertEqual(plan.v_stock, 985)
+        self.assertEqual(plan.instructions[0][0], 0)
+        self.assertEqual(plan.instructions[0][1], 0)
+        self.assertEqual(plan.instructions[0][2], 'stock')
+        self.assertTrue(numpy.array_equal(plan.instructions[0][3], [500, 267, 142, 76]))
+        self.assertTrue(numpy.array_equal(plan.instructions[1][3], [82, 82, 82, 82]))
+        self.assertTrue(numpy.array_equal(plan.instructions[2][3], [81, 81, 81, 81]))
+        return
+
 
 if __name__ == '__main__':
     unittest.main()
