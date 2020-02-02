@@ -1,5 +1,35 @@
 """Module with robot-agnostic utilities."""
+import collections
 import numpy
+from . import evotools
+from . import liquidhandling
+
+
+def get_trough_wells(n: int, trough_wells: list) -> list:
+    """Creates a list that re-uses trough wells if needed.
+
+    When n > trough.virtual_rows, the available wells are repeated.
+    
+    Args:
+        n (int): number of trough wells to work with
+        trough_wells (list): trough well IDs that may be used
+
+    Returns:
+        wells (list): n virtual wells in the trough
+    """
+    if not isinstance(n, int):
+        raise TypeError('n must be int')
+    if not isinstance(trough_wells, (list, tuple, numpy.ndarray)):
+        raise TypeError('trough_wells must be a tuple, list or 1-D numpy array.')
+    if n < 0:
+        raise ValueError('n must be ≥ 0.')
+    if len(trough_wells) == 0:
+        raise ValueError('trough_wells must contain at least 1 element.')
+
+    trough_wells = list(numpy.array(trough_wells).flatten('F'))
+    n_available = len(trough_wells)
+    n_repeat = n // n_available + 1
+    return (trough_wells * n_repeat)[:n]
 
 
 class DilutionPlan:
@@ -111,3 +141,129 @@ class DilutionPlan:
             if dsteps > 0:
                 output += f' ({dsteps} serial dilutions)'
         return output
+
+    def to_worklist(
+            self, *,
+            worklist: evotools.Worklist,
+            stock: liquidhandling.Labware, stock_column: int=0,
+            diluent: liquidhandling.Labware, diluent_column: int=0,
+            dilution_plate: liquidhandling.Labware,
+            destination_plate: liquidhandling.Labware=None,
+            v_destination: float=None,
+            mix_threshold: float=0.3,
+            lc_stock_trough: str='Trough_Water_FD_AspLLT',
+            lc_diluent_trough: str='Trough_Water_FD_AspLLT',
+            lc_mix: str='Water_FD_AspZmax-1_Mix',
+            lc_transfer: str='Water_FD_AspZmax-1',
+        ):
+        """Writes the `DilutionPlan` to a `Worklist`.
+
+        The stock is assumed to be non-sedimenting (e.g. by stirring), but all aspirations from freshly
+        diluted wells are done right away.
+        Mixing is done after dilution and before transfer whenever the diluted volume is more than
+        `mix_threshold * self.vmax`. The volume aspirated for mixing is 80% of `self.vmax` but
+        maxes out at the `Worklist.max_volume`.
+
+        Stock and diluent troughs may have less rows than the dilution self.
+
+        Args:
+            wl (Worklist): a Worklist that will be appended
+            stock (Labware): a trough containing the highly concentrated stock solution
+            stock_column (int): 0-based column number of the stock solution in the `stock` labware
+            diluent (Labware): a trough containing the diluent for the dilution series
+            diluent_column (int): 0-based column number of the diluent solution in the `stock` labware        
+            dilution_plate (Labware): an (empty) labware to use for the dilution series (begins in top left corner)
+            destination_plate (Labware, optional): an (empty) labware to transfer to
+            v_destination (float): volume [µl] to transfer to the `destination_plate` (if set)
+            mix_threshold (float): maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.3 or 30%)
+            lc_stock_trough (str): liquid class to use for transfer of stock solution to the dilution plate
+            lc_diluent_trough (str): liquid class to use for transfer of diluent to dilution plate
+            lc_max (str): liquid class for mixing steps
+            lc_transfer (str): liquid class for transfers within the `dilution_plate` and to the `destination_plate`
+        """
+        if dilution_plate.n_rows < self.R:
+            raise ValueError(f'Dilution plate "{dilution_plate.name}" has not enough rows for this dilution plan.')
+        if dilution_plate.n_columns < self.C:
+            raise ValueError(f'Dilution plate "{dilution_plate.name}" has not enough columns for this dilution plan.')
+        if destination_plate and destination_plate.n_rows < self.R:
+            raise ValueError(f'Destination plate "{destination_plate.name}" has not enough rows for this dilution plan.')
+        if destination_plate and destination_plate.n_columns < self.C:
+            raise ValueError(f'Destination plate "{destination_plate.name}" has not enough columns for this dilution plan.')
+        if not stock.is_trough:
+            raise ValueError(f'The stock labware "{stock.name}" must be a trough.')
+        if not diluent.is_trough:
+            raise ValueError(f'The diluent labware "{diluent.name}" must be a trough.')
+
+        stock_wells = stock.wells[:, stock_column]
+        diluent_wells = diluent.wells[:, diluent_column]
+
+        # beforehand, we need to know which other columns have to be prepared from
+        # a given column. This way, we can transfer to them right after diluting/mixing.
+        serial_dilution_from_to = collections.defaultdict(list)
+        for col, _, src, v in self.instructions:
+            if src != 'stock':
+                serial_dilution_from_to[src].append((col, v))
+
+        # now prepare column by column
+        for col, _, src, v_src in self.instructions:
+            # this is the first transfer in the entire procedure
+            if src == 'stock':
+                worklist.transfer(
+                    stock, get_trough_wells(self.R, stock_wells),
+                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    volumes=v_src,
+                    liquid_class=lc_stock_trough,
+                    label=f'Distribute from stock'
+                )
+                worklist.commit()
+            else:
+                # transfers for serial dilution are done after the mixing step
+                # at this point this has already happened
+                if not numpy.allclose(dilution_plate.volumes[:self.R, col], v_src):
+                    raise Exception(f'Column {col} volume not as expected.')
+
+            # the column already contains the higher-concentrated standards
+            # now it's time to dilute it
+            worklist.transfer(
+                diluent, get_trough_wells(self.R, diluent_wells),
+                dilution_plate, dilution_plate.wells[:self.R, col],
+                volumes=self.vmax[col] - v_src,
+                liquid_class=lc_diluent_trough,
+                label=f'Dilute column {col}'
+            )
+            worklist.commit()
+
+            # mixing time!
+            if numpy.any(v_src > mix_threshold * self.vmax[col]):
+                worklist.transfer(
+                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    volumes=min(worklist.max_volume, self.vmax[col] * 0.8),
+                    liquid_class=lc_mix,
+                    label=f'Mix column {col} with 80% of its volume'
+                )
+                worklist.commit()
+
+            # transfer to other columns that will be prepared from this one
+            for dst, v_dst in serial_dilution_from_to[col]:
+                worklist.transfer(
+                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    dilution_plate, dilution_plate.wells[:self.R, dst],
+                    volumes=v_dst,
+                    liquid_class=lc_transfer,
+                    label=f'Transfer columns {col} -> {dst} for later dilution step'
+                )
+                worklist.commit()
+
+            # transfer to a destination is optional
+            if destination_plate:
+                worklist.transfer(
+                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    destination_plate, destination_plate.wells[:self.R, col],
+                    volumes=v_destination,
+                    liquid_class=lc_transfer,
+                    label=f'Transfer column {col} to the destination plate'
+                )
+                worklist.commit()
+
+        return

@@ -1915,6 +1915,58 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertTrue(numpy.array_equal(plan.instructions[2][3], [121, 121, 121, 121]))
         return
 
+    def test_to_worklist(self):
+        # this test case tries to make it as hard as possible for the `to_worklist` method:
+        # + vmax is different in every column
+        # + stock has 2 rows, but dilution plan has 3
+        # + diluent has 4 rows but dilution plan has 3
+        # + diluent is not in the first column of a multi-column trough
+        # + dilution plate is bigger than the plan
+        # + destination plate is bigger than the plan
+        stock_concentration = 20
+        plan = robotools.DilutionPlan(
+            xmin=0.01, xmax=10,
+            R=3, C=4,
+            stock=stock_concentration, mode='log',
+            vmax=[1000,1100,980,500], min_transfer=50
+        )
+        stock = liquidhandling.Labware('Stock', 1, 1, virtual_rows=2, min_volume=0, max_volume=10000, initial_volumes=10000)
+        diluent = liquidhandling.Labware('Diluent', 1, 2, virtual_rows=4, min_volume=0, max_volume=10000, initial_volumes=[0,10000])
+        dilution = liquidhandling.Labware('Dilution', 6, 8, min_volume=0, max_volume=2000)
+        destination = liquidhandling.Labware('Destination', 7, 10, min_volume=0, max_volume=1000)
+        with evotools.Worklist() as wl:
+            plan.to_worklist(
+                worklist=wl,
+                stock=stock, stock_column=0,
+                diluent=diluent, diluent_column=1,
+                dilution_plate=dilution,
+                destination_plate=destination, v_destination=200
+            )
+        # assert the achieved concentrations in the destination
+        numpy.testing.assert_array_almost_equal(
+            plan.x,
+            destination.composition['Stock'][:plan.R,:plan.C] * stock_concentration
+        )
+        pass
+
+
+class TestUtils(unittest.TestCase):
+    def test_get_trough_wells(self):
+        with self.assertRaises(ValueError):
+            robotools.get_trough_wells(n=-1, trough_wells=list('ABC'))
+        with self.assertRaises(ValueError):
+            robotools.get_trough_wells(n=3, trough_wells=[])
+        with self.assertRaises(TypeError):
+            robotools.get_trough_wells(n=0.5, trough_wells=list('ABC'))
+        with self.assertRaises(TypeError):
+            robotools.get_trough_wells(n=2, trough_wells='ABC')
+        self.assertSequenceEqual(robotools.get_trough_wells(n=0, trough_wells=list('ABC')), list())
+        self.assertSequenceEqual(robotools.get_trough_wells(n=1, trough_wells=list('ABC')), list('A'))
+        self.assertSequenceEqual(robotools.get_trough_wells(n=3, trough_wells=list('ABC')), list('ABC'))
+        self.assertSequenceEqual(robotools.get_trough_wells(n=4, trough_wells=list('ABC')), list('ABCA'))
+        self.assertSequenceEqual(robotools.get_trough_wells(n=7, trough_wells=list('ABC')), list('ABCABCA'))
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
