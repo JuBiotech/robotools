@@ -14,14 +14,20 @@ class DilutionPlan:
             C (int): number of colums in the MTP
             stock (float): stock concentration (must be >= xmax)
             mode (str): either 'log' or 'linear'
-            vmax (float): maximum possible volume [µL] in the MTP
+            vmax (float): scalar or vector-valued (C,) maximum volume [µL] in the dilution series
             min_transfer (float): minimum allowed volume [µL] for transfer steps
         """
         # process arguments
         if stock < xmax:
             raise ValueError(f'Stock concentration ({stock}) must be >= xmax ({xmax})')
         N = R * C
-    
+        
+        vmax = numpy.atleast_1d(vmax)
+        if len(vmax) == 1:
+            vmax = numpy.repeat(vmax, C)
+        if not len(vmax) == C:
+            raise ValueError('The `vmax` argument must be scalar or of length `C`.')
+        
         # determine target concentrations
         if mode == 'log':
             ideal_targets = numpy.exp(numpy.linspace(numpy.log(xmax), numpy.log(xmin), N))
@@ -39,13 +45,13 @@ class DilutionPlan:
     
         # transfer from stock until the volume is too low
         for c in range(C):
-            vtransfer = numpy.round(vmax * ideal_targets[:,c] / stock, 0)
+            vtransfer = numpy.round(vmax[c] * ideal_targets[:,c] / stock, 0)
             if all(vtransfer >= min_transfer):
                 instructions.append(
                     (c, 0, 'stock', vtransfer)
                 )
                 # compute the actually achieved target concentration
-                actual_targets.append(vtransfer / vmax * stock)
+                actual_targets.append(vtransfer / vmax[c] * stock)
             else:
                 break
         
@@ -54,7 +60,7 @@ class DilutionPlan:
             # find the first source column that can be used (with sufficient transfer volume)
             for src_c in range(0, len(instructions)):
                 _, src_df, _, _ = instructions[src_c]
-                vtransfer = numpy.ceil(ideal_targets[:,c] / actual_targets[src_c] * vmax)
+                vtransfer = numpy.ceil(vmax[c] * ideal_targets[:,c] / actual_targets[src_c])
                 # take the leftmost column (least dilution steps) where the minimal transfer volume is exceeded
                 if all(vtransfer >= min_transfer):
                     instructions.append(
@@ -62,7 +68,7 @@ class DilutionPlan:
                         (c, src_df+1, src_c, vtransfer)
                     )
                     # compute the actually achieved target concentration
-                    actual_targets.append(vtransfer / vmax * actual_targets[src_c])
+                    actual_targets.append(vtransfer * actual_targets[src_c] / vmax[c])
                     break
             
         if len(actual_targets) < C:
@@ -86,6 +92,7 @@ class DilutionPlan:
             for _, dsteps, src, v in instructions
             if dsteps == 0
         ])
+        self.v_diluent = numpy.sum(R * vmax) - self.v_stock
         self.max_steps = max([
             dsteps
             for _, dsteps, _, _ in instructions
@@ -93,12 +100,14 @@ class DilutionPlan:
 
     def __repr__(self):
         output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \
-            f' from at least {self.v_stock} µl stock:'
+            f' from at least {self.v_stock} µL stock:'
         for c, dsteps, src, vtransfer in self.instructions:
-            output += f'\r\n\tPrepare column {c} with {vtransfer} µl from '
+            output += f'\r\n\tPrepare column {c} with {vtransfer} µL from '
             if dsteps == 0:
                 output += 'stock'
             else:
-                output += f'column {src} ({dsteps} serial dilutions)'
-        output += f'\r\n\tFill up all colums to {self.vmax} µl before aspirating.'
+                output += f'column {src}'
+            output += f' and fill up to {self.vmax[c]} µL'
+            if dsteps > 0:
+                output += f' ({dsteps} serial dilutions)'
         return output

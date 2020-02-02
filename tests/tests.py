@@ -1826,6 +1826,16 @@ class TestDilutionPlan(unittest.TestCase):
                 min_transfer=20
             )
 
+        with self.assertRaises(ValueError):
+            robotools.DilutionPlan(
+                xmin=0.001, xmax=30,
+                R=6, C=4,
+                stock=30,
+                mode='linear',
+                vmax=[1000,1000,1000],
+                min_transfer=20
+            )
+
         return
 
     def test_repr(self):
@@ -1882,6 +1892,27 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertTrue(numpy.array_equal(plan.instructions[0][3], [500, 267, 142, 76]))
         self.assertTrue(numpy.array_equal(plan.instructions[1][3], [82, 82, 82, 82]))
         self.assertTrue(numpy.array_equal(plan.instructions[2][3], [81, 81, 81, 81]))
+        return
+
+    def test_vector_vmax(self):
+        plan = robotools.DilutionPlan(
+            xmin=0.01, xmax=10,
+            R=4, C=3,
+            stock=20,
+            mode='log',
+            vmax=[1000,500,1500],
+            min_transfer=20
+        )
+
+        self.assertTrue(numpy.allclose(plan.x, plan.ideal_x, rtol=0.05))
+        self.assertEqual(plan.max_steps, 2)
+        self.assertEqual(plan.v_stock, 985)
+        self.assertEqual(plan.instructions[0][0], 0)
+        self.assertEqual(plan.instructions[0][1], 0)
+        self.assertEqual(plan.instructions[0][2], 'stock')
+        self.assertTrue(numpy.array_equal(plan.instructions[0][3], [500, 267, 142, 76]))
+        self.assertTrue(numpy.array_equal(plan.instructions[1][3], [41, 41, 41, 41]))
+        self.assertTrue(numpy.array_equal(plan.instructions[2][3], [121, 121, 121, 121]))
         return
 
 
