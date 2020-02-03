@@ -150,7 +150,7 @@ class DilutionPlan:
             dilution_plate: liquidhandling.Labware,
             destination_plate: liquidhandling.Labware=None,
             v_destination: float=None,
-            mix_threshold: float=0.3,
+            mix_threshold: float=0.1,
             lc_stock_trough: str='Trough_Water_FD_AspLLT',
             lc_diluent_trough: str='Trough_Water_FD_AspLLT',
             lc_mix: str='Water_FD_AspZmax-1_Mix',
