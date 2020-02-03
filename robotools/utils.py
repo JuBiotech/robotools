@@ -130,7 +130,7 @@ class DilutionPlan:
 
     def __repr__(self):
         output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \
-            f' from at least {self.v_stock} µL stock:'
+            f' from at least {self.v_stock} µL stock and {self.v_diluent} µL diluent:'
         for c, dsteps, src, vtransfer in self.instructions:
             output += f'\r\n\tPrepare column {c} with {vtransfer} µL from '
             if dsteps == 0:
