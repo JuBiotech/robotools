@@ -150,7 +150,7 @@ class DilutionPlan:
             dilution_plate: liquidhandling.Labware,
             destination_plate: liquidhandling.Labware=None,
             v_destination: float=None,
-            mix_threshold: float=0.1,
+            mix_threshold: float=0.05,
             lc_stock_trough: str='Trough_Water_FD_AspLLT',
             lc_diluent_trough: str='Trough_Water_FD_AspLLT',
             lc_mix: str='Water_FD_AspZmax-1_Mix',
@@ -164,7 +164,7 @@ class DilutionPlan:
         `mix_threshold * self.vmax`. The volume aspirated for mixing is 80% of `self.vmax` but
         maxes out at the `Worklist.max_volume`.
 
-        Stock and diluent troughs may have less rows than the dilution self.
+        Stock and diluent troughs may have less rows than the dilution plate.
 
         Args:
             wl (Worklist): a Worklist that will be appended
@@ -175,10 +175,10 @@ class DilutionPlan:
             dilution_plate (Labware): an (empty) labware to use for the dilution series (begins in top left corner)
             destination_plate (Labware, optional): an (empty) labware to transfer to
             v_destination (float): volume [µl] to transfer to the `destination_plate` (if set)
-            mix_threshold (float): maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.3 or 30%)
+            mix_threshold (float): maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
             lc_stock_trough (str): liquid class to use for transfer of stock solution to the dilution plate
             lc_diluent_trough (str): liquid class to use for transfer of diluent to dilution plate
-            lc_max (str): liquid class for mixing steps
+            lc_mix (str): liquid class for mixing steps
             lc_transfer (str): liquid class for transfers within the `dilution_plate` and to the `destination_plate`
         """
         if dilution_plate.n_rows < self.R:
