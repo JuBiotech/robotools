@@ -151,9 +151,12 @@ class DilutionPlan:
             destination_plate: liquidhandling.Labware=None,
             v_destination: float=None,
             mix_threshold: float=0.05,
+            mix_wash: int=2,
+            mix_repeat: int=2,
+            mix_volume: float=0.8,
             lc_stock_trough: str='Trough_Water_FD_AspLLT',
             lc_diluent_trough: str='Trough_Water_FD_AspLLT',
-            lc_mix: str='Water_FD_AspZmax-1_Mix',
+            lc_mix: str='Water_DispZmax-3_AspZmax-5',
             lc_transfer: str='Water_FD_AspZmax-1',
         ):
         """Writes the `DilutionPlan` to a `Worklist`.
@@ -161,8 +164,8 @@ class DilutionPlan:
         The stock is assumed to be non-sedimenting (e.g. by stirring), but all aspirations from freshly
         diluted wells are done right away.
         Mixing is done after dilution and before transfer whenever the diluted volume is more than
-        `mix_threshold * self.vmax`. The volume aspirated for mixing is 80% of `self.vmax` but
-        maxes out at the `Worklist.max_volume`.
+        `mix_threshold * self.vmax`. The volume aspirated for mixing may be parameterized with `mix_volume`.
+        Mixing is repeated `mix_repeat` times and inbetween, the `mix_wash` scheme is applied (see below).
 
         Stock and diluent troughs may have less rows than the dilution plate.
 
@@ -176,6 +179,10 @@ class DilutionPlan:
             destination_plate (Labware, optional): an (empty) labware to transfer to
             v_destination (float): volume [µl] to transfer to the `destination_plate` (if set)
             mix_threshold (float): maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
+            mix_wash (int): number of the wash scheme inbetween mixing steps
+                The recommended wash scheme is 0 mL + 1 mL with fast wash.
+            mix_repeat (int): how often to mix after diluting
+            mix_volume (float): fraction of well volume to mix with (upper bound is the Worklist.max_volume)
             lc_stock_trough (str): liquid class to use for transfer of stock solution to the dilution plate
             lc_diluent_trough (str): liquid class to use for transfer of diluent to dilution plate
             lc_mix (str): liquid class for mixing steps
@@ -235,14 +242,16 @@ class DilutionPlan:
 
             # mixing time!
             if numpy.any(v_src > mix_threshold * self.vmax[col]):
-                worklist.transfer(
-                    dilution_plate, dilution_plate.wells[:self.R, col],
-                    dilution_plate, dilution_plate.wells[:self.R, col],
-                    volumes=min(worklist.max_volume, self.vmax[col] * 0.8),
-                    liquid_class=lc_mix,
-                    label=f'Mix column {col} with 80% of its volume'
-                )
-                worklist.commit()
+                for r in range(mix_repeat):
+                    worklist.transfer(
+                        dilution_plate, dilution_plate.wells[:self.R, col],
+                        dilution_plate, dilution_plate.wells[:self.R, col],
+                        volumes=min(worklist.max_volume, self.vmax[col] * mix_volume),
+                        liquid_class=lc_mix,
+                        wash_scheme=mix_wash if r < mix_repeat - 1 else 1,
+                        label=f'Mix column {col} with {mix_volume*100:.0f}% of its volume'
+                    )
+                    worklist.commit()
 
             # transfer to other columns that will be prepared from this one
             for dst, v_dst in serial_dilution_from_to[col]:
