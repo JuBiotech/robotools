@@ -4,9 +4,16 @@ stages:
   - release
 
 
-test-robotools:
+test-robotools-py36:
   stage: test
   image: python:3.6
+  script:
+    - python setup.py bdist_wheel && pip install dist/*.whl
+    - cd tests && python -m unittest -v
+
+test-robotools-py37:
+  stage: test
+  image: python:3.7
   script:
     - python setup.py bdist_wheel && pip install dist/*.whl
     - cd tests && python -m unittest -v
