@@ -507,7 +507,7 @@ class Worklist(list):
             destination_wells (str or iterable): list of destination well ids
             volumes (float or iterable): volume(s) to transfer
             label (str): label of the operation to log into labware history
-            wash_scheme (int): wash scheme to apply after every every
+            wash_scheme (int): wash scheme to apply after every tip use
             partition_by (str): one of 'auto' (default), 'source' or 'destination'
                 'auto': partitioning by source unless the source is a Trough
                 'source': partitioning by source columns
