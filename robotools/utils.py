@@ -170,7 +170,7 @@ class DilutionPlan:
         Stock and diluent troughs may have less rows than the dilution plate.
 
         Args:
-            wl (Worklist): a Worklist that will be appended
+            worklist (Worklist): a Worklist that will be appended
             stock (Labware): a trough containing the highly concentrated stock solution
             stock_column (int): 0-based column number of the stock solution in the `stock` labware
             diluent (Labware): a trough containing the diluent for the dilution series
