@@ -1,6 +1,7 @@
 """Module with robot-agnostic utilities."""
 import collections
 import numpy
+import typing
 from . import evotools
 from . import liquidhandling
 
@@ -34,7 +35,7 @@ def get_trough_wells(n: int, trough_wells: list) -> list:
 
 class DilutionPlan:
     """Represents the result of a dilution series planning."""
-    def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:float, min_transfer:float):
+    def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:typing.Union[float, typing.Sequence[float]], min_transfer:float):
         """Plans a regularly-spaced dilution series with in very few steps.
     
         Args:

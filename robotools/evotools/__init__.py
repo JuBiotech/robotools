@@ -4,6 +4,7 @@ import logging
 import math
 import numpy
 import os
+import typing
 
 from .. import liquidhandling
 
@@ -392,7 +393,7 @@ class Worklist(list):
     def reagent_distribution(self,
             src_rack_label:str, src_start:int, src_end:int,
             dst_rack_label:str, dst_start:int, dst_end:int,
-            *, volume:float, diti_reuse:int=1, multi_disp:int=1, exclude_wells:list=None,
+            *, volume:float, diti_reuse:int=1, multi_disp:int=1, exclude_wells:typing.Iterable[int]=None,
             liquid_class:str='', direction:str='left_to_right',
             src_rack_id:str='', src_rack_type:str='',
             dst_rack_id:str='', dst_rack_type:str='',

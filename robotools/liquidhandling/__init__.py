@@ -1,5 +1,6 @@
 import numpy
 import logging
+import typing
 
 logger = logging.getLogger('liquidhandling')
 
@@ -11,6 +12,7 @@ class VolumeOverflowError(Exception):
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold} in step {label}')
         else:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold}')
+
 
 class VolumeUnderflowError(Exception):
     """Error that indicates the planned underflow of a well."""
@@ -53,14 +55,14 @@ def _combine_composition(volume_A:float, composition_A:dict, volume_B:float, com
     return new_composition
 
 
-class Labware(object):
+class Labware:
     @property
-    def history(self):
+    def history(self) -> typing.List[typing.Tuple[typing.Optional[str], numpy.ndarray]]:
         """List of label/volumes history."""
         return list(zip(self._labels, self._history))
 
     @property
-    def report(self):
+    def report(self) -> str:
         """A printable report of the labware history."""
         report = self.name
         for label, state in self.history:
@@ -71,7 +73,7 @@ class Labware(object):
         return report
         
     @property
-    def volumes(self):
+    def volumes(self) -> numpy.ndarray:
         """Current volumes in the labware."""
         return self._volumes.copy()
     
@@ -81,12 +83,12 @@ class Labware(object):
         return self._wells
     
     @property
-    def indices(self) -> dict:
+    def indices(self) -> typing.Dict[str, typing.Tuple[int, int]]:
         """Mapping of well-ids to numpy indices."""
         return self._indices
     
     @property
-    def positions(self) -> dict:
+    def positions(self) -> typing.Dict[str, int]:
         """Mapping of well-ids to EVOware-compatible position numbers."""
         return self._positions
 
@@ -103,14 +105,14 @@ class Labware(object):
         return self.virtual_rows != None
 
     @property
-    def composition(self) -> dict:
+    def composition(self) -> typing.Dict[str, numpy.ndarray]:
         """Relative composition of the liquids.
         
         This dictionary maps liquid names (keys) to arrays of relative amounts in each well.
         """
         return self._composition
     
-    def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:float=None, virtual_rows:int=None):
+    def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:typing.Union[float, numpy.ndarray]=None, virtual_rows:int=None):
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
             raise ValueError(f'Invalid rows: {rows}')
@@ -177,8 +179,8 @@ class Labware(object):
         
         # initialize state variables
         self._volumes = initial_volumes.copy().astype(float)
-        self._history = [self.volumes]
-        self._labels = ['initial']
+        self._history:typing.List[numpy.ndarray] = [self.volumes]
+        self._labels:typing.List[typing.Optional[str]] = ['initial']
         self._composition = {
             self.name: numpy.ones_like(self.volumes)
         } if numpy.any(initial_volumes > 0) else {}
@@ -199,7 +201,7 @@ class Labware(object):
         }
         return well_comp
 
-    def add(self, wells, volumes:float, label:str=None, compositions:list=None):
+    def add(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:str=None, compositions:list=None):
         """Adds volumes to wells.
 
         Args:
@@ -243,7 +245,7 @@ class Labware(object):
         self.log(label)
         return
     
-    def remove(self, wells, volumes:float, label=None):
+    def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:str=None):
         """Removes volumes from wells.
 
         Args:
@@ -269,7 +271,7 @@ class Labware(object):
         self.log(label)
         return
     
-    def log(self, label):
+    def log(self, label:typing.Optional[str]):
         """Logs the current volumes to the history."""
         self._history.append(self.volumes)
         self._labels.append(label)
