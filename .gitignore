@@ -475,3 +475,4 @@ healthchecksdb
 
 # End of https://www.gitignore.io/api/python,visualstudio,visualstudiocode
 .vscode
+robotools/py.typed

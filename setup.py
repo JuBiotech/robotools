@@ -7,7 +7,9 @@ __packagename__ = 'robotools'
 
 def package_files(directory):
     assert os.path.exists(directory)
-    paths = []
+    fp_typed = pathlib.Path(__packagename__, 'py.typed')
+    fp_typed.touch()
+    paths = [str(fp_typed)]
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
