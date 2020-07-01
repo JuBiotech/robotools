@@ -20,7 +20,7 @@ test-robotools-py37:
 
 coverage-robotools:
   stage: test
-  image: python:3.6
+  image: python:3.7
   script:
     - python setup.py develop
     - pip install coverage
@@ -28,7 +28,7 @@ coverage-robotools:
 
 release-robotools:
   stage: release
-  image: python:3.6
+  image: python:3.7
   script:
     - python setup.py bdist_wheel && cp dist/*.whl .
   artifacts:
