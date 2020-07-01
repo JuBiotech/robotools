@@ -71,7 +71,7 @@ class DilutionPlan:
     
         # collect preparation instructions for each columns
         # (column, dilution steps, prepared from, transfer volumes)
-        instructions = []
+        instructions:typing.List[typing.Tuple[int, int, typing.Union[int, str], numpy.ndarray]] = []
         actual_targets = []
     
         # transfer from stock until the volume is too low
