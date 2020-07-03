@@ -112,7 +112,13 @@ class Labware:
         """
         return self._composition
     
-    def __init__(self, name:str, rows:int, columns:int, *, min_volume:float, max_volume:float, initial_volumes:typing.Union[float, numpy.ndarray]=None, virtual_rows:int=None):
+    def __init__(
+        self,
+        name:str, rows:int, columns:int, *,
+        min_volume:float, max_volume:float,
+        initial_volumes:typing.Optional[typing.Union[float, numpy.ndarray]]=None,
+        virtual_rows:typing.Optional[int]=None
+    ):
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
             raise ValueError(f'Invalid rows: {rows}')
