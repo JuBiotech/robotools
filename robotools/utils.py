@@ -6,7 +6,7 @@ from . import evotools
 from . import liquidhandling
 
 
-def get_trough_wells(n: int, trough_wells: list) -> list:
+def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Sequence[str]:
     """Creates a list that re-uses trough wells if needed.
 
     When n > trough.virtual_rows, the available wells are repeated.
@@ -144,22 +144,22 @@ class DilutionPlan:
         return output
 
     def to_worklist(
-            self, *,
-            worklist: evotools.Worklist,
-            stock: liquidhandling.Labware, stock_column: int=0,
-            diluent: liquidhandling.Labware, diluent_column: int=0,
-            dilution_plate: liquidhandling.Labware,
-            destination_plate: liquidhandling.Labware=None,
-            v_destination: float=None,
-            mix_threshold: float=0.05,
-            mix_wash: int=2,
-            mix_repeat: int=2,
-            mix_volume: float=0.8,
-            lc_stock_trough: str='Trough_Water_FD_AspLLT',
-            lc_diluent_trough: str='Trough_Water_FD_AspLLT',
-            lc_mix: str='Water_DispZmax-3_AspZmax-5',
-            lc_transfer: str='Water_FD_AspZmax-1',
-        ):
+        self, *,
+        worklist: evotools.Worklist,
+        stock: liquidhandling.Labware, stock_column: int=0,
+        diluent: liquidhandling.Labware, diluent_column: int=0,
+        dilution_plate: liquidhandling.Labware,
+        destination_plate: liquidhandling.Labware=None,
+        v_destination: float=None,
+        mix_threshold: float=0.05,
+        mix_wash: int=2,
+        mix_repeat: int=2,
+        mix_volume: float=0.8,
+        lc_stock_trough: str='Trough_Water_FD_AspLLT',
+        lc_diluent_trough: str='Trough_Water_FD_AspLLT',
+        lc_mix: str='Water_DispZmax-3_AspZmax-5',
+        lc_transfer: str='Water_FD_AspZmax-1',
+    ):
         """Writes the `DilutionPlan` to a `Worklist`.
 
         The stock is assumed to be non-sedimenting (e.g. by stirring), but all aspirations from freshly

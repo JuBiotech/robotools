@@ -7,7 +7,7 @@ logger = logging.getLogger('liquidhandling')
 
 class VolumeOverflowError(Exception):
     """Error that indicates the planned overflow of a well."""
-    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:str=None):
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None):
         if label:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold} in step {label}')
         else:
@@ -16,14 +16,17 @@ class VolumeOverflowError(Exception):
 
 class VolumeUnderflowError(Exception):
     """Error that indicates the planned underflow of a well."""
-    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:str=None):
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None):
         if label:
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold} in step {label}')
         else:
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold}')
 
 
-def _combine_composition(volume_A:float, composition_A:dict, volume_B:float, composition_B:dict):
+def _combine_composition(
+    volume_A:float, composition_A:typing.Optional[typing.Dict[str, float]],
+    volume_B:float, composition_B:typing.Optional[typing.Dict[str, float]]
+) -> typing.Optional[typing.Dict[str, float]]:
     """Computes the composition of a liquid, created by the mixing of two liquids (A and B).
 
     Args:
@@ -192,7 +195,7 @@ class Labware:
         } if numpy.any(initial_volumes > 0) else {}
         return
     
-    def get_well_composition(self, well:str) -> dict:
+    def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
         
         Keys: liquid names
@@ -207,7 +210,12 @@ class Labware:
         }
         return well_comp
 
-    def add(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:str=None, compositions:list=None):
+    def add(
+        self,
+        wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        label:typing.Optional[str]=None,
+        compositions:typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]]=None
+    ):
         """Adds volumes to wells.
 
         Args:
@@ -251,7 +259,7 @@ class Labware:
         self.log(label)
         return
     
-    def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:str=None):
+    def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:typing.Optional[str]=None):
         """Removes volumes from wells.
 
         Args:
@@ -283,7 +291,7 @@ class Labware:
         self._labels.append(label)
         return
 
-    def condense_log(self, n:int, label='last'):
+    def condense_log(self, n:int, label:typing.Optional[str]='last'):
         """Condense the last n log entries.
 
         Args:
