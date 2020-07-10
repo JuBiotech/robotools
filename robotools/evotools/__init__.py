@@ -4,6 +4,7 @@ import logging
 import math
 import numpy
 import os
+import typing
 
 from .. import liquidhandling
 
@@ -31,12 +32,14 @@ class InvalidOperationError(Exception):
     pass
 
 
-def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:float,
-        liquid_class:str='',
-        tip:Tip=Tip.Any,
-        rack_id:str='', tube_id:str='',
-        rack_type:str='', forced_rack_type:str='',
-        max_volume:int=None):
+def _prepate_aspirate_dispense_parameters(
+    rack_label:str, position:int, volume:float,
+    liquid_class:str='',
+    tip:typing.Union[Tip, int]=Tip.Any,
+    rack_id:str='', tube_id:str='',
+    rack_type:str='', forced_rack_type:str='',
+    max_volume:typing.Optional[int]=None
+):
     """Validates and prepares aspirate/dispense parameters.
 
     Args:
@@ -109,7 +112,12 @@ def _prepate_aspirate_dispense_parameters(rack_label:str, position:int, volume:f
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
-def _optimize_partition_by(source:liquidhandling.Labware, destination:liquidhandling.Labware, partition_by:str, label:str=None):
+def _optimize_partition_by(
+    source:liquidhandling.Labware,
+    destination:liquidhandling.Labware,
+    partition_by:str,
+    label:typing.Optional[str]=None
+):
     """Determines optimal partitioning settings.
 
     Args:
@@ -147,7 +155,7 @@ def _optimize_partition_by(source:liquidhandling.Labware, destination:liquidhand
     return partition_by
 
 
-def _partition_volume(volume:float, *, max_volume:int):
+def _partition_volume(volume:float, *, max_volume:int) -> typing.List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Args:
@@ -163,12 +171,17 @@ def _partition_volume(volume:float, *, max_volume:int):
         return [volume]
     isteps = math.ceil(volume / max_volume)
     step_volume = math.ceil(volume / isteps)
-    volumes = [step_volume] * (isteps - 1)
+    volumes:typing.List[float] = [step_volume] * (isteps - 1)
     volumes.append(volume - numpy.sum(volumes))
     return volumes
 
 
-def _partition_by_column(sources, destinations, volumes, partition_by:str):
+def _partition_by_column(
+    sources:typing.Iterable[str],
+    destinations:typing.Iterable[str],
+    volumes:typing.Iterable[float],
+    partition_by:str
+) -> typing.Dict[int, typing.Tuple[typing.List[str], typing.List[str], typing.List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
     Args:
@@ -228,7 +241,7 @@ class Worklist(list):
             raise ValueError('The `max_volume` parameter is required.')
         self.max_volume = max_volume
         self.auto_split = auto_split
-        return super().__init__()
+        super().__init__()
     
     def __enter__(self):
         self.clear()
@@ -252,7 +265,7 @@ class Worklist(list):
             file.write('\n'.join(self))
         return
     
-    def comment(self, comment:str):
+    def comment(self, comment:typing.Optional[str]):
         """Adds a comment.
         
         Args:
@@ -332,10 +345,12 @@ class Worklist(list):
         self.append(f'S;{diti_index}')
         return
     
-    def aspirate_well(self, rack_label:str, position:int, volume:float, *,
-            liquid_class:str='', tip:Tip=Tip.Any,
-            rack_id:str='', tube_id:str='',
-            rack_type:str='', forced_rack_type:str=''):
+    def aspirate_well(
+        self, rack_label:str, position:int, volume:float, *,
+        liquid_class:str='', tip:typing.Union[Tip, int]=Tip.Any,
+        rack_id:str='', tube_id:str='',
+        rack_type:str='', forced_rack_type:str=''
+    ):
         """Command for aspirating with a single tip.
 
         Each Aspirate record specifies the aspiration parameters for a single tip (the next unused tip from the tip selection you have specified).
@@ -360,10 +375,12 @@ class Worklist(list):
         )
         return
     
-    def dispense_well(self, rack_label:str, position:int, volume:float, *,
-            liquid_class:str='', tip:Tip=Tip.Any,
-            rack_id:str='', tube_id:str='',
-            rack_type:str='', forced_rack_type:str=''):
+    def dispense_well(
+        self, rack_label:str, position:int, volume:float, *,
+        liquid_class:str='', tip:typing.Union[Tip, int]=Tip.Any,
+        rack_id:str='', tube_id:str='',
+        rack_type:str='', forced_rack_type:str=''
+    ):
         """Command for dispensing with a single tip.
 
         Each Dispense record specifies the dispense parameters for a single tip.
@@ -389,14 +406,16 @@ class Worklist(list):
         )
         return
         
-    def reagent_distribution(self,
-            src_rack_label:str, src_start:int, src_end:int,
-            dst_rack_label:str, dst_start:int, dst_end:int,
-            *, volume:float, diti_reuse:int=1, multi_disp:int=1, exclude_wells:list=None,
-            liquid_class:str='', direction:str='left_to_right',
-            src_rack_id:str='', src_rack_type:str='',
-            dst_rack_id:str='', dst_rack_type:str='',
-        ):
+    def reagent_distribution(
+        self,
+        src_rack_label:str, src_start:int, src_end:int,
+        dst_rack_label:str, dst_start:int, dst_end:int,
+        *, volume:float, diti_reuse:int=1, multi_disp:int=1,
+        exclude_wells:typing.Optional[typing.Iterable[int]]=None,
+        liquid_class:str='', direction:str='left_to_right',
+        src_rack_id:str='', src_rack_type:str='',
+        dst_rack_id:str='', dst_rack_type:str='',
+    ):
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
         Args:
@@ -454,7 +473,15 @@ class Worklist(list):
         )
         return
     
-    def aspirate(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, **kwargs):
+    def aspirate(
+        self,
+        labware:liquidhandling.Labware,
+        wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        *,
+        label:typing.Optional[str]=None,
+        **kwargs
+    ):
         """Performs aspiration from the provided labware.
 
         Args:
@@ -475,7 +502,16 @@ class Worklist(list):
                 self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
         return
 
-    def dispense(self, labware:liquidhandling.Labware, wells:list, volumes:float, *, label=None, compositions:list=None, **kwargs):
+    def dispense(
+        self,
+        labware:liquidhandling.Labware,
+        wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        *,
+        label:typing.Optional[str]=None,
+        compositions:typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]]=None,
+        **kwargs
+    ):
         """Performs dispensing into the provided labware.
 
         Args:
@@ -497,7 +533,17 @@ class Worklist(list):
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
     
-    def transfer(self, source:liquidhandling.Labware, source_wells, destination:liquidhandling.Labware, destination_wells, volumes, *, label=None, wash_scheme=1, partition_by:str='auto', **kwargs):
+    def transfer(
+        self,
+        source:liquidhandling.Labware, source_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        destination:liquidhandling.Labware, destination_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        *,
+        label:typing.Optional[str]=None,
+        wash_scheme:int=1,
+        partition_by:str='auto',
+        **kwargs
+    ):
         """Transfer operation between two labwares.
 
         Args:
@@ -574,15 +620,18 @@ class Worklist(list):
             destination.condense_log(nsteps, label=label)
         return
         
-    def distribute(self, 
-            source:liquidhandling.Labware, source_column:int,
-            destination:liquidhandling.Labware, destination_wells:list,
-            *, volume:float, diti_reuse:int=1, multi_disp:int=1,
-            liquid_class:str='', label:str='',
-            direction:str='left_to_right',
-            src_rack_id:str='', src_rack_type:str='',
-            dst_rack_id:str='', dst_rack_type:str=''
-        ):
+    def distribute(
+        self, 
+        source:liquidhandling.Labware, source_column:int,
+        destination:liquidhandling.Labware, destination_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        *,
+        volume:float,
+        diti_reuse:int=1, multi_disp:int=1,
+        liquid_class:str='', label:str='',
+        direction:str='left_to_right',
+        src_rack_id:str='', src_rack_type:str='',
+        dst_rack_id:str='', dst_rack_type:str=''
+    ):
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
         Does NOT support large volume operations.
