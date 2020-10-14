@@ -8,6 +8,7 @@ import robotools
 from robotools import liquidhandling
 from robotools import evotools
 from robotools import janustools
+from robotools import transform
 
 
 class TestStandardLabware(unittest.TestCase):
@@ -1967,6 +1968,70 @@ class TestUtils(unittest.TestCase):
         self.assertSequenceEqual(robotools.get_trough_wells(n=7, trough_wells=list('ABC')), list('ABCABCA'))
         pass
 
+
+class TestWellShifter(unittest.TestCase):
+    def test_identity_transform(self):
+        A = (6, 8)
+        B = (8, 12)
+        shifter = transform.WellShifter(A, B, shifted_A01='A01')
+
+        original = ['A01', 'C03', 'D06', 'F08']
+        expected = ['A01', 'C03', 'D06', 'F08']
+        shifted = shifter.shift(original)
+        self.assertTrue(numpy.array_equal(expected, shifter.shift(original)))
+        self.assertTrue(numpy.array_equal(shifter.unshift(shifted), original))
+        return
+
+    def test_center_shift(self):
+        A = (6, 8)
+        B = (8, 12)
+        shifter = transform.WellShifter(A, B, shifted_A01='B03')
+
+        original = ['A01', 'C03', 'D06', 'F08']
+        expected = ['B03', 'D05', 'E08', 'G10']
+        shifted = shifter.shift(original)
+        self.assertTrue(numpy.array_equal(expected, shifter.shift(original)))
+        self.assertTrue(numpy.array_equal(shifter.unshift(shifted), original))
+        return
+
+    def test_boundcheck(self):
+        A = (6, 8)
+        B = (8, 12)
+        
+        with self.assertRaises(ValueError):
+            transform.WellShifter(A, B, shifted_A01='E03')
+
+        with self.assertRaises(ValueError):
+            transform.WellShifter(A, B, shifted_A01='B06')
+        return
+
+
+class TestWellRotator(unittest.TestCase):
+    def test_init(self):
+        rotator = transform.WellRotator(original_shape=(7,3))
+        self.assertEqual(rotator.original_shape, (7,3))
+        self.assertEqual(rotator.rotated_shape, (3,7))
+        return
+
+    def test_clockwise(self):
+        A = (6, 8)
+        rotator = transform.WellRotator(A)
+
+        original = ['A01', 'C03', 'D06', 'F08', 'B04']
+        expected = ['A06', 'C04', 'F03', 'H01', 'D05']
+        rotated = rotator.rotate_cw(original)
+        self.assertTrue(numpy.array_equal(expected, rotated))
+        return
+
+    def test_counterclockwise(self):
+        A = (6, 8)
+        rotator = transform.WellRotator(A)
+
+        original = ['A01', 'C03', 'D06', 'F08', 'B04']
+        expected = ['H01', 'F03', 'C04', 'A06', 'E02']
+        rotated = rotator.rotate_ccw(original)
+        self.assertTrue(numpy.array_equal(expected, rotated))
+        return
 
 if __name__ == '__main__':
     unittest.main()
