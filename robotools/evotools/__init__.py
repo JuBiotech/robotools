@@ -1,3 +1,5 @@
+""" Creating worklist files for the Tecan Freedom EVO.
+"""
 import collections
 import enum
 import logging
@@ -42,18 +44,29 @@ def _prepate_aspirate_dispense_parameters(
 ):
     """Validates and prepares aspirate/dispense parameters.
 
-    Args:
-        rack_label (str): user-defined labware name (max 32 characters)
-        position (int): number of the well
-        volume (float): volume in microliters (will be rounded to 2 decimal places)
-        liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-        tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
-        rack_id (str): (optional) barcode of the labware (max 32 characters)
-        tube_id (str): (optional) barcode of the tube (max 32 characters)
-        rack_type (str): (optional) configuration name of the labware (max 32 characters).
-            An error is raised if it missmatches with the underlying worktable.
-        forced_rack_type (str): (optional) overrides rack_type from worktable
-        max_volume (int): (optional) maximum allowed volume
+    Parameters
+    ----------
+    rack_label : str
+        User-defined labware name (max 32 characters)
+    position : int
+        Number of the well
+    volume : float
+        Volume in microliters (will be rounded to 2 decimal places)
+    liquid_class : str, optional
+        Overrides the liquid class for this step (max 32 characters)
+    tip : Tip or int, optional
+        Tip that will be selected (Tip or 1-8)
+    rack_id : str, optional
+        Barcode of the labware (max 32 characters)
+    tube_id : str, optional
+        Barcode of the tube (max 32 characters)
+    rack_type : str, optional
+        Configuration name of the labware (max 32 characters).
+        An error is raised if it missmatches with the underlying worktable.
+    forced_rack_type : str, optional
+        Overrides rack_type from worktable
+    max_volume : int, optional
+        Maximum allowed volume
     """
     # required parameters
     if rack_label is None:
@@ -120,14 +133,19 @@ def _optimize_partition_by(
 ):
     """Determines optimal partitioning settings.
 
-    Args:
-        source (Labware): source labware object
-        destination (Labware): destination labware object
-        partition_by (str): user-provided partitioning settings
-        label (str): label of the operation (optional)
+    Parameters
+    ----------
+    source (Labware): source labware object
+    destination (Labware): destination labware object
+    partition_by : str
+    user-provided partitioning settings
+    label : str
+    label of the operation (optional)
 
-    Returns:
-        partition_by (str): either 'source' or 'destination'
+    Returns
+    -------
+    partition_by : str
+        Either 'source' or 'destination'
     """
     if not partition_by in {'auto', 'source', 'destination'}:
         raise ValueError(f'Invalid partition_by argument: {partition_by}')
@@ -158,12 +176,17 @@ def _optimize_partition_by(
 def _partition_volume(volume:float, *, max_volume:int) -> typing.List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
-    Args:
-        volume (float): a volume to partition
-        max_volume (int): maximum volume of a pipetting step
+    Parameters
+    ----------
+    volume : float
+        A volume to partition
+    max_volume : int
+        Maximum volume of a pipetting step
 
-    Returns:
-        volumes (list): partitioned volumes
+    Returns
+    -------
+    volumes : list
+        Partitioned volumes
     """
     if volume == 0:
         return []
@@ -184,14 +207,21 @@ def _partition_by_column(
 ) -> typing.Dict[int, typing.Tuple[typing.List[str], typing.List[str], typing.List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
-    Args:
-        sources: list of source well ids
-        destinations: list of destination well ids
-        volumes: list of volumes
-        partition_by (str): either 'source' or 'destination'
+    Parameters
+    ----------
+    sources : list
+        The source well ids; same length as destinations and volumes
+    destinations : list
+        The destination well ids; same length as sources and volumes
+    volumes : list
+        The volumes; same length as sources and destinations
+    partition_by : str
+        Either 'source' or 'destination'
 
-    Returns:
-        list of (sources, destinations, volumes)
+    Returns
+    -------
+    column_groups : list
+        A list of (sources, destinations, volumes)
     """
     # first partition the wells into columns
     column_groups = collections.defaultdict(lambda: ([], [], []))
@@ -227,14 +257,19 @@ def _partition_by_column(
 
 
 class Worklist(list):
+    """ Context manager for the creation of Worklists. """
     def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True):
         """Creates a worklist writer.
 
-        Args:
-            filepath (str): optional filename/filepath to write when the context is exited (must include a .gwl extension)
-            max_volume (int): maximum aspiration volume in µl
-            auto_split (bool): If True, large volumes in transfer operations are automatically splitted.
-                If set to False, InvalidOperationError is raised when a pipetting volume exceeds max_volume.
+        Parameters
+        ----------
+        filepath : str
+            Optional filename/filepath to write when the context is exited (must include a .gwl extension)
+        max_volume : int
+            Maximum aspiration volume in µL
+        auto_split : bool
+            If `True`, large volumes in transfer operations are automatically splitted.
+            If set to `False`, `InvalidOperationError` is raised when a pipetting volume exceeds `max_volume`.
         """
         self._filepath = filepath
         if max_volume is None:
@@ -255,8 +290,10 @@ class Worklist(list):
     def save(self, filepath:str):
         """Writes the worklist to the filepath.
 
-        Args:
-            filepath (str): file name or path to write (must include a .gwl extension)
+        Parameters
+        ----------
+        filepath : str
+            File name or path to write (must include a .gwl extension)
         """
         assert '.gwl' in filepath.lower(), 'The filename did not contain the .gwl extension.'
         if os.path.exists(filepath):
@@ -268,8 +305,10 @@ class Worklist(list):
     def comment(self, comment:typing.Optional[str]):
         """Adds a comment.
         
-        Args:
-            comment (str): A single- or multi-line comment. Be nice and avoid special characters.
+        Parameters
+        ----------
+        comment : str
+            A single- or multi-line comment. Be nice and avoid special characters.
         """
         if not comment:
             return
@@ -285,9 +324,11 @@ class Worklist(list):
         """Washes fixed tips or replaces DiTis.
 
         Washes/replaces the tip that was used by the preceding aspirate record(s).
-        
-        Args:
-            scheme (int): number indicating the wash scheme (default: 1)
+
+        Parameters
+        ----------
+        scheme : int
+            Number indicating the wash scheme (default: 1)
         """
         if not scheme in {1,2,3,4}:
             raise ValueError('scheme must be either 1, 2, 3 or 4')
@@ -324,21 +365,23 @@ class Worklist(list):
     
     def set_diti(self, diti_index:int):
         """Switches the DiTi types within the worklist.
-        
+
         IMPORTANT: As the DiTi index in worklists is 1-based you have to increase the shown DiTi index by one.
-        
+
         Choose the required DiTi type by specifying the DiTi index.
         Freedom EVOware automatically assigns a unique index to each DiTi type.
         The DiTi index is shown in the Edit Labware dialog box for the DiTi labware (Well dimensions tab). 
-        
+
         The Set DiTi Type record can only be used at the very beginning of the
         worklist or directly after a Break record. A Break record always resets
         the DiTi type to the type selected in the Worklist command. Accordingly,
         if your worklist contains a Break record, you may need to specify the
         Set DiTi Type record again.
-        
-        Args:
-            diti_index (int): type of DiTis to use in subsequent steps
+
+        Parameters
+        ----------
+        diti_index : int
+            Type of DiTis to use in subsequent steps
         """
         if not (len(self) == 0 or self[-1][0] == 'B'):
             raise InvalidOperationError('DiTi type can only be switched at the beginning or after a Break/commit step. Read the docstring.')
@@ -355,17 +398,27 @@ class Worklist(list):
 
         Each Aspirate record specifies the aspiration parameters for a single tip (the next unused tip from the tip selection you have specified).
 
-        Args:
-            rack_label (str): user-defined labware name (max 32 characters)
-            position (int): number of the well
-            volume (float): volume in microliters (will be rounded to 2 decimal places)
-            liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-            tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
-            rack_id (str): (optional) barcode of the labware (max 32 characters)
-            tube_id (str): (optional) barcode of the tube (max 32 characters)
-            rack_type (str): (optional) configuration name of the labware (max 32 characters).
-                An error is raised if it missmatches with the underlying worktable.
-            forced_rack_type (str): (optional) overrides rack_type from worktable
+        Parameters
+        ----------
+        rack_label : str
+            User-defined labware name (max 32 characters)
+        position : int
+            Number of the well
+        volume : float
+            Volume in microliters (will be rounded to 2 decimal places)
+        liquid_class : str, optional
+            Overwrites the liquid class for this step (max 32 characters)
+        tip : Tip or int, optional
+            Tip that will be selected (Tip or 1-8)
+        rack_id : str, optional
+            Barcode of the labware (max 32 characters)
+        tube_id : str, optional
+            Barcode of the tube (max 32 characters)
+        rack_type : str
+            Configuration name of the labware (max 32 characters).
+            An error is raised if it missmatches with the underlying worktable.
+        forced_rack_type : str, optional
+            Overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
         (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
@@ -386,17 +439,27 @@ class Worklist(list):
         Each Dispense record specifies the dispense parameters for a single tip.
         It uses the same tip which was used by the preceding Aspirate record.
         
-        Args:
-            rack_label (str): user-defined labware name (max 32 characters)
-            position (int): number of the well
-            volume (float): volume in microliters (will be rounded to 2 decimal places)
-            liquid_class (str): (optional) overwrites the liquid class for this step (max 32 characters)
-            tip (Tip or int): (optional) tip that will be selected (Tip or 1-8)
-            rack_id (str): (optional) barcode of the labware (max 32 characters)
-            tube_id (str): (optional) barcode of the tube (max 32 characters)
-            rack_type (str): (optional) configuration name of the labware (max 32 characters).
-                An error is raised if it missmatches with the underlying worktable.
-            forced_rack_type (str): (optional) overrides rack_type from worktable
+        Parameters
+        ----------
+        rack_label : str
+            User-defined labware name (max 32 characters)
+        position : int
+            Number of the well
+        volume : float
+            Volume in microliters (will be rounded to 2 decimal places)
+        liquid_class : str, optional
+            Overwrites the liquid class for this step (max 32 characters)
+        tip : Tip or int, optional
+            Tip that will be selected (Tip or 1-8)
+        rack_id : str, optional
+            Barcode of the labware (max 32 characters)
+        tube_id : str, optional
+            Barcode of the tube (max 32 characters)
+        rack_type : str, optional
+            Configuration name of the labware (max 32 characters).
+            An error is raised if it missmatches with the underlying worktable.
+        forced_rack_type : str, optional
+            Overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
         (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
@@ -418,23 +481,40 @@ class Worklist(list):
     ):
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
-        Args:
-            src_rack_label (str): name of the source labware on the worktable
-            src_start (int): first well to be used in the source labware
-            end_start (int): last well to be used in the source labware
-            src_rack_label (str): name of the destination labware on the worktable
-            src_start (int): first well to be used in the destination labware
-            end_start (int): last well to be used in the destination labware
-            volume (float): microliters to dispense into each destination
-            diti_reuse (int): number of allowed re-uses for disposable tips
-            multi_disp (int): maximum number of allowed multi-dispenses
-            exclude_wells (list): numbers of destination wells to skip
-            liquid_class (str): liquid class to use for the operation
-            direction (str): moving direction on the destination ('left_to_right' or 'right_to_left')
-            src_rack_id (str): (optional) barcode of the source labware
-            src_rack_type (str): (optional) configuration name of the source labware
-            dst_rack_id (str): (optional) barcode of the destination labware
-            dst_rack_type (str): (optional) configuration name of the destination labware
+        Parameters
+        ----------
+        src_rack_label : str
+            Name of the source labware on the worktable
+        src_start : int
+            First well to be used in the source labware
+        end_start : int
+            Last well to be used in the source labware
+        src_rack_label : str
+            Name of the destination labware on the worktable
+        src_start : int
+            First well to be used in the destination labware
+        end_start :int
+            Last well to be used in the destination labware
+        volume : float
+            Microliters to dispense into each destination
+        diti_reuse : int
+            Number of allowed re-uses for disposable tips
+        multi_disp : int
+            Maximum number of allowed multi-dispenses
+        exclude_wells : list
+            Numbers of destination wells to skip
+        liquid_class : str
+            Liquid class to use for the operation
+        direction : str
+            Moving direction on the destination ('left_to_right' or 'right_to_left')
+        src_rack_id : str, optional
+            Barcode of the source labware
+        src_rack_type : str, optional
+            Configuration name of the source labware
+        dst_rack_id : str, optional
+            Barcode of the destination labware
+        dst_rack_type : str, optional
+            Configuration name of the destination labware
         """
         # check & convert arguments
         if not direction in {'left_to_right', 'right_to_left'}:
@@ -484,12 +564,18 @@ class Worklist(list):
     ):
         """Performs aspiration from the provided labware.
 
-        Args:
-            labware (liquidhandling.Labware): source labware
-            wells (str or iterable): list of well ids
-            volumes (float or iterable): volume(s) to aspirate
-            label (str): label of the operation to log into labware history
-            kwargs: additional keyword arguments to pass to `aspirate_well`
+        Parameters
+        ----------
+        labware : liquidhandling.Labware
+            Source labware
+        wells : str or iterable
+            List of well ids
+        volumes : float or iterable
+            Volume(s) to aspirate
+        label : str
+            Label of the operation to log into labware history
+        kwargs
+            Additional keyword arguments to pass to `aspirate_well`
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -514,13 +600,20 @@ class Worklist(list):
     ):
         """Performs dispensing into the provided labware.
 
-        Args:
-            labware (liquidhandling.Labware): source labware
-            wells (str or iterable): list of well ids
-            volumes (float or iterable): volume(s) to dispense
-            label (str): label of the operation to log into labware history
-            compositions (list): iterable of liquid compositions
-            kwargs: additional keyword arguments to pass to `dispense_well`
+        Parameters
+        ----------
+        labware : liquidhandling.Labware
+            Source labware
+        wells : str or iterable
+            List of well ids
+        volumes : float or iterable
+            Volume(s) to dispense
+        label : str
+            Label of the operation to log into labware history
+        compositions : list
+            Iterable of liquid compositions
+        kwargs
+            Additional keyword arguments to pass to `dispense_well`
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -546,19 +639,29 @@ class Worklist(list):
     ):
         """Transfer operation between two labwares.
 
-        Args:
-            source (liquidhandling.Labware): source labware
-            source_wells (str or iterable): list of source well ids
-            destination (liquidhandling.Labware): destination labware
-            destination_wells (str or iterable): list of destination well ids
-            volumes (float or iterable): volume(s) to transfer
-            label (str): label of the operation to log into labware history
-            wash_scheme (int): wash scheme to apply after every tip use
-            partition_by (str): one of 'auto' (default), 'source' or 'destination'
+        Parameters
+        ----------
+        source : liquidhandling.Labware
+            Source labware
+        source_wells : str or iterable
+            List of source well ids
+        destination : liquidhandling.Labware
+            Destination labware
+        destination_wells : str or iterable
+            List of destination well ids
+        volumes : float or iterable
+            Volume(s) to transfer
+        label : str
+            Label of the operation to log into labware history
+        wash_scheme : int
+            Wash scheme to apply after every tip use
+        partition_by : str
+            one of 'auto' (default), 'source' or 'destination'
                 'auto': partitioning by source unless the source is a Trough
                 'source': partitioning by source columns
                 'destination': partitioning by destination columns
-            kwargs: additional keyword arguments to pass to aspirate and dispense
+        kwargs
+            Additional keyword arguments to pass to aspirate and dispense
         """
         # reformat the convenience parameters
         source_wells = numpy.array(source_wells).flatten('F')
@@ -636,21 +739,36 @@ class Worklist(list):
 
         Does NOT support large volume operations.
 
-        Args:
-            source (liquidhandling.Labware): source labware with virtual_rows (a Trough)
-            source_column (int): 0-based column number of the reagent in the source labware
-            destination (liquidhandling.Labware): destination labware
-            destination_wells (array-like): list or array of destination wells
-            volume (float): microliters to dispense into each destination
-            multi_disp (int): maximum number of allowed multi-dispenses
-            liquid_class (str): liquid class to use for the operation
-            label (str): label of the operation
-            diti_reuse (int): number of allowed re-uses for disposable tips
-            direction (str): moving direction on the destination ('left_to_right' or 'right_to_left')
-            src_rack_id (str): (optional) barcode of the source labware
-            src_rack_type (str): (optional) configuration name of the source labware
-            dst_rack_id (str): (optional) barcode of the destination labware
-            dst_rack_type (str): (optional) configuration name of the destination labware
+        Parameters
+        ----------
+        source : liquidhandling.Labware
+            Source labware with virtual_rows (a Trough)
+        source_column : int
+            0-based column number of the reagent in the source labware
+        destination : liquidhandling.Labware
+            Destination labware
+        destination_wells : array-like
+            List or array of destination wells
+        volume : float
+            Microliters to dispense into each destination
+        multi_disp : int
+            Maximum number of allowed multi-dispenses
+        liquid_class : str
+            Liquid class to use for the operation
+        label : str
+            Label of the operation
+        diti_reuse : int
+            Number of allowed re-uses for disposable tips
+        direction : str
+            Moving direction on the destination ('left_to_right' or 'right_to_left')
+        src_rack_id : str, optional
+            Barcode of the source labware
+        src_rack_type : str, optional
+            Configuration name of the source labware
+        dst_rack_id : str, optional
+            Barcode of the destination labware
+        dst_rack_type : str
+            Configuration name of the destination labware
         """
         if source.virtual_rows is None:
             raise ValueError(f'Reagent distribution only works with Trough sources. "{source.name}" is not a Trough.')

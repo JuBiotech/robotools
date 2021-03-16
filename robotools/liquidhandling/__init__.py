@@ -29,14 +29,21 @@ def _combine_composition(
 ) -> typing.Optional[typing.Dict[str, float]]:
     """Computes the composition of a liquid, created by the mixing of two liquids (A and B).
 
-    Args:
-        volume_A (float): volume of liquid A
-        composition_A (dict): relative composition of liquid A
-        volume_B (float): volume of liquid B
-        composition_B (dict): relative composition of liquid B
+    Parameters
+    ----------
+    volume_A : float
+        Volume of liquid A
+    composition_A : dict
+        Relative composition of liquid A
+    volume_B : float
+        Volume of liquid B
+    composition_B : dict
+        Relative composition of liquid B
 
-    Returns:
-        composition (dict): composition of the new liquid created by mixing the given volumes of A and B
+    Returns
+    -------
+    composition : dict
+        Composition of the new liquid created by mixing the given volumes of A and B
     """
     if composition_A is None or composition_B is None:
         return None
@@ -59,6 +66,7 @@ def _combine_composition(
 
 
 class Labware:
+    """ Represents an array of liquid cavities. """
     @property
     def history(self) -> typing.List[typing.Tuple[typing.Optional[str], numpy.ndarray]]:
         """List of label/volumes history."""
@@ -122,6 +130,28 @@ class Labware:
         initial_volumes:typing.Optional[typing.Union[float, numpy.ndarray]]=None,
         virtual_rows:typing.Optional[int]=None
     ):
+        """ Creates a `Labware` object.
+
+        Parameters
+        ----------
+        name : str
+            Label that the labware is identified by.
+        rows : int
+            Number of rows in the labware
+        columns : int
+            Number of columns in the labware
+        min_volume : float
+            Filling volume that must remain after an aspirate operation.
+        max_volume : float
+            Maximum volume that must not be exceeded after a dispense.
+        initial_volumes : float, array-like, optional
+            Initial filling volume of the wells (default: 0)
+        virtual_rows : int, optional
+            When specified to a positive number, the `Labware` is treated as a trough.
+            Must be used in combination with `rows=1`.
+            For example: A `Labware` with virtual rows can be accessed with 6 Tips,
+            but has just one row in the `volumes` array.
+        """
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
             raise ValueError(f'Invalid rows: {rows}')
@@ -198,8 +228,16 @@ class Labware:
     def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
         
-        Keys: liquid names
-        Values: relative amount
+        Parameters
+        ----------
+        well : str
+            ID of the well for which to retrieve the composition.
+
+        Returns
+        -------
+        composition : dict
+            Keys: liquid names
+            Values: relative amount
         """
         if self._composition is None:
             return None
@@ -218,11 +256,16 @@ class Labware:
     ):
         """Adds volumes to wells.
 
-        Args:
-            wells: iterable of well ids
-            volumes (int or float): scalar or iterable of volumes
-            label (str): description of the operation
-            compositions (iterable): list of composition dictionaries ({ name : relative amount })
+        Parameters
+        ----------
+        wells : iterable of str
+            Well ids
+        volumes : float, iterable of float
+            Scalar or iterable of volumes
+        label : str
+            Description of the operation
+        compositions : iterable
+            List of composition dictionaries ({ name : relative amount })
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -262,10 +305,14 @@ class Labware:
     def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:typing.Optional[str]=None):
         """Removes volumes from wells.
 
-        Args:
-            wells: iterable of well ids
-            volumes (int or float): scalar or iterable of volumes
-            label (str): description of the operation
+        Parameters
+        ----------
+        wells : iterable of str
+            Well ids
+        volumes : float, iterable of float
+            Scalar or iterable of volumes
+        label : str
+            Description of the operation
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -286,7 +333,13 @@ class Labware:
         return
     
     def log(self, label:typing.Optional[str]):
-        """Logs the current volumes to the history."""
+        """Logs the current volumes to the history.
+
+        Parameters
+        ----------
+        label : str
+            A label to insert in the history.
+        """
         self._history.append(self.volumes)
         self._labels.append(label)
         return
@@ -294,9 +347,12 @@ class Labware:
     def condense_log(self, n:int, label:typing.Optional[str]='last'):
         """Condense the last n log entries.
 
-        Args:
-            n (int): number of log entries to condense
-            label (str): 'first', 'last' or label of the condensed entry (default: label of the last entry in the condensate)
+        Parameters
+        ----------
+        n : int
+            Number of log entries to condense
+        label : str
+            'first', 'last' or label of the condensed entry (default: label of the last entry in the condensate)
         """
         if label == 'first':
             label = self._labels[len(self._labels)-n]
@@ -310,9 +366,9 @@ class Labware:
         self._labels.append(label)
         self._history.append(state)
         return
-        
+
     def __repr__(self):
         return f'{self.name}\n{numpy.round(self.volumes, decimals=1)}'
-    
+
     def __str__(self):
         return self.__repr__()
