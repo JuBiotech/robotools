@@ -7,7 +7,6 @@ import unittest
 import robotools
 from robotools import liquidhandling
 from robotools import evotools
-from robotools import janustools
 from robotools import transform
 
 

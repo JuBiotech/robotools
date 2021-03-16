@@ -1,6 +1,5 @@
 from . import liquidhandling
 from . import evotools
-from . import janustools
 from . utils import DilutionPlan, get_trough_wells
 from . transform import WellShifter, WellRotator
 
