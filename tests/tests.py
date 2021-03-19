@@ -1952,10 +1952,10 @@ class TestDilutionPlan(unittest.TestCase):
             xmin=0.01, xmax=10,
             R=3, C=4,
             stock=stock_concentration, mode='log',
-            vmax=[1000,1100,980,500], min_transfer=50
+            vmax=[1000, 1900, 980, 500], min_transfer=50,
         )
         stock = liquidhandling.Trough('Stock', 2, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
-        diluent = liquidhandling.Trough('Diluent', 4, 2, min_volume=0, max_volume=10000, initial_volumes=[0,10000])
+        diluent = liquidhandling.Trough('Diluent', 4, 2, min_volume=0, max_volume=20_000, initial_volumes=[0,20_000])
         dilution = liquidhandling.Labware('Dilution', 6, 8, min_volume=0, max_volume=2000)
         destination = liquidhandling.Labware('Destination', 7, 10, min_volume=0, max_volume=1000)
         with evotools.Worklist() as wl:
@@ -1964,13 +1964,17 @@ class TestDilutionPlan(unittest.TestCase):
                 stock=stock, stock_column=0,
                 diluent=diluent, diluent_column=1,
                 dilution_plate=dilution,
-                destination_plate=destination, v_destination=200
+                destination_plate=destination, v_destination=200,
+                mix_volume=0.75
             )
         # assert the achieved concentrations in the destination
         numpy.testing.assert_array_almost_equal(
             plan.x,
             destination.composition['Stock'][:plan.R,:plan.C] * stock_concentration
         )
+        assert "Mix column 0 with 75 % of its volume" in dilution.report
+        assert "Mix column 1 with 50 % of its volume" in dilution.report
+        pass
         pass
 
 

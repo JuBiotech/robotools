@@ -275,13 +275,15 @@ class DilutionPlan:
             # mixing time!
             if numpy.any(v_src > mix_threshold * self.vmax[col]):
                 for r in range(mix_repeat):
+                    mix_vol = min(worklist.max_volume, self.vmax[col] * mix_volume)
+                    mix_fraction = round(mix_vol / self.vmax[col], 2)
                     worklist.transfer(
                         dilution_plate, dilution_plate.wells[:self.R, col],
                         dilution_plate, dilution_plate.wells[:self.R, col],
-                        volumes=min(worklist.max_volume, self.vmax[col] * mix_volume),
+                        volumes=mix_vol,
                         liquid_class=lc_mix,
                         wash_scheme=mix_wash if r < mix_repeat - 1 else 1,
-                        label=f'Mix column {col} with {mix_volume*100:.0f}% of its volume'
+                        label=f'Mix column {col} with {mix_fraction*100:.0f} % of its volume'
                     )
                     worklist.commit()
 
