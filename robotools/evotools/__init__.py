@@ -685,6 +685,7 @@ class Worklist(list):
         # the label applies to the entire transfer operation and is not logged at individual aspirate/dispense steps
         self.comment(label)
         nsteps = 0
+        lvh_extra = 0
 
         for srcs, dsts, vols in _partition_by_column(source_wells, destination_wells, volumes, partition_by):
             # make vector of volumes into vector of volume-lists
@@ -694,6 +695,8 @@ class Worklist(list):
             ]
             # transfer from this source column until all wells are done
             npartitions = max(map(len, vols))
+            # Count only the extra steps created by LVH
+            lvh_extra += sum([len(vs) - 1 for vs in vols])
             for p in range(npartitions):
                 naccessed = 0
                 # iterate the rows
@@ -715,8 +718,14 @@ class Worklist(list):
             if npartitions > 1:
                 self.commit()
 
-        # condense the labware logs into one operation
-        # this is done after creating the worklist to facilitate debugging
+        # Condense the labware logs into one operation
+        # after the transfer operation completed to facilitate debugging.
+        # Also include the number of extra steps because of LVH if applicable.
+        if lvh_extra:
+            if label:
+                label = f"{label} ({lvh_extra} LVH steps)"
+            else:
+                label = f"{lvh_extra} LVH steps"
         if destination == source:
             source.condense_log(nsteps*2, label=label)
         else:

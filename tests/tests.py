@@ -237,8 +237,8 @@ class TestTroughLabware(unittest.TestCase):
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
             trough.remove(['A01', 'B01'], 2000)
         return
-        
-    
+
+
 class TestWorklist(unittest.TestCase):
     def test_context(self):
         with evotools.Worklist() as worklist:
@@ -1134,7 +1134,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
             with self.assertRaises(evotools.InvalidOperationError):
                 wl.dispense_well('WaterTrough', 1, 1000)
             with self.assertRaises(evotools.InvalidOperationError):
-                wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)                
+                wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)
             with self.assertRaises(evotools.InvalidOperationError):
                 wl.dispense(source, ['A01', 'A02', 'C02'], 1000)
             with self.assertRaises(evotools.InvalidOperationError):
@@ -1145,7 +1145,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         with evotools.Worklist(max_volume=1200) as wl:
             wl.aspirate_well('WaterTrough', 1, 1000)
             wl.dispense_well('WaterTrough', 1, 1000)
-            wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)                
+            wl.aspirate(source, ['A01', 'A02', 'C02'], 1000)
             wl.dispense(source, ['A01', 'A02', 'C02'], 1000)
             wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
         return
@@ -1257,9 +1257,11 @@ class TestLargeVolumeHandling(unittest.TestCase):
             wl.transfer(
                 src, 'A01',
                 dst, 'A01',
-                2000
+                2000,
+                label="Transfer more than 2x the max"
             )
             self.assertEqual(wl, [
+                'C;Transfer more than 2x the max',
                 'A;A;;;1;;667.00;;;;',
                 'D;B;;;1;;667.00;;;;',
                 'W1;',
@@ -1273,6 +1275,9 @@ class TestLargeVolumeHandling(unittest.TestCase):
                 'W1;',
                 'B;',   # always break after partitioning
             ])
+        # Two extra steps were necessary because of LVH
+        assert "Transfer more than 2x the max (2 LVH steps)" in src.report
+        assert "Transfer more than 2x the max (2 LVH steps)" in dst.report
         self.assertTrue(numpy.array_equal(src.volumes, [
             [12000-2000, 12000],
             [12000, 12000],
@@ -1373,6 +1378,15 @@ class TestLargeVolumeHandling(unittest.TestCase):
                 'W1;',
                 'B;',   # tailing break after partitioning
             ])
+
+        # How the number of splits is calculated:
+        # 1500 is split 2x → 1 extra
+        # 250 is not split
+        # 1200 is split 2x → 1 extra
+        # 3000 is split 4x → 3 extra
+        # Sum of extra steps: 5
+        assert "5 LVH steps" in src.report
+        assert "5 LVH steps" in dst.report
         self.assertTrue(numpy.array_equal(src.volumes, [
             [12000-1500, 12000-1200],
             [12000-250, 12000-3000],
