@@ -15,6 +15,7 @@ logger = logging.getLogger('evotools')
 
 
 class Labwares(str, enum.Enum):
+    """Built-in EVOware labware identifiers."""
     SystemLiquid = 'Systemliquid'
 
 
