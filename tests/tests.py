@@ -1975,6 +1975,78 @@ class TestDilutionPlan(unittest.TestCase):
         assert "Mix column 0 with 75 % of its volume" in dilution.report
         assert "Mix column 1 with 50 % of its volume" in dilution.report
         pass
+
+    def test_to_worklist_hooks(self):
+        stock_concentration = 123
+        plan = robotools.DilutionPlan(
+            xmin=1, xmax=123,
+            R=3, C=4,
+            stock=stock_concentration, mode='log',
+            vmax=1000,
+            min_transfer=50,
+        )
+        stock = liquidhandling.Trough('Stock', 2, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
+        diluent = liquidhandling.Trough('Diluent', 4, 2, min_volume=0, max_volume=10000, initial_volumes=[0,10000])
+        dilution = liquidhandling.Labware('Dilution', 3, 4, min_volume=0, max_volume=2000)
+
+        # Multiple destinations; transferred to via a hook
+        destinations = [
+            robotools.Labware('DestinationOne', 3, 2, min_volume=0, max_volume=1000),
+            robotools.Labware('DestinationTwo', 3, 2, min_volume=0, max_volume=1000),
+        ]
+
+        # Split the work across two worklists (also via the hook)
+        wl_one = robotools.Worklist()
+        wl_two = robotools.Worklist()
+
+        def pre_mix(col, wl):
+            wl.comment(f"Pre-mix on column {col}")
+            if col == 1:
+                return wl_two
+
+        def post_mix(col, wl):
+            wl.comment(f"Post-mix on column {col}")
+            if col == 1:
+                wl.transfer(
+                    dilution, dilution.wells[:, 0:2],
+                    destinations[0], destinations[0].wells[:, :],
+                    volumes=100
+                )
+            elif col == 3:
+                wl.transfer(
+                    dilution, dilution.wells[:, 2:4],
+                    destinations[1], destinations[1].wells[:, :],
+                    volumes=100
+                )
+
+        plan.to_worklist(
+            worklist=wl_one,
+            stock=stock, stock_column=0,
+            diluent=diluent, diluent_column=1,
+            dilution_plate=dilution,
+            pre_mix_hook=pre_mix,
+            post_mix_hook=post_mix,
+        )
+
+        assert len(wl_two) > 0
+        assert "C;Pre-mix on column 0" in wl_one
+        assert "C;Pre-mix on column 1" in wl_one
+        assert "C;Pre-mix on column 2" in wl_two
+        assert "C;Pre-mix on column 3" in wl_two
+
+        assert "C;Post-mix on column 0" in wl_one
+        assert "C;Post-mix on column 1" in wl_two # worklist switched in the mix hook!
+        assert "C;Post-mix on column 2" in wl_two
+        assert "C;Post-mix on column 3" in wl_two
+
+        numpy.testing.assert_almost_equal(
+            destinations[0].composition["Stock"] * stock_concentration,
+            plan.x[:, [0, 1]]
+        )
+        numpy.testing.assert_almost_equal(
+            destinations[1].composition["Stock"] * stock_concentration,
+            plan.x[:, [2, 3]]
+        )
         pass
 
 

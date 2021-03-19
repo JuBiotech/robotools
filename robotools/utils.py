@@ -165,6 +165,8 @@ class DilutionPlan:
         dilution_plate: liquidhandling.Labware,
         destination_plate: liquidhandling.Labware=None,
         v_destination: float=None,
+        pre_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
+        post_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
         mix_threshold: float=0.05,
         mix_wash: int=2,
         mix_repeat: int=2,
@@ -195,20 +197,40 @@ class DilutionPlan:
         diluent : Labware
             A trough containing the diluent for the dilution series
         diluent_column : int
-            0-based column number of the diluent solution in the `stock` labware        
+            0-based column number of the diluent solution in the `stock` labware
         dilution_plate : Labware
             An (empty) labware to use for the dilution series (begins in top left corner)
         destination_plate : Labware, optional
-            An (empty) labware to transfer to
+            An (empty) labware to transfer to.
+            Consider passing a `post_mix_hook` if you want to have more control over these transfers.
         v_destination : float
             Volume [µl] to transfer to the `destination_plate` (if set)
+        pre_mix_hook : callable, optional
+            Arguments of the callable, if specified:
+                The 0-indexed number of the freshly DILUTED column.
+                The currently active worklist.
+
+            It may return a `Worklist` which will be used for subsequent steps.
+
+            Can be used as a more flexible alternative to `mix_*` settings,
+            for example to perform custom mixing, or switch to another worklist for subsequent steps.
+        post_mix_hook : callable, optional
+            Arguments of the callable, if specified:
+                The 0-indexed number of the freshly MIXED column.
+                The currently active worklist.
+
+            It may return a `Worklist` which will be used for subsequent steps.
+
+            Can be used as a more flexible alternative to specifying a `destination_plate`, for example to transfer
+            to multiple destinations.
         mix_threshold : float
             Maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
         mix_wash : int
             Number of the wash scheme inbetween mixing steps
             The recommended wash scheme is 0 mL + 1 mL with fast wash.
         mix_repeat : int
-            How often to mix after diluting
+            How often to mix after diluting.
+            May be set to 0, particularly when combined with a `pre_mix_hook`.
         mix_volume : float
             Fraction of well volume to mix with (upper bound is the Worklist.max_volume)
         lc_stock_trough : str
@@ -272,6 +294,11 @@ class DilutionPlan:
             )
             worklist.commit()
 
+            if callable(pre_mix_hook):
+                new_wl = pre_mix_hook(col, worklist)
+                if new_wl is not None:
+                    worklist = new_wl
+
             # mixing time!
             if numpy.any(v_src > mix_threshold * self.vmax[col]):
                 for r in range(mix_repeat):
@@ -286,6 +313,11 @@ class DilutionPlan:
                         label=f'Mix column {col} with {mix_fraction*100:.0f} % of its volume'
                     )
                     worklist.commit()
+
+            if callable(post_mix_hook):
+                new_wl = post_mix_hook(col, worklist)
+                if new_wl is not None:
+                    worklist = new_wl
 
             # transfer to other columns that will be prepared from this one
             for dst, v_dst in serial_dilution_from_to[col]:
