@@ -1,6 +1,7 @@
 import numpy
 import logging
 import typing
+import warnings
 
 logger = logging.getLogger('liquidhandling')
 
@@ -165,7 +166,13 @@ class Labware:
             raise ValueError('When using virtual_rows, the number of rows must be == 1')
         if virtual_rows is not None and virtual_rows < 1:
             raise ValueError(f'Invalid virtual_rows: {virtual_rows}')
-                
+        if virtual_rows and not isinstance(self, Trough):
+            warnings.warn(
+                "Troughs should be created with the robotools.Trough class.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # explode convenience parameters
         if initial_volumes is None:
             initial_volumes = 0
@@ -372,3 +379,42 @@ class Labware:
 
     def __str__(self):
         return self.__repr__()
+
+
+class Trough(Labware):
+    """Special type of labware that can be accessed by many pipette tips in parallel."""
+    def __init__(
+        self,
+        name: str,
+        virtual_rows: int, columns: int, *,
+        min_volume: float, max_volume: float,
+        initial_volumes: typing.Optional[typing.Union[float, numpy.ndarray]]=None,
+    ):
+        """ Creates a `Labware` object.
+
+        Parameters
+        ----------
+        name : str
+            Label that the labware is identified by.
+        virtual_rows : int, optional
+            Number of tips that may access the trough in parallel.
+            For example: A `Labware` with virtual rows can be accessed with 6 Tips,
+            but has just one row in the `volumes` array.
+        columns : int
+            Number of columns in the labware
+        min_volume : float
+            Filling volume that must remain after an aspirate operation.
+        max_volume : float
+            Maximum volume that must not be exceeded after a dispense.
+        initial_volumes : float, array-like, optional
+            Initial filling volume of the wells (default: 0)
+        """
+        super().__init__(
+            name=name,
+            rows=1,
+            columns=columns,
+            min_volume=min_volume,
+            max_volume=max_volume,
+            initial_volumes=initial_volumes,
+            virtual_rows=virtual_rows
+        )
