@@ -4,10 +4,9 @@
 # Robotools
 This is a package for debugging and planning liquid handling operations.
 
-Head over to the [examples](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/tree/master/examples) to see more:
-+ [Labware](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/examples/Liquidhandling_Labware.ipynb)
-+ [Planning a dilution series](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/examples/Liquidhandling_DilutionSeries.ipynb)
-+ [Creating a worklist to pipet an assay](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/examples/Evotools_AssayPreparation.ipynb)
-+ [Advanced worklist commands](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/examples/Evotools_Advanced.ipynb)
-
-
+Head over to the [notebooks](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/tree/master/notebooks) to see more:
++ [01 Labware Basics](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/notebooks/01_Labware_Basics.ipynb)
++ [02 Worklist Basics](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/notebooks/02_Worklist_Basics.ipynb)
++ [03 Large Volumes and Composition Tracking](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/notebooks/03_Large_Volumes_and_Composition_Tracking.ipynb)
++ [04 DilutionPlan](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/notebooks/04_DilutionPlan.ipynb)
++ [05 Advanced Worklist Commands](https://jugit.fz-juelich.de/IBG-1/micropro/robotools/blob/master/notebooks/05_Advanced_Worklist_Commands.ipynb)

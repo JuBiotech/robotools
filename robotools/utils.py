@@ -11,12 +11,17 @@ def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Seque
 
     When n > trough.virtual_rows, the available wells are repeated.
     
-    Args:
-        n (int): number of trough wells to work with
-        trough_wells (list): trough well IDs that may be used
+    Parameters
+    ----------
+    n : int
+        Number of trough wells to work with
+    trough_wells : list
+        Trough well IDs that may be used
 
-    Returns:
-        wells (list): n virtual wells in the trough
+    Returns
+    -------
+    wells : list
+        n virtual wells in the trough
     """
     if not isinstance(n, int):
         raise TypeError('n must be int')
@@ -38,15 +43,24 @@ class DilutionPlan:
     def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:typing.Union[float, typing.Sequence[float]], min_transfer:float):
         """Plans a regularly-spaced dilution series with in very few steps.
     
-        Args:
-            xmin (float): lowest concentration value in the result
-            xmax (float): highest concentration in the result
-            R (int): number of rows in the MTP
-            C (int): number of colums in the MTP
-            stock (float): stock concentration (must be >= xmax)
-            mode (str): either 'log' or 'linear'
-            vmax (float): scalar or vector-valued (C,) maximum volume [µL] in the dilution series
-            min_transfer (float): minimum allowed volume [µL] for transfer steps
+        Parameters
+        ----------
+        xmin : float
+            Lowest concentration value in the result
+        xmax : float
+            Highest concentration in the result
+        R : int
+            Number of rows in the MTP
+        C : int
+            Number of colums in the MTP
+        stock : float
+            Stock concentration (must be >= xmax)
+        mode : str
+            Either 'log' or 'linear'
+        vmax : float
+            Scalar or vector-valued (C,) maximum volume [µL] in the dilution series
+        min_transfer : float
+            Minimum allowed volume [µL] for transfer steps
         """
         # process arguments
         if stock < xmax:
@@ -133,7 +147,7 @@ class DilutionPlan:
         output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \
             f' from at least {self.v_stock} µL stock and {self.v_diluent} µL diluent:'
         for c, dsteps, src, vtransfer in self.instructions:
-            output += f'\r\n\tPrepare column {c+1} with {vtransfer} µL from '
+            output += f'\r\n   Prepare column {c+1} with {vtransfer} µL from '
             if dsteps == 0:
                 output += 'stock'
             else:
@@ -151,6 +165,8 @@ class DilutionPlan:
         dilution_plate: liquidhandling.Labware,
         destination_plate: liquidhandling.Labware=None,
         v_destination: float=None,
+        pre_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
+        post_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
         mix_threshold: float=0.05,
         mix_wash: int=2,
         mix_repeat: int=2,
@@ -170,24 +186,61 @@ class DilutionPlan:
 
         Stock and diluent troughs may have less rows than the dilution plate.
 
-        Args:
-            worklist (Worklist): a Worklist that will be appended
-            stock (Labware): a trough containing the highly concentrated stock solution
-            stock_column (int): 0-based column number of the stock solution in the `stock` labware
-            diluent (Labware): a trough containing the diluent for the dilution series
-            diluent_column (int): 0-based column number of the diluent solution in the `stock` labware        
-            dilution_plate (Labware): an (empty) labware to use for the dilution series (begins in top left corner)
-            destination_plate (Labware, optional): an (empty) labware to transfer to
-            v_destination (float): volume [µl] to transfer to the `destination_plate` (if set)
-            mix_threshold (float): maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
-            mix_wash (int): number of the wash scheme inbetween mixing steps
-                The recommended wash scheme is 0 mL + 1 mL with fast wash.
-            mix_repeat (int): how often to mix after diluting
-            mix_volume (float): fraction of well volume to mix with (upper bound is the Worklist.max_volume)
-            lc_stock_trough (str): liquid class to use for transfer of stock solution to the dilution plate
-            lc_diluent_trough (str): liquid class to use for transfer of diluent to dilution plate
-            lc_mix (str): liquid class for mixing steps
-            lc_transfer (str): liquid class for transfers within the `dilution_plate` and to the `destination_plate`
+        Parameters
+        ----------
+        worklist : Worklist
+            A Worklist that will be appended
+        stock : Labware
+            A trough containing the highly concentrated stock solution
+        stock_column : int
+            0-based column number of the stock solution in the `stock` labware
+        diluent : Labware
+            A trough containing the diluent for the dilution series
+        diluent_column : int
+            0-based column number of the diluent solution in the `stock` labware
+        dilution_plate : Labware
+            An (empty) labware to use for the dilution series (begins in top left corner)
+        destination_plate : Labware, optional
+            An (empty) labware to transfer to.
+            Consider passing a `post_mix_hook` if you want to have more control over these transfers.
+        v_destination : float
+            Volume [µl] to transfer to the `destination_plate` (if set)
+        pre_mix_hook : callable, optional
+            Arguments of the callable, if specified:
+                The 0-indexed number of the freshly DILUTED column.
+                The currently active worklist.
+
+            It may return a `Worklist` which will be used for subsequent steps.
+
+            Can be used as a more flexible alternative to `mix_*` settings,
+            for example to perform custom mixing, or switch to another worklist for subsequent steps.
+        post_mix_hook : callable, optional
+            Arguments of the callable, if specified:
+                The 0-indexed number of the freshly MIXED column.
+                The currently active worklist.
+
+            It may return a `Worklist` which will be used for subsequent steps.
+
+            Can be used as a more flexible alternative to specifying a `destination_plate`, for example to transfer
+            to multiple destinations.
+        mix_threshold : float
+            Maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
+        mix_wash : int
+            Number of the wash scheme inbetween mixing steps
+            The recommended wash scheme is 0 mL + 1 mL with fast wash.
+        mix_repeat : int
+            How often to mix after diluting.
+            May be set to 0, particularly when combined with a `pre_mix_hook`.
+        mix_volume : float
+            Fraction of well volume to mix with (upper bound is the Worklist.max_volume)
+        lc_stock_trough : str
+            Liquid class to use for transfer of stock solution to the dilution plate
+        lc_diluent_trough : str
+            Liquid class to use for transfer of diluent to dilution plate
+        lc_mix : str
+            Liquid class for mixing steps
+        lc_transfer : str
+            Liquid class for transfers within the `dilution_plate` and to the `destination_plate`
         """
         if dilution_plate.n_rows < self.R:
             raise ValueError(f'Dilution plate "{dilution_plate.name}" has not enough rows for this dilution plan.')
@@ -241,18 +294,30 @@ class DilutionPlan:
             )
             worklist.commit()
 
+            if callable(pre_mix_hook):
+                new_wl = pre_mix_hook(col, worklist)
+                if new_wl is not None:
+                    worklist = new_wl
+
             # mixing time!
             if numpy.any(v_src > mix_threshold * self.vmax[col]):
                 for r in range(mix_repeat):
+                    mix_vol = min(worklist.max_volume, self.vmax[col] * mix_volume)
+                    mix_fraction = round(mix_vol / self.vmax[col], 2)
                     worklist.transfer(
                         dilution_plate, dilution_plate.wells[:self.R, col],
                         dilution_plate, dilution_plate.wells[:self.R, col],
-                        volumes=min(worklist.max_volume, self.vmax[col] * mix_volume),
+                        volumes=mix_vol,
                         liquid_class=lc_mix,
                         wash_scheme=mix_wash if r < mix_repeat - 1 else 1,
-                        label=f'Mix column {col} with {mix_volume*100:.0f}% of its volume'
+                        label=f'Mix column {col} with {mix_fraction*100:.0f} % of its volume'
                     )
                     worklist.commit()
+
+            if callable(post_mix_hook):
+                new_wl = post_mix_hook(col, worklist)
+                if new_wl is not None:
+                    worklist = new_wl
 
             # transfer to other columns that will be prepared from this one
             for dst, v_dst in serial_dilution_from_to[col]:

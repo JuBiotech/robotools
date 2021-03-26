@@ -4,12 +4,17 @@ import numpy
 def make_well_index_dict(R:int, C:int):
     """Create a dictionary mapping well IDs to their numpy indices.
     
-    Args:
-        R (int): number of rows
-        C (int): number of columns
+    Parameters
+    ----------
+    R : int
+        Number of rows
+    C : int
+        Number of columns
 
-    Returns:
-        indices (dict): mapping of IDs to numpy-style indices
+    Returns
+    -------
+    indices : dict
+        Mapping of IDs to numpy-style indices
     """
     return {
         f'{row}{column:02d}' : (r, c)
@@ -18,15 +23,20 @@ def make_well_index_dict(R:int, C:int):
     }
 
 
-def make_well_array(R:int, C:int):
+def make_well_array(R:int, C:int) -> numpy.ndarray:
     """Create a numpy array of well IDs.
-    
-    Args:
-        R (int): number of rows
-        C (int): number of columns
 
-    Returns:
-        array (numpy.array): array of well IDs
+    Parameters
+    ----------
+    R : int
+        Number of rows
+    C : int
+        Number of columns
+
+    Returns
+    -------
+    array : ndarray
+        Array of well IDs
     """
     return numpy.array([
         [f'{row}{column:02d}' for column in range(1, C+1)]
@@ -34,14 +44,19 @@ def make_well_array(R:int, C:int):
     ])
 
 
-class WellShifter(object):
+class WellShifter:
+    """ Helper object to shift a set of well IDs within a MTP. """
     def __init__(self, shape_A:tuple, shape_B:tuple, shifted_A01:str):
         """Create a helper object for shifting wells around.
 
-        Args:
-            shape_A: (n_rows, n_cols) of the source labware
-            shape_B: (n_rows, n_cols) of the destination labware
-            shifted_A01 (str): well ID on B where the A01 from A ends up
+        Parameters
+        ----------
+        shape_A : tuple
+            (n_rows, n_cols) of the source labware
+        shape_B : tuple
+            (n_rows, n_cols) of the destination labware
+        shifted_A01 : str
+            Well ID on B where the A01 from A ends up
         """
         self.shifted_A01 = shifted_A01
         self.shape_A = shape_A
@@ -61,11 +76,15 @@ class WellShifter(object):
     def shift(self, wells):
         """Apply the forward-transformation.
 
-        Args:
-            wells (array-like): list or array of well ids on A
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids on A
 
-        Returns:
-            shifted (array-like): array of well ids on B (same shape)
+        Returns
+        -------
+        shifted : array-like
+            Array of well ids on B (same shape)
         """
         wells = numpy.array(wells)
         wells_shape = wells.shape
@@ -79,11 +98,15 @@ class WellShifter(object):
     def unshift(self, wells):
         """Apply the reverse-transformation.
 
-        Args:
-            wells (array-like): list or array of well ids on B
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids on B
 
-        Returns:
-            original (array-like): array of well ids on A (same shape)
+        Returns
+        -------
+        original : array-like
+            Array of well ids on A (same shape)
         """
         wells = numpy.array(wells)
         wells_shape = wells.shape
@@ -95,12 +118,15 @@ class WellShifter(object):
         return numpy.array(shifted).reshape(wells_shape)
 
 
-class WellRotator(object):
+class WellRotator:
+    """ Helper object to rotate a set of well IDs within a MTP. """
     def __init__(self, original_shape:tuple):
         """Create a helper object for shifting wells around.
 
-        Args:
-            original_shape: (n_rows, n_cols) of all wells in the source labware
+        Parameters
+        ----------
+        original_shape : tuple
+            (n_rows, n_cols) of all wells in the source labware
         """
         self.original_shape = original_shape
         self.rotated_shape = original_shape[::-1]
@@ -108,16 +134,20 @@ class WellRotator(object):
         self.rotated_indices = make_well_index_dict(*self.rotated_shape)
         self.original_wells = make_well_array(*self.original_shape)
         self.rotated_wells = make_well_array(*self.rotated_shape)
-        return
+        super().__init__()
 
     def rotate_ccw(self, wells):
         """Rotate the given wells counterclockwise.
 
-        Args:
-            wells (array-like): list or array of well ids
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids
 
-        Returns:
-            rotated (array-like): array of well ids
+        Returns
+        -------
+        rotated : array-like
+            Array of well ids
         """
         wells = numpy.array(wells)
         wells_shape = wells.shape
@@ -131,11 +161,15 @@ class WellRotator(object):
     def rotate_cw(self, wells):
         """Rotate the given wells clockwise.
 
-        Args:
-            wells (array-like): list or array of well ids
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids
 
-        Returns:
-            rotated (array-like): array of well ids
+        Returns
+        -------
+        rotated : array-like
+            Array of well ids
         """
         wells = numpy.array(wells)
         wells_shape = wells.shape
