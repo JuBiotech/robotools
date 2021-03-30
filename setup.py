@@ -1,3 +1,18 @@
+# Copyright 2021 Forschungszentrum Jülich GmbH
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import setuptools
 import os
 import pathlib
@@ -32,18 +47,21 @@ __version__ = get_version()
 setuptools.setup(name = __packagename__,
         packages = setuptools.find_packages(), # this must be the same as the name above
         version=__version__,
-        description='Standard workflows and convenience methods for Janus and FreedomEVO robots.',
+        description='Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists.',
         url='https://jugit.fz-juelich.de/IBG-1/biopro/robotools',
         download_url = 'https://jugit.fz-juelich.de/IBG-1/biopro/robotools/tarball/%s' % __version__,
-        author='DigInBio Contributors',
+        author='Michael Osthege',
         author_email='m.osthege@fz-juelich.de',
-        copyright='(c) 2019 Forschungszentrum Juelich GmbH',
-        license='(c) 2019 Forschungszentrum Juelich GmbH',
+        license='GNU Affero General Public License v3',
         classifiers= [
             'Programming Language :: Python',
             'Operating System :: OS Independent',
-            'Programming Language :: Python :: 3.6',
-            'Intended Audience :: Developers'
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
+            'License :: OSI Approved :: GNU Affero General Public License v3',
+            'Intended Audience :: Science/Research',
+            'Topic :: Scientific/Engineering',
         ],
         install_requires=[
             'numpy',
