@@ -10,7 +10,7 @@ test-robotools-py37:
   script:
     - pip install pytest pytest-cov
     - pip install -e .
-    - pytest --cov=./robotools --cov-report term-missing tests/tests.py
+    - pytest --cov=./robotools --cov-report term-missing robotools/tests.py
 
 release-robotools:
   stage: release
