@@ -2,13 +2,16 @@ Welcome to the ``robotools`` documentation!
 ===========================================
 
 .. image:: https://img.shields.io/badge/code%20on-Github-lightgrey
-    :target: https://github.com/michaelosthege/robotools
+    :target: https://github.com/JuBiotech/robotools
+
+.. image:: https://zenodo.org/badge/358629210.svg
+   :target: https://zenodo.org/badge/latestdoi/358629210
 
 ``robotools`` is a Python package for planning _in-silico_ liquid handling operations.
 It can create Tecan Freedom EVO worklist files on the fly, making it possible to program complicated liquid handling operations
 from Python scripts or Jupyter notebooks.
 
-You can download the latest version from `GitHub <https://github.com/michaelosthege/robotools>`_ or install it via ``pip install robotools``.
+You can download the latest version from `GitHub <https://github.com/JuBiotech/robotools>`_ or install it via ``pip install robotools``.
 
 In the following chapters, we introduce the data structures, worklist-creation and extra features.
 
