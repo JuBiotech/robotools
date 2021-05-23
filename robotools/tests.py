@@ -1663,7 +1663,7 @@ class TestCompositionTracking(unittest.TestCase):
         numpy.testing.assert_array_equal(A.volumes, [[100, 100, 10]])
         numpy.testing.assert_array_equal(A.composition['water'], [[0, 0.9, 0.975]])
         numpy.testing.assert_array_equal(A.composition['glucose'], [[1, 0.1, 0.025]])
-        self.assertDictEqual(A.get_well_composition('A01'), dict(glucose=1, water=0))
+        self.assertDictEqual(A.get_well_composition('A01'), dict(glucose=1))
         self.assertDictEqual(A.get_well_composition('A02'), dict(glucose=0.1, water=0.9))
         self.assertDictEqual(A.get_well_composition('A03'), dict(glucose=0.025, water=0.975))
         return

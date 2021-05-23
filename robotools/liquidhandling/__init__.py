@@ -252,6 +252,7 @@ class Labware:
         well_comp = {
             k : f[idx]
             for k, f in self.composition.items()
+            if f[idx] > 0
         }
         return well_comp
 
