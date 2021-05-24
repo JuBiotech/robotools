@@ -1562,6 +1562,84 @@ class TestReagentDistribution(unittest.TestCase):
     
 
 class TestCompositionTracking(unittest.TestCase):
+    def test_get_initial_composition(self):
+        wells2x3 = numpy.array([
+            ["A01", "A02", "A03"],
+            ["B01", "B02", "B03"],
+        ])
+
+        # Raise errors on invalid component well ids
+        with pytest.raises(ValueError, match=r"Invalid component name keys: \{'G02'\}"):
+            liquidhandling._get_initial_composition("eppis", wells2x3, dict(G02="beer"), numpy.zeros((2, 3)))
+
+        # Raise errors on attempts to name empty wells
+        with pytest.raises(ValueError, match=r"name 'beer' was specified for eppis.A02, but"):
+            liquidhandling._get_initial_composition("eppis", wells2x3, dict(A02="beer"), numpy.zeros((2, 3)))
+
+        # No components if all wells are empty
+        result = liquidhandling._get_initial_composition("eppis", wells2x3, {}, numpy.zeros((2, 3)))
+        assert result == {}
+
+        # Default to labware name for one-well labwares
+        result = liquidhandling._get_initial_composition("media", [["A01"]], {}, numpy.atleast_2d(100))
+        assert "media" in result
+        assert len(result) == 1
+
+        # Assigning default component names to all wells
+        result = liquidhandling._get_initial_composition("samples", wells2x3, {}, numpy.ones((2, 3)))
+        assert isinstance(result, dict)
+        # Non-empty wells default to unique component names
+        assert "samples.A01" in result
+        assert "samples.B03" in result
+        # Only the well with the component has 100 % of it
+        numpy.testing.assert_array_equal(
+            result["samples.B02"],
+            numpy.array([
+                [0, 0, 0],
+                [0, 1, 0],
+            ])
+        )
+
+        # Mix of user-defined and default component names
+        result = liquidhandling._get_initial_composition("samples", wells2x3, {"B01": "water"}, numpy.ones((2, 3)))
+        assert isinstance(result, dict)
+        # Non-empty wells default to unique component names
+        assert "samples.A01" in result
+        assert "water" in result
+        assert "samples.B03" in result
+        pass
+
+    def test_get_trough_component_names(self):
+        # The function requies the correct number of column names and initial volumes
+        # and should raise informative errors otherwise.
+        with pytest.raises(ValueError, match=r"column names \['A', 'B', 'C'\] don't match"):
+            liquidhandling._get_trough_component_names("water", 2, ["A", "B", "C"], [20, 10])
+        with pytest.raises(ValueError, match=r"initial volumes \[20, 10\] don't match"):
+            liquidhandling._get_trough_component_names("water", 3, ["A", "B", "C"], [20, 10])
+        with pytest.raises(ValueError, match=r"initial volumes \[\[20], \[10\]\] don't match"):
+            liquidhandling._get_trough_component_names("water", 2, ["A", "B"], [[20], [10]])
+
+        # It should also check that no names are given for empty columns
+        with pytest.raises(ValueError, match="Empty columns must be unnamed"):
+            liquidhandling._get_trough_component_names("water", 2, ["A", "B"], [20, 0])
+
+        # It explicitly sets names of empty wells to None
+        result = liquidhandling._get_trough_component_names("water", 1, [None], [0])
+        assert result == {"A01": None}
+
+        # And defaults to the labware name of single-column troughs
+        result = liquidhandling._get_trough_component_names("water", 1, [None], [100])
+        assert result == {"A01": "water"}
+
+        # But includes the 1-based column number in the default name for non-empty wells
+        result = liquidhandling._get_trough_component_names("stocks", 2, [None, None], [0, 50])
+        assert result == {"A01": None, "A02": "stocks.column_02" }
+
+        # User-provided names, default naming and empty-well all in one:
+        result = liquidhandling._get_trough_component_names("stocks", 4, ["acid", "base", None, None], [100, 100, 50, 0])
+        assert result == {"A01": "acid", "A02": "base", "A03": "stocks.column_03", "A04": None }
+        pass
+
     def test_combine_composition(self):
         A = dict(water=1)
         B = dict(water=0.5, glucose=0.5)
