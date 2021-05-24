@@ -180,7 +180,8 @@ class Labware:
         name:str, rows:int, columns:int, *,
         min_volume:float, max_volume:float,
         initial_volumes:typing.Optional[typing.Union[float, numpy.ndarray]]=None,
-        virtual_rows:typing.Optional[int]=None
+        virtual_rows:typing.Optional[int]=None,
+        component_names:typing.Optional[typing.Dict[str, str]]=None,
     ):
         """ Creates a `Labware` object.
 
@@ -203,6 +204,8 @@ class Labware:
             Must be used in combination with `rows=1`.
             For example: A `Labware` with virtual rows can be accessed with 6 Tips,
             but has just one row in the `volumes` array.
+        component_names : dict, optional
+            A dictionary that names the content of non-empty real wells for composition tracking.
         """
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
@@ -278,10 +281,13 @@ class Labware:
         self._volumes = initial_volumes.copy().astype(float)
         self._history:typing.List[numpy.ndarray] = [self.volumes]
         self._labels:typing.List[typing.Optional[str]] = ['initial']
-        self._composition = {
-            self.name: numpy.ones_like(self.volumes)
-        } if numpy.any(initial_volumes > 0) else {}
-        return
+        self._composition = _get_initial_composition(
+            name,
+            real_wells=self.wells[[0], :] if virtual_rows else self.wells,
+            component_names=component_names or {},
+            initial_volumes=initial_volumes
+        )        
+        super().__init__()
     
     def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
@@ -496,7 +502,8 @@ class Trough(Labware):
         name: str,
         virtual_rows: int, columns: int, *,
         min_volume: float, max_volume: float,
-        initial_volumes: typing.Optional[typing.Union[float, numpy.ndarray]]=None,
+        initial_volumes: typing.Union[float, numpy.ndarray]=0,
+        column_names:typing.Optional[typing.Sequence[typing.Union[str, None]]]=None,
     ):
         """ Creates a `Labware` object.
 
@@ -516,7 +523,22 @@ class Trough(Labware):
             Maximum volume that must not be exceeded after a dispense.
         initial_volumes : float, array-like, optional
             Initial filling volume of the wells (default: 0)
+        column_names : array-like, optional
+            A list/tuple of names for the column-wise contents of the troughs.
+            If provided, these names are used for composition tracking.
         """
+        # Convert lazily scalar-valued parameters to lists
+        if column_names is None:
+            column_names = [None] * columns
+        if isinstance(column_names, str):
+            column_names = [column_names]
+
+        if isinstance(initial_volumes, (int, float)):
+            initial_volumes = [initial_volumes] * columns
+
+        # Determine component names with a different default pattern compared to Labware
+        component_names = _get_trough_component_names(name, columns, column_names, initial_volumes)
+
         super().__init__(
             name=name,
             rows=1,
@@ -524,5 +546,6 @@ class Trough(Labware):
             min_volume=min_volume,
             max_volume=max_volume,
             initial_volumes=initial_volumes,
-            virtual_rows=virtual_rows
+            virtual_rows=virtual_rows,
+            component_names=component_names
         )

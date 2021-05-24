@@ -1660,20 +1660,34 @@ class TestCompositionTracking(unittest.TestCase):
         return
 
     def test_labware_init(self):
-        # without initial volume, there's no entry in the composition
-        A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000)
+        minmax = dict(min_volume=0, max_volume=4000)
+        # without initial volume, there's no composition tracking
+        A = liquidhandling.Labware('glc', 6, 8, **minmax)
         self.assertIsInstance(A.composition, dict)
         self.assertEqual(len(A.composition), 0)
         self.assertDictEqual(A.get_well_composition('A01'), {})
 
-        # by seeting an initial volume, the name becomes the name of the liquid
-        A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000, initial_volumes=100)
+        # Single-well Labware defaults to the labware name for components
+        A = liquidhandling.Labware("x", 1, 1, **minmax, initial_volumes=300)
+        assert set(A.composition) == {"x"}
+        A = liquidhandling.Labware("x", 1, 1, virtual_rows=3, **minmax, initial_volumes=300)
+        assert set(A.composition) == {"x"}
+
+        # by setting an initial volume, the well-wise liquids take part in composition tracking
+        A = liquidhandling.Labware('glc', 6, 8, **minmax, initial_volumes=100)
         self.assertIsInstance(A.composition, dict)
-        self.assertEqual(len(A.composition), 1)
-        self.assertIn('glc', A.composition)
-        self.assertIsInstance(A.composition['glc'], numpy.ndarray)
-        numpy.testing.assert_array_equal(A.composition['glc'], numpy.ones_like(A.volumes))
-        self.assertDictEqual(A.get_well_composition('A01'), dict(glc=1))
+        self.assertEqual(len(A.composition), 48)
+        self.assertIn('glc.A01', A.composition)
+        self.assertIn('glc.F08', A.composition)
+        self.assertDictEqual(A.get_well_composition('A01'), {"glc.A01": 1})
+
+        # Only wells with initial volumes take part
+        A = liquidhandling.Labware(
+            "test", 1, 3, **minmax,
+            initial_volumes=[10, 0, 0],
+            component_names=dict(A01="water")
+        )
+        assert set(A.composition) == {"water"}
         return
 
     def test_get_well_composition(self):
@@ -1689,8 +1703,19 @@ class TestCompositionTracking(unittest.TestCase):
         return
         
     def test_labware_add(self):
-        A = liquidhandling.Labware('water', 6, 8, min_volume=0, max_volume=4000, initial_volumes=10)
-        numpy.testing.assert_array_equal(A.composition['water'], numpy.ones_like(A.volumes))
+        A = liquidhandling.Labware('water', 6, 8, min_volume=0, max_volume=4000, initial_volumes=10, component_names={
+            "A01": "water",
+            "B01": "water",
+        })
+        water_comp = numpy.array([
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ])
+        numpy.testing.assert_array_equal(A.composition['water'], water_comp)
 
         A.add(
             wells=['A01', 'B01'],
@@ -1745,6 +1770,33 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(A.get_well_composition('A02'), dict(glucose=0.1, water=0.9))
         self.assertDictEqual(A.get_well_composition('A03'), dict(glucose=0.025, water=0.975))
         return
+
+    def test_trough_init(self):
+        minmax = dict(min_volume=0, max_volume=100_000)
+        # Single-column troughs use the labware name for the composition
+        W = liquidhandling.Trough('water', 2, 1, **minmax, initial_volumes=10000)
+        assert set(W.composition) == {"water"}
+
+        # Multi-column troughs get component names automatically
+        A = liquidhandling.Trough(name="water", virtual_rows=2, columns=3, **minmax, initial_volumes=[0, 200, 200])
+        assert set(A.composition) == {"water.column_02", "water.column_03"}
+        assert "water.column_01" not in A.composition
+        assert "water.column_02" in A.composition
+        assert "water.column_03" in A.composition
+
+        # Components in troughs are named via a list, because the dict would
+        # require well names and columns could lead to 0/1-based confusion.
+        T = liquidhandling.Trough("stocks", 6, 3, min_volume=0, max_volume=10_000, initial_volumes=[100, 200, 0], column_names=["rich", "complex", None])
+        assert set(T.composition.keys()) == {"rich", "complex"}
+
+        # Naming just some of them works too
+        A = liquidhandling.Trough(
+            name="alice", virtual_rows=2, columns=3, **minmax,
+            initial_volumes=[0, 200, 200],
+            column_names=[None, "NaCl", None]
+        )
+        assert set(A.composition) == {"NaCl", "alice.column_03"}
+        numpy.testing.assert_array_equal(A.composition["NaCl"], [[0, 1, 0]])
 
     def test_trough_composition(self):
         T = liquidhandling.Trough('media', 8, 1, min_volume=1000, max_volume=25000)
