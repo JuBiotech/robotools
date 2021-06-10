@@ -5,4 +5,4 @@ from . liquidhandling import Labware, Trough, VolumeOverflowError, VolumeUnderfl
 from . utils import DilutionPlan, get_trough_wells
 from . transform import WellShifter, WellRotator
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'

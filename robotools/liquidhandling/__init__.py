@@ -66,6 +66,57 @@ def _combine_composition(
     return new_composition
 
 
+def _get_initial_composition(
+    name: str,
+    real_wells: numpy.ndarray,
+    component_names: typing.Dict[str, typing.Union[str, None]],
+    initial_volumes: numpy.ndarray,
+) -> typing.Dict[str, typing.Union[str, None]]:
+    """Creates a dictionary of initial composition arrays.
+
+    Parameters
+    ----------
+    name : str
+        Name of the labware - used for default component names.
+    real_wells : array-like
+        2D array of non-virtual wells in the labware.
+    component_names : dict
+        User-provided dictionary that maps real well IDs to component names.
+    initial_volumes : numpy.ndarray
+        Initial volumes of real wells.
+
+    Returns
+    -------
+    composition : dict
+        The component-wise dictionary of numpy arrays that describe the composition of real wells.
+    """
+    possible_component_wells = set(numpy.unique(real_wells))
+    illegal_component_wells = set(component_names.keys()) - possible_component_wells
+    if illegal_component_wells:
+        raise ValueError(f"Invalid component name keys: {illegal_component_wells}")
+
+    is_multiwell = len(real_wells) > 1
+    composition = {}
+    for idx, w in numpy.ndenumerate(real_wells):
+        # Ignore None-valued component names, but don't allow naming of empty wells.
+        if initial_volumes[idx] == 0:
+            if component_names.get(w, None) is not None:
+                raise ValueError(f"A component name '{component_names[w]}' was specified for {name}.{w}, but the corresponding initial volume is 0.")
+            continue
+
+        # Fetch a name for identifying the liquid from this non-empty well
+        default_name = f"{name}.{w}" if is_multiwell else name
+        cname = component_names.get(w, default_name)
+
+        # Make sure that a composition array exists
+        if cname not in composition:
+            composition[cname] = numpy.zeros_like(real_wells, dtype=float)
+
+        # Mark this well as filled by this component
+        composition[cname][idx] = 1
+    return composition
+
+
 class Labware:
     """ Represents an array of liquid cavities. """
     @property
@@ -129,7 +180,8 @@ class Labware:
         name:str, rows:int, columns:int, *,
         min_volume:float, max_volume:float,
         initial_volumes:typing.Optional[typing.Union[float, numpy.ndarray]]=None,
-        virtual_rows:typing.Optional[int]=None
+        virtual_rows:typing.Optional[int]=None,
+        component_names:typing.Optional[typing.Dict[str, str]]=None,
     ):
         """ Creates a `Labware` object.
 
@@ -152,6 +204,8 @@ class Labware:
             Must be used in combination with `rows=1`.
             For example: A `Labware` with virtual rows can be accessed with 6 Tips,
             but has just one row in the `volumes` array.
+        component_names : dict, optional
+            A dictionary that names the content of non-empty real wells for composition tracking.
         """
         # sanity checking
         if not isinstance(rows, int) or rows < 1:
@@ -227,10 +281,13 @@ class Labware:
         self._volumes = initial_volumes.copy().astype(float)
         self._history:typing.List[numpy.ndarray] = [self.volumes]
         self._labels:typing.List[typing.Optional[str]] = ['initial']
-        self._composition = {
-            self.name: numpy.ones_like(self.volumes)
-        } if numpy.any(initial_volumes > 0) else {}
-        return
+        self._composition = _get_initial_composition(
+            name,
+            real_wells=self.wells[[0], :] if virtual_rows else self.wells,
+            component_names=component_names or {},
+            initial_volumes=initial_volumes
+        )        
+        super().__init__()
     
     def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
@@ -252,6 +309,7 @@ class Labware:
         well_comp = {
             k : f[idx]
             for k, f in self.composition.items()
+            if f[idx] > 0
         }
         return well_comp
 
@@ -381,6 +439,62 @@ class Labware:
         return self.__repr__()
 
 
+def _get_trough_component_names(
+    name: str,
+    columns: int,
+    column_names: typing.Sequence[typing.Union[str, None]],
+    initial_volumes: typing.Sequence[typing.Union[int, float]]
+) -> typing.Dict[str, typing.Union[str, None]]:
+    """Determines a fully-specified component name dictionary for a trough.
+
+    This helper function exists to provide a different default naming pattern for troughs.
+    Instead of "stocks.A01" this function defaults to "stocks.column_01" with 1-based column numbering.
+
+    Parameters
+    ----------
+    name : str
+        Name of the trough - used for default component names.
+    columns : int
+        Number of trough columns.
+    column_names : array-like
+        Column-wise component names.
+        Must be given for all columns, but can contain None elements.
+    initial_volumes : array-like
+        Column-wise initial volumes.
+        Used to determine if a default component name is needed.
+
+    Returns
+    -------
+    component_names : dict
+        The component name dictionary that maps all row A well IDs to component names.
+    """
+    if numpy.shape(column_names) != (columns,):
+        raise ValueError(f"The column names {column_names} don't match the number of columns ({columns}).")
+    if numpy.shape(initial_volumes) != (columns,):
+        raise ValueError(f"The initial volumes {initial_volumes} don't match the number of columns ({columns}).")
+
+    if any([
+        cname is not None and ivol == 0
+        for cname, ivol in zip(column_names, initial_volumes)
+    ]):
+        raise ValueError(
+            f"Empty columns must be unnamed."
+            f"\n\tcolumn_names: {column_names}"
+            f"\n\tinitial_volumes: {initial_volumes}"
+        )
+
+    component_names = {}
+    for c, (cname, ivol) in enumerate(zip(column_names, initial_volumes)):
+        if ivol > 0 and cname is None:
+            # Determine default name
+            if columns > 1:
+                cname = f"{name}.column_{c+1:02d}"
+            else:
+                cname = name
+        component_names[f"A{c+1:02d}"] = cname
+    return component_names
+
+
 class Trough(Labware):
     """Special type of labware that can be accessed by many pipette tips in parallel."""
     def __init__(
@@ -388,7 +502,8 @@ class Trough(Labware):
         name: str,
         virtual_rows: int, columns: int, *,
         min_volume: float, max_volume: float,
-        initial_volumes: typing.Optional[typing.Union[float, numpy.ndarray]]=None,
+        initial_volumes: typing.Union[float, numpy.ndarray]=0,
+        column_names:typing.Optional[typing.Sequence[typing.Union[str, None]]]=None,
     ):
         """ Creates a `Labware` object.
 
@@ -408,7 +523,22 @@ class Trough(Labware):
             Maximum volume that must not be exceeded after a dispense.
         initial_volumes : float, array-like, optional
             Initial filling volume of the wells (default: 0)
+        column_names : array-like, optional
+            A list/tuple of names for the column-wise contents of the troughs.
+            If provided, these names are used for composition tracking.
         """
+        # Convert lazily scalar-valued parameters to lists
+        if column_names is None:
+            column_names = [None] * columns
+        if isinstance(column_names, str):
+            column_names = [column_names]
+
+        if isinstance(initial_volumes, (int, float)):
+            initial_volumes = [initial_volumes] * columns
+
+        # Determine component names with a different default pattern compared to Labware
+        component_names = _get_trough_component_names(name, columns, column_names, initial_volumes)
+
         super().__init__(
             name=name,
             rows=1,
@@ -416,5 +546,6 @@ class Trough(Labware):
             min_volume=min_volume,
             max_volume=max_volume,
             initial_volumes=initial_volumes,
-            virtual_rows=virtual_rows
+            virtual_rows=virtual_rows,
+            component_names=component_names
         )
