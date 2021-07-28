@@ -576,7 +576,9 @@ class Worklist(list):
         label : str
             Label of the operation to log into labware history
         kwargs
-            Additional keyword arguments to pass to `aspirate_well`
+            Additional keyword arguments to pass to `aspirate_well`.
+            Most prominent example: `liquid_class`.
+            Take a look at `Worklist.aspirate_well` for the full list of options.
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -614,7 +616,9 @@ class Worklist(list):
         compositions : list
             Iterable of liquid compositions
         kwargs
-            Additional keyword arguments to pass to `dispense_well`
+            Additional keyword arguments to pass to `dispense_well`.
+            Most prominent example: `liquid_class`.
+            Take a look at `Worklist.dispense_well` for the full list of options.
         """
         wells = numpy.array(wells).flatten('F')
         volumes = numpy.array(volumes).flatten('F')
@@ -662,7 +666,9 @@ class Worklist(list):
                 'source': partitioning by source columns
                 'destination': partitioning by destination columns
         kwargs
-            Additional keyword arguments to pass to aspirate and dispense
+            Additional keyword arguments to pass to aspirate and dispense.
+            Most prominent example: `liquid_class`.
+            Take a look at `Worklist.aspirate_well` for the full list of options.
         """
         # reformat the convenience parameters
         source_wells = numpy.array(source_wells).flatten('F')
