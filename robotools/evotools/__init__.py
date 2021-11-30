@@ -38,7 +38,7 @@ class InvalidOperationError(Exception):
 def _prepare_aspirate_dispense_parameters(
     rack_label:str, position:int, volume:float,
     liquid_class:str='',
-    tip:typing.Union[Tip, int]=Tip.Any,
+    tip:typing.Union[Tip, int, collections.abc.Iterable]=Tip.Any,
     rack_id:str='', tube_id:str='',
     rack_type:str='', forced_rack_type:str='',
     max_volume:typing.Optional[int]=None
@@ -55,8 +55,8 @@ def _prepare_aspirate_dispense_parameters(
         Volume in microliters (will be rounded to 2 decimal places)
     liquid_class : str, optional
         Overrides the liquid class for this step (max 32 characters)
-    tip : Tip or int, optional
-        Tip that will be selected (Tip or 1-8)
+    tip : Tip, int or Iterable of Tip / int, optional
+            Tip that will be selected (Tip, 1-8 or Iterable of the former two)
     rack_id : str, optional
         Barcode of the labware (max 32 characters)
     tube_id : str, optional
@@ -94,25 +94,48 @@ def _prepare_aspirate_dispense_parameters(
     # optional parameters
     if not isinstance(liquid_class, str) or ';' in liquid_class:
         raise ValueError(f'Invalid liquid_class: {liquid_class}')
+    
+    def _int_to_tip(tip_int: int):
+        """Asserts a Tecan Tip class to an int between 1 and 8."""
+        if not 1 <= tip_int <= 8:
+            raise ValueError(f"Tip is {tip} with type {type(tip)}, but should be an int between 1 and 8 for _int_to_tip conversion.")
+        if tip_int == 1:
+            return Tip.T1
+        elif tip_int == 2:
+            return Tip.T2
+        elif tip_int == 3:
+            return Tip.T3
+        elif tip_int == 4:
+            return Tip.T4
+        elif tip_int == 5:
+            return Tip.T5
+        elif tip_int == 6:
+            return Tip.T6
+        elif tip_int == 7:
+            return Tip.T7
+        elif tip_int == 8:
+            return Tip.T8
+
+
     if isinstance(tip, int) and not isinstance(tip, Tip):
-        if tip == 1:
-            tip = Tip.T1
-        elif tip == 2:
-            tip = Tip.T2
-        elif tip == 3:
-            tip = Tip.T3
-        elif tip == 4:
-            tip = Tip.T4
-        elif tip == 5:
-            tip = Tip.T5
-        elif tip == 6:
-            tip = Tip.T6
-        elif tip == 7:
-            tip = Tip.T7
-        elif tip == 8:
-            tip = Tip.T8
-    if not isinstance(tip, Tip):
-        raise ValueError(f'Invalid tip: {tip}')
+        # User-specified integers from 1-8 need to be converted to Tecan logic
+        tip = _int_to_tip(tip)
+
+    if isinstance(tip, collections.abc.Iterable):
+        tips = []
+        for element in tip:
+            if isinstance(element, int) and not isinstance(element, Tip):
+                tips.append(_int_to_tip(element))
+            elif isinstance(element, Tip):
+                if element == -1:
+                    raise ValueError("When Iterables are used, no Tip.Any elements are allowed. Pass just one Tip.Any instead.")
+                tips.append(element)
+            else:
+                raise ValueError(f'If tip is an Iterable, it may only contain int or Tip values, not {type(element)}.') 
+        tip = sum(set(tips))
+    elif not isinstance(tip, Tip):
+        raise ValueError(f'tip must be an int between 1 and 8, Tip or Iterable, but was {type(tip)}.')
+
     if not isinstance(rack_id, str) or len(rack_id) > 32 or ';' in rack_id:
         raise ValueError(f'Invalid rack_id: {rack_id}')
     if not isinstance(rack_type, str) or len(rack_type) > 32 or ';' in rack_type:
@@ -391,7 +414,7 @@ class Worklist(list):
     
     def aspirate_well(
         self, rack_label:str, position:int, volume:float, *,
-        liquid_class:str='', tip:typing.Union[Tip, int]=Tip.Any,
+        liquid_class:str='', tip:typing.Union[Tip, int, typing.Iterable]=Tip.Any,
         rack_id:str='', tube_id:str='',
         rack_type:str='', forced_rack_type:str=''
     ):
@@ -409,8 +432,8 @@ class Worklist(list):
             Volume in microliters (will be rounded to 2 decimal places)
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
-        tip : Tip or int, optional
-            Tip that will be selected (Tip or 1-8)
+        tip : Tip, int or Iterable of Tip / int, optional
+            Tip that will be selected (Tip, 1-8 or Iterable of the former two)
         rack_id : str, optional
             Barcode of the labware (max 32 characters)
         tube_id : str, optional
@@ -450,8 +473,8 @@ class Worklist(list):
             Volume in microliters (will be rounded to 2 decimal places)
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
-        tip : Tip or int, optional
-            Tip that will be selected (Tip or 1-8)
+        tip : Tip, int or Iterable of Tip / int, optional
+            Tip that will be selected (Tip, 1-8 or Iterable of the former two)
         rack_id : str, optional
             Barcode of the labware (max 32 characters)
         tube_id : str, optional
