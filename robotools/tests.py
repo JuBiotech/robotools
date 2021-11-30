@@ -282,12 +282,32 @@ class TestWorklist(unittest.TestCase):
         with self.assertRaises(ValueError):
             evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='liquid;class')
         evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='valid liquid class')
-        with self.assertRaises(ValueError):
+
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=4)
+        assert tip == 8
+        _, _, _, _, tip, _, _, _, _  = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.T5)
+        assert tip == 16
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=(evotools.Tip.T4, 4))
+        assert tip == 8
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=[evotools.Tip.T1, 4])
+        assert tip == 9
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=[1, 4])
+        assert tip == 9
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=[1, evotools.Tip.T4])
+        assert tip == 9
+        _, _, _, _, tip, _, _, _, _ = evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.Any)
+        assert tip == ''
+    
+        with pytest.raises(ValueError, match='no Tip.Any elements are allowed'):
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=(evotools.Tip.T1, evotools.Tip.Any))
+        with pytest.raises(ValueError, match='tip must be an int between 1 and 8, Tip or Iterable'):
             evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=None)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match='it may only contain int or Tip values'):
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=[1, 2.6])
+        with pytest.raises(ValueError, match='should be an int between 1 and 8 for _int_to_tip'):
             evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=12)
-        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=4)
-        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.T5)
+
+        
         with self.assertRaises(ValueError):
             evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id=None)
         with self.assertRaises(ValueError):
