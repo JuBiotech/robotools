@@ -247,66 +247,66 @@ class TestWorklist(unittest.TestCase):
 
     def test_parameter_validation(self):
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label=15, position=1, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label=15, position=1, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='thisisaveryverylongracklabelthatexceedsthemaximumlength', position=1, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='thisisaveryverylongracklabelthatexceedsthemaximumlength', position=1, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='rack label; with semicolon', position=1, volume=15)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='valid rack label', position=1, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='rack label; with semicolon', position=1, volume=15)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='valid rack label', position=1, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=None, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=None, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position='3', volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position='3', volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=-1, volume=15)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=-1, volume=15)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='nan')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='nan')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=float('nan'))
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=float('nan'))
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=-15.4)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=-15.4)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='bla')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='15')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=20)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=23.78)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=numpy.array(23.4))
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='bla')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume='15')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=20)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=23.78)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=numpy.array(23.4))
         
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='liquid;class')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='valid liquid class')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='liquid;class')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, liquid_class='valid liquid class')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=12)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=4)
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.T5)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=12)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=4)
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, tip=evotools.Tip.T5)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='invalid;rack')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='invalid;rack')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='thisisaveryverylongrackthatexceedsthemaximumlength')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='1235464')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='thisisaveryverylongrackthatexceedsthemaximumlength')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_id='1235464')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='invalid;rack type')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='invalid;rack type')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='thisisaveryverylongracktypethatexceedsthemaximumlength')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='valid rack type')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='thisisaveryverylongracktypethatexceedsthemaximumlength')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, rack_type='valid rack type')
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type=None)
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type=None)
         with self.assertRaises(ValueError):
-            evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='invalid;forced rack type')
-        evotools._prepate_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='valid forced rack type')
+            evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='invalid;forced rack type')
+        evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='valid forced rack type')
         return
 
     def test_comment(self):

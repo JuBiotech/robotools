@@ -35,7 +35,7 @@ class InvalidOperationError(Exception):
     pass
 
 
-def _prepate_aspirate_dispense_parameters(
+def _prepare_aspirate_dispense_parameters(
     rack_label:str, position:int, volume:float,
     liquid_class:str='',
     tip:typing.Union[Tip, int]=Tip.Any,
@@ -422,7 +422,7 @@ class Worklist(list):
             Overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
         tip_type = ''
         self.append(
             f'A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
@@ -463,7 +463,7 @@ class Worklist(list):
             Overrides rack_type from worktable
         """
         args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepate_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
         tip_type = ''
         self.append(
             f'D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
@@ -536,10 +536,10 @@ class Worklist(list):
             exclude_wells = ''
 
         src_args = (src_rack_label, 1, volume, '', Tip.Any, src_rack_id, '', src_rack_type, '')
-        (src_rack_label, _, _, _, _, src_rack_id, _, src_rack_type, _) = _prepate_aspirate_dispense_parameters(*src_args, max_volume=self.max_volume)
+        (src_rack_label, _, _, _, _, src_rack_id, _, src_rack_type, _) = _prepare_aspirate_dispense_parameters(*src_args, max_volume=self.max_volume)
 
         dst_args = (dst_rack_label, 1, volume, '', Tip.Any, dst_rack_id, '', dst_rack_type, '')
-        (dst_rack_label, _, _, _, _, dst_rack_id, _, dst_rack_type, _) = _prepate_aspirate_dispense_parameters(*dst_args, max_volume=self.max_volume)
+        (dst_rack_label, _, _, _, _, dst_rack_id, _, dst_rack_type, _) = _prepare_aspirate_dispense_parameters(*dst_args, max_volume=self.max_volume)
 
         # automatically decrease multi_disp to support the large volume
         # at the expense of more washing
