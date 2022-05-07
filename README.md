@@ -20,4 +20,20 @@ pip install robotools
 # Usage and Citing
 `robotools` is licensed under the [GNU Affero General Public License v3.0](https://github.com/JuBiotech/robotools/blob/master/LICENSE).
 
+When using `robotools` in your work, please cite the [corresponding software version](https://doi.org/10.5281/zenodo.4697605).
+
+```bibtex
+@software{robotools,
+  author       = {Michael Osthege and
+                  Laura Helleckes},
+  title        = {JuBiotech/robotools: v1.3.0},
+  month        = nov,
+  year         = 2021,
+  publisher    = {Zenodo},
+  version      = {v1.3.0},
+  doi          = {10.5281/zenodo.5745938},
+  url          = {https://doi.org/10.5281/zenodo.5745938}
+}
+```
+
 Head over to Zenodo to [generate a BibTeX citation](https://zenodo.org/badge/latestdoi/358629210) for the latest release.
