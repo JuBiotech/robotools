@@ -21,19 +21,19 @@ __packagename__ = 'robotools'
 
 
 def package_files(directory):
-    assert os.path.exists(directory)
+    assert pathlib.Path(directory).exists()
     fp_typed = pathlib.Path(__packagename__, 'py.typed')
     fp_typed.touch()
     paths = [str(fp_typed.absolute())]
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join('..', path, filename))
+            paths.append(pathlib.Path('..', path, filename))
     return paths
 
 
 def get_version():
-    import os, re
-    VERSIONFILE = os.path.join(__packagename__, '__init__.py')
+    import os, re   # (Clay) - Why import os and re down here?  Can we just import at top?
+    VERSIONFILE = pathlib.Path(__packagename__, '__init__.py')
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:
