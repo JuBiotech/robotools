@@ -8,20 +8,22 @@ logger = logging.getLogger('liquidhandling')
 
 class VolumeOverflowError(Exception):
     """Error that indicates the planned overflow of a well."""
-    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None):
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None) -> None:
         if label:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold} in step {label}')
         else:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold}')
+        return
 
 
 class VolumeUnderflowError(Exception):
     """Error that indicates the planned underflow of a well."""
-    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None):
+    def __init__(self, labware:str, well:str, current:float, change:float, threshold:float, label:typing.Optional[str]=None) -> None:
         if label:
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold} in step {label}')
         else:
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold}')
+        return
 
 
 def _combine_composition(
@@ -182,7 +184,7 @@ class Labware:
         initial_volumes:typing.Optional[typing.Union[float, numpy.ndarray]]=None,
         virtual_rows:typing.Optional[int]=None,
         component_names:typing.Optional[typing.Dict[str, str]]=None,
-    ):
+    ) -> None:
         """ Creates a `Labware` object.
 
         Parameters
@@ -288,6 +290,7 @@ class Labware:
             initial_volumes=initial_volumes
         )        
         super().__init__()
+        return
     
     def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
@@ -318,7 +321,7 @@ class Labware:
         wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
         label:typing.Optional[str]=None,
         compositions:typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]]=None
-    ):
+    ) -> None:
         """Adds volumes to wells.
 
         Parameters
@@ -367,7 +370,7 @@ class Labware:
         self.log(label)
         return
     
-    def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:typing.Optional[str]=None):
+    def remove(self, wells:typing.Sequence[str], volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray], label:typing.Optional[str]=None) -> None:
         """Removes volumes from wells.
 
         Parameters
@@ -397,7 +400,7 @@ class Labware:
         self.log(label)
         return
     
-    def log(self, label:typing.Optional[str]):
+    def log(self, label:typing.Optional[str]) -> None:
         """Logs the current volumes to the history.
 
         Parameters
@@ -409,7 +412,7 @@ class Labware:
         self._labels.append(label)
         return
 
-    def condense_log(self, n:int, label:typing.Optional[str]='last'):
+    def condense_log(self, n:int, label:typing.Optional[str]='last') -> None:
         """Condense the last n log entries.
 
         Parameters
@@ -432,10 +435,10 @@ class Labware:
         self._history.append(state)
         return
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f'{self.name}\n{numpy.round(self.volumes, decimals=1)}'
 
-    def __str__(self):
+    def __str__(self) -> None:
         return self.__repr__()
 
 
@@ -504,7 +507,7 @@ class Trough(Labware):
         min_volume: float, max_volume: float,
         initial_volumes: typing.Union[float, numpy.ndarray]=0,
         column_names:typing.Optional[typing.Sequence[typing.Union[str, None]]]=None,
-    ):
+    ) -> None:
         """ Creates a `Labware` object.
 
         Parameters
@@ -549,3 +552,4 @@ class Trough(Labware):
             virtual_rows=virtual_rows,
             component_names=component_names
         )
+        return

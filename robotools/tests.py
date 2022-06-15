@@ -12,7 +12,7 @@ from robotools import transform
 
 
 class TestStandardLabware(unittest.TestCase):
-    def test_init(self):
+    def test_init(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=30)
         self.assertEqual(plate.name, 'TestPlate')
         self.assertFalse(plate.is_trough)
@@ -37,7 +37,7 @@ class TestStandardLabware(unittest.TestCase):
         })
         return
 
-    def test_invalid_init(self):
+    def test_invalid_init(self) -> None:
         with self.assertRaises(ValueError):
             _ = liquidhandling.Labware('A', 0, 3, min_volume=10, max_volume=250)
         with self.assertRaises(ValueError):
@@ -48,7 +48,7 @@ class TestStandardLabware(unittest.TestCase):
             _ = liquidhandling.Labware('A', 1, 4, min_volume=10, max_volume=250, virtual_rows=0)
         return
 
-    def test_volume_limits(self):
+    def test_volume_limits(self) -> None:
         with self.assertRaises(ValueError):
             _ = liquidhandling.Labware('A', 3, 4, min_volume=-30, max_volume=100)
         with self.assertRaises(ValueError):
@@ -60,14 +60,14 @@ class TestStandardLabware(unittest.TestCase):
         _ = liquidhandling.Labware('A', 3, 4, min_volume=10, max_volume=70, initial_volumes=50)
         return
 
-    def test_initial_volumes(self):
+    def test_initial_volumes(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 1, 3, min_volume=50, max_volume=250, initial_volumes=[20,30,40])
         self.assertTrue(numpy.array_equal(plate.volumes, numpy.array([
             [20,30,40],
         ])))
         return
 
-    def test_logging(self):
+    def test_logging(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250)
         plate.add(plate.wells, 25)
         plate.add(plate.wells, 25)
@@ -76,7 +76,7 @@ class TestStandardLabware(unittest.TestCase):
         self.assertEqual(len(plate.history), 5)
         return
 
-    def test_log_condensation_first(self):
+    def test_log_condensation_first(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250)
         plate.add(plate.wells, 25, label='A')
         plate.add(plate.wells, 25, label='B')
@@ -112,7 +112,7 @@ class TestStandardLabware(unittest.TestCase):
         ])))
         return
 
-    def test_add_valid(self):
+    def test_add_valid(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         plate.add(wells, 150)
@@ -122,14 +122,14 @@ class TestStandardLabware(unittest.TestCase):
             assert plate.volumes[plate.indices[well]] == 153.5
         return
     
-    def test_add_too_much(self):
+    def test_add_too_much(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         with self.assertRaises(liquidhandling.VolumeOverflowError):
             plate.add(wells, 500)
         return
 
-    def test_remove_valid(self):
+    def test_remove_valid(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 2, 3, min_volume=50, max_volume=250, initial_volumes=200)
         wells = ['A01', 'A02', 'B03']
         plate.remove(wells, 50)
@@ -140,7 +140,7 @@ class TestStandardLabware(unittest.TestCase):
         ])))
         return
     
-    def test_remove_too_much(self):
+    def test_remove_too_much(self) -> None:
         plate = liquidhandling.Labware('TestPlate', 4, 6, min_volume=100, max_volume=250)
         wells = ['A01', 'A02', 'B04']
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
@@ -150,16 +150,16 @@ class TestStandardLabware(unittest.TestCase):
         
 
 class TestTroughLabware(unittest.TestCase):
-    def test_warns_on_api(self):
+    def test_warns_on_api(self) -> None:
         with pytest.warns(UserWarning, match="Troughs should be created with"):
             robotools.Labware("test", rows=1, columns=2, min_volume=100, max_volume=3000, virtual_rows=4)
 
         with pytest.warns(None) as record:
             robotools.Trough("test", virtual_rows=6, columns=2, min_volume=100, max_volume=3000)
         assert len(record) == 0
-        pass
+        return
 
-    def test_init_trough(self):
+    def test_init_trough(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 5, 4, min_volume=1000, max_volume=50*1000, initial_volumes=30*1000)
         self.assertEqual(trough.name, 'TestTrough')
         self.assertTrue(trough.is_trough)
@@ -187,14 +187,14 @@ class TestTroughLabware(unittest.TestCase):
         })
         return
 
-    def test_initial_volumes(self):
+    def test_initial_volumes(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 5, 4, min_volume=1000, max_volume=50*1000, initial_volumes=[30*1000, 20*1000, 20*1000, 20*1000])
         self.assertTrue(numpy.array_equal(trough.volumes, numpy.array([
             [30*1000, 20*1000, 20*1000, 20*1000],
         ])))
         return
 
-    def test_trough_add_valid(self):
+    def test_trough_add_valid(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 3, 4, min_volume=100, max_volume=250)
         # adding into the first column (which is actually one well)
         trough.add(['A01', 'B01'], 50)
@@ -209,14 +209,14 @@ class TestTroughLabware(unittest.TestCase):
         self.assertEqual(len(trough.history), 3)
         return
 
-    def test_trough_add_too_much(self):
+    def test_trough_add_too_much(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 3, 4, min_volume=100, max_volume=1000)
         # adding into the first column (which is actually one well)
         with self.assertRaises(liquidhandling.VolumeOverflowError):
             trough.add(['A01', 'B01'], 600)
         return
 
-    def test_trough_remove_valid(self):
+    def test_trough_remove_valid(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 3, 4, min_volume=1000, max_volume=30000, initial_volumes=3000)
         # adding into the first column (which is actually one well)
         trough.remove(['A01', 'B01'], 50)
@@ -231,7 +231,7 @@ class TestTroughLabware(unittest.TestCase):
         self.assertEqual(len(trough.history), 3)
         return
 
-    def test_trough_remove_too_much(self):
+    def test_trough_remove_too_much(self) -> None:
         trough = liquidhandling.Trough('TestTrough', 3, 4, min_volume=1000, max_volume=30*1000, initial_volumes=3000)
         # adding into the first column (which is actually one well)
         with self.assertRaises(liquidhandling.VolumeUnderflowError):
@@ -240,12 +240,12 @@ class TestTroughLabware(unittest.TestCase):
 
 
 class TestWorklist(unittest.TestCase):
-    def test_context(self):
+    def test_context(self) -> None:
         with evotools.Worklist() as worklist:
             self.assertIsNotNone(worklist)
         return
 
-    def test_parameter_validation(self):
+    def test_parameter_validation(self) -> None:
         with self.assertRaises(ValueError):
             evotools._prepare_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
         with self.assertRaises(ValueError):
@@ -329,7 +329,7 @@ class TestWorklist(unittest.TestCase):
         evotools._prepare_aspirate_dispense_parameters(rack_label='WaterTrough', position=1, volume=15, forced_rack_type='valid forced rack type')
         return
 
-    def test_comment(self):
+    def test_comment(self) -> None:
         with evotools.Worklist() as wl:
             # empty and None comments should be ignored
             wl.comment('')
@@ -349,7 +349,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_wash(self):
+    def test_wash(self) -> None:
         with evotools.Worklist() as wl:
             wl.wash()
             with self.assertRaises(ValueError):
@@ -369,7 +369,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_decontaminate(self):
+    def test_decontaminate(self) -> None:
         with evotools.Worklist() as wl:
             wl.decontaminate()
             self.assertEqual(wl, [
@@ -377,7 +377,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_flush(self):
+    def test_flush(self) -> None:
         with evotools.Worklist() as wl:
             wl.flush()
             self.assertEqual(wl, [
@@ -385,7 +385,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_commit(self):
+    def test_commit(self) -> None:
         with evotools.Worklist() as wl:
             wl.commit()
             self.assertEqual(wl, [
@@ -393,7 +393,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_set_diti(self):
+    def test_set_diti(self) -> None:
         with evotools.Worklist() as wl:
             wl.set_diti(diti_index=1)
             with self.assertRaises(evotools.InvalidOperationError):
@@ -407,7 +407,7 @@ class TestWorklist(unittest.TestCase):
             ])
         return
 
-    def test_aspirate_single(self):
+    def test_aspirate_single(self) -> None:
         with evotools.Worklist() as wl:
             wl.aspirate_well('WaterTrough', 1, 200)
             self.assertEqual(wl[-1], 'A;WaterTrough;;;1;;200.00;;;;')
@@ -417,7 +417,7 @@ class TestWorklist(unittest.TestCase):
             self.assertEqual(wl[-1], 'A;WaterTrough;;;1;;200.00;my_liquid_class;;128;forced_rack')
         return
 
-    def test_dispense_single(self):
+    def test_dispense_single(self) -> None:
         with evotools.Worklist() as wl:
             wl.dispense_well('WaterTrough', 1, 200)
             self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200.00;;;;')
@@ -427,13 +427,13 @@ class TestWorklist(unittest.TestCase):
             self.assertEqual(wl[-1], 'D;WaterTrough;;;1;;200.00;my_liquid_class;;128;forced_rack')
         return
 
-    def test_aspirate_systemliquid(self):
+    def test_aspirate_systemliquid(self) -> None:
         with evotools.Worklist() as wl:
             wl.aspirate_well(evotools.Labwares.SystemLiquid, 1, 200)
             self.assertEqual(wl[-1], 'A;Systemliquid;;;1;;200.00;;;;')
         return
 
-    def test_save(self):
+    def test_save(self) -> None:
         tf = tempfile.mktemp() + '.gwl'
         error = None
         try:
@@ -458,7 +458,7 @@ class TestWorklist(unittest.TestCase):
             raise error
         return
 
-    def test_autosave(self):
+    def test_autosave(self) -> None:
         tf = tempfile.mktemp() + '.gwl'
         error = None
         try:
@@ -481,7 +481,7 @@ class TestWorklist(unittest.TestCase):
 
 
 class TestStandardLabwareWorklist(unittest.TestCase):
-    def test_aspirate(self):
+    def test_aspirate(self) -> None:
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         with evotools.Worklist() as wl:
             wl.aspirate(source, ['A01', 'A02', 'C02'], 50, label=None)
@@ -503,7 +503,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(source.history), 3)
         return
 
-    def test_aspirate_2d_volumes(self):
+    def test_aspirate_2d_volumes(self) -> None:
         source = liquidhandling.Labware('SourceLW', rows=2, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         with evotools.Worklist() as wl:
             wl.aspirate(source, source.wells[:,:2], volumes=numpy.array([
@@ -523,7 +523,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(source.history), 2)
         return
 
-    def test_dispense(self):
+    def test_dispense(self) -> None:
         destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
             wl.dispense(destination, ['A01', 'A02', 'A03'], 150, label=None)
@@ -544,7 +544,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(destination.history), 3)
         return
 
-    def test_dispense_2d_volumes(self):
+    def test_dispense_2d_volumes(self) -> None:
         destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
             wl.dispense(destination, destination.wells[:,:2], volumes=numpy.array([
@@ -564,7 +564,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(destination.history), 2)
         return
 
-    def test_skip_zero_volumes(self):
+    def test_skip_zero_volumes(self) -> None:
         source = liquidhandling.Labware('SourceLW', rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         destination = liquidhandling.Labware('DestinationLW', rows=2, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
@@ -588,7 +588,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(destination.history), 2)
         return
 
-    def test_transfer_2d_volumes(self):
+    def test_transfer_2d_volumes(self) -> None:
         A = liquidhandling.Labware('A', 2, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 2, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as wl:
@@ -625,7 +625,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 2)
         return
 
-    def test_transfer_2d_volumes_no_wash(self):
+    def test_transfer_2d_volumes_no_wash(self) -> None:
         A = liquidhandling.Labware('A', 2, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 2, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as wl:
@@ -659,7 +659,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 2)
         return
 
-    def test_transfer_many_many(self):
+    def test_transfer_many_many(self) -> None:
         A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         wells = ['A01', 'B01']
@@ -706,7 +706,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 3)
         return
 
-    def test_transfer_many_many_2d(self):
+    def test_transfer_many_many_2d(self) -> None:
         A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         wells = A.wells[:,:2]
@@ -747,7 +747,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 2)
         return
     
-    def test_transfer_one_many(self):
+    def test_transfer_one_many(self) -> None:
         A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
@@ -799,7 +799,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 3)
         return
     
-    def test_transfer_many_one(self):
+    def test_transfer_many_one(self) -> None:
         A = liquidhandling.Labware('A', 3, 4, min_volume=50, max_volume=250, initial_volumes=200)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
@@ -830,7 +830,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 2)
         return
 
-    def test_tip_selection(self):
+    def test_tip_selection(self) -> None:
         A = liquidhandling.Labware('A', 3, 4, min_volume=10, max_volume=250, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.aspirate(A, 'A01', 10, tip=1)
@@ -869,7 +869,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             ])
         return
 
-    def test_history_condensation(self):
+    def test_history_condensation(self) -> None:
         A = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
         B = liquidhandling.Labware('B', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
 
@@ -898,7 +898,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
         ])))
         return
 
-    def test_history_condensation_within_labware(self):
+    def test_history_condensation_within_labware(self) -> None:
         A = liquidhandling.Labware('A', 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
 
         with evotools.Worklist() as wl:
@@ -920,7 +920,7 @@ class TestStandardLabwareWorklist(unittest.TestCase):
 
 
 class TestTroughLabwareWorklist(unittest.TestCase):
-    def test_aspirate(self):
+    def test_aspirate(self) -> None:
         source = liquidhandling.Trough('SourceLW', virtual_rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         with evotools.Worklist() as wl:
             wl.aspirate(source, ['A01', 'A02', 'C02'], 50)
@@ -939,7 +939,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(source.history), 3)
         return
 
-    def test_dispense(self):
+    def test_dispense(self) -> None:
         destination = liquidhandling.Trough('DestinationLW', virtual_rows=3, columns=3, min_volume=10, max_volume=200)
         with evotools.Worklist() as wl:
             wl.dispense(destination, ['A01', 'A02', 'A03', 'B01'], 50)
@@ -959,7 +959,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(destination.history), 3)
         return
 
-    def test_transfer_many_many(self):
+    def test_transfer_many_many(self) -> None:
         A = liquidhandling.Trough('A', 3, 4, min_volume=50, max_volume=2500, initial_volumes=2000)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
@@ -1001,7 +1001,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 3)
         return
     
-    def test_transfer_one_many(self):
+    def test_transfer_one_many(self) -> None:
         A = liquidhandling.Trough('A', 3, 4, min_volume=50, max_volume=2500, initial_volumes=2000)
         B = liquidhandling.Labware('B', 3, 4, min_volume=50, max_volume=250)
         with evotools.Worklist() as worklist:
@@ -1062,7 +1062,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
             self.assertEqual(len(B.history), 3)
         return
     
-    def test_transfer_many_one(self):
+    def test_transfer_many_one(self) -> None:
         A = liquidhandling.Trough('A', 3, 4, min_volume=50, max_volume=2500, initial_volumes=[2000,1500,1000,500])
         B = liquidhandling.Labware('B', 3, 4, min_volume=10, max_volume=250, initial_volumes=100)
         with evotools.Worklist() as worklist:
@@ -1125,7 +1125,7 @@ class TestTroughLabwareWorklist(unittest.TestCase):
 
 
 class TestLargeVolumeHandling(unittest.TestCase):
-    def test_partition_volume_helper(self):
+    def test_partition_volume_helper(self) -> None:
         self.assertEqual([], evotools._partition_volume(0, max_volume=950))
         self.assertEqual([550.3], evotools._partition_volume(550.3, max_volume=950))
         self.assertEqual([500, 500], evotools._partition_volume(1000, max_volume=950))
@@ -1133,7 +1133,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         self.assertEqual([667, 667, 666], evotools._partition_volume(2000, max_volume=950))
         return
 
-    def test_worklist_constructor(self):
+    def test_worklist_constructor(self) -> None:
         with self.assertRaises(ValueError):
             with evotools.Worklist(max_volume=None) as wl:
                 pass
@@ -1145,7 +1145,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
             self.assertEqual(wl.auto_split, False)
         return
 
-    def test_max_volume_checking(self):
+    def test_max_volume_checking(self) -> None:
         source = liquidhandling.Trough('WaterTrough', virtual_rows=3, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000)
         destination = liquidhandling.Trough('WaterTrough', virtual_rows=3, columns=3, min_volume=1000, max_volume=100*1000, initial_volumes=50*1000)
         with evotools.Worklist(max_volume=900, auto_split=False) as wl:
@@ -1170,7 +1170,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
             wl.transfer(source, ['A01', 'B01'], destination, ['A01', 'B01'], 1000)
         return
 
-    def test_partition_by_columns_source(self):
+    def test_partition_by_columns_source(self) -> None:
         column_groups = evotools._partition_by_column(
             ['A01', 'B01', 'A03', 'B03', 'C02'],
             ['A01', 'B01', 'C01', 'D01', 'E01'],
@@ -1195,7 +1195,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ))
         return
 
-    def test_partition_by_columns_destination(self):
+    def test_partition_by_columns_destination(self) -> None:
         column_groups = evotools._partition_by_column(
             ['A01', 'B01', 'A03', 'B03', 'C02'],
             ['A01', 'B01', 'C02', 'D01', 'E02'],
@@ -1215,7 +1215,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ))
         return
 
-    def test_partition_by_columns_sorting(self):
+    def test_partition_by_columns_sorting(self) -> None:
         # within every column, the wells are supposed to be sorted by row
         # The test source wells are partially sorted (col 1 is in the right order, col 3 in the reverse)
         # The result is expected to always be sorted by row, either in the source (first case) or destination:
@@ -1270,7 +1270,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ))
         return
 
-    def test_single_split(self):
+    def test_single_split(self) -> None:
         src = liquidhandling.Labware('A', 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = liquidhandling.Labware('B', 3, 2, min_volume=1000, max_volume=25000)
         with evotools.Worklist(auto_split=True) as wl:
@@ -1310,7 +1310,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ]))
         return
 
-    def test_column_split(self):
+    def test_column_split(self) -> None:
         src = liquidhandling.Labware('A', 4, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = liquidhandling.Labware('B', 4, 2, min_volume=1000, max_volume=25000)
         with evotools.Worklist(auto_split=True) as wl:
@@ -1353,7 +1353,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
         ]))
         return
 
-    def test_block_split(self):
+    def test_block_split(self) -> None:
         src = liquidhandling.Labware('A', 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = liquidhandling.Labware('B', 3, 2, min_volume=1000, max_volume=25000)
         with evotools.Worklist(auto_split=True) as wl:
@@ -1421,7 +1421,7 @@ class TestLargeVolumeHandling(unittest.TestCase):
 
 
 class TestReagentDistribution(unittest.TestCase):
-    def test_parameter_validation(self):
+    def test_parameter_validation(self) -> None:
         with evotools.Worklist() as wl:
             with self.assertRaises(ValueError):
                 wl.reagent_distribution(
@@ -1448,7 +1448,7 @@ class TestReagentDistribution(unittest.TestCase):
                     )
         return
 
-    def test_default_parameterization(self):
+    def test_default_parameterization(self) -> None:
         with evotools.Worklist() as wl:
             wl.reagent_distribution(
                 'S1', 1, 20,
@@ -1458,7 +1458,7 @@ class TestReagentDistribution(unittest.TestCase):
         self.assertEqual(wl[0], 'R;S1;;;1;20;D1;;;2;21;50;;1;1;0')
         return
 
-    def test_full_parameterization(self):
+    def test_full_parameterization(self) -> None:
         with evotools.Worklist() as wl:
             wl.reagent_distribution(
                 'S1', 1, 20,
@@ -1472,7 +1472,7 @@ class TestReagentDistribution(unittest.TestCase):
         self.assertEqual(wl[0], 'R;S1;S1234;MP3Pos;1;20;D1;D1234;MP4Pos;2;21;50;TestLC;2;3;1;2;4;8')
         return
 
-    def test_large_volume_multi_disp_adaption(self):
+    def test_large_volume_multi_disp_adaption(self) -> None:
         with evotools.Worklist() as wl:
             wl.reagent_distribution(
                 'S1', 1, 8,
@@ -1482,7 +1482,7 @@ class TestReagentDistribution(unittest.TestCase):
         self.assertEqual(wl[0], 'R;S1;;;1;8;D1;;;1;96;400;;1;2;0')
         return
 
-    def test_oo_parameter_validation(self):
+    def test_oo_parameter_validation(self) -> None:
         with evotools.Worklist() as wl:
             src = liquidhandling.Labware('NotATrough', 6, 2, min_volume=20, max_volume=1000)
             dst = liquidhandling.Labware('48deep', 6, 8, min_volume=50, max_volume=4000)
@@ -1503,7 +1503,7 @@ class TestReagentDistribution(unittest.TestCase):
                 )
         return
 
-    def test_oo_example_1(self):
+    def test_oo_example_1(self) -> None:
         src = liquidhandling.Trough('T3', 8, 1,
             min_volume=20, max_volume=100*1000,
             initial_volumes=100*1000,
@@ -1535,7 +1535,7 @@ class TestReagentDistribution(unittest.TestCase):
         self.assertTrue(numpy.array_equal(dst.volumes, dst_exp))
         return
 
-    def test_oo_example_2(self):
+    def test_oo_example_2(self) -> None:
         src = liquidhandling.Trough('T2', 8, 1,
             min_volume=20, max_volume=100*1000,
             initial_volumes=100*1000,
@@ -1558,7 +1558,7 @@ class TestReagentDistribution(unittest.TestCase):
         self.assertTrue(numpy.array_equal(dst.volumes, numpy.ones_like(dst.volumes) * 100))
         return
 
-    def test_oo_block_from_right(self):
+    def test_oo_block_from_right(self) -> None:
         src = liquidhandling.Trough('Water', 8, 1,
             min_volume=20, max_volume=100*1000,
             initial_volumes=100*1000,
@@ -1582,7 +1582,7 @@ class TestReagentDistribution(unittest.TestCase):
     
 
 class TestCompositionTracking(unittest.TestCase):
-    def test_get_initial_composition(self):
+    def test_get_initial_composition(self) -> None:
         wells2x3 = numpy.array([
             ["A01", "A02", "A03"],
             ["B01", "B02", "B03"],
@@ -1627,9 +1627,9 @@ class TestCompositionTracking(unittest.TestCase):
         assert "samples.A01" in result
         assert "water" in result
         assert "samples.B03" in result
-        pass
+        return
 
-    def test_get_trough_component_names(self):
+    def test_get_trough_component_names(self) -> None:
         # The function requies the correct number of column names and initial volumes
         # and should raise informative errors otherwise.
         with pytest.raises(ValueError, match=r"column names \['A', 'B', 'C'\] don't match"):
@@ -1658,9 +1658,9 @@ class TestCompositionTracking(unittest.TestCase):
         # User-provided names, default naming and empty-well all in one:
         result = liquidhandling._get_trough_component_names("stocks", 4, ["acid", "base", None, None], [100, 100, 50, 0])
         assert result == {"A01": "acid", "A02": "base", "A03": "stocks.column_03", "A04": None }
-        pass
+        return
 
-    def test_combine_composition(self):
+    def test_combine_composition(self) -> None:
         A = dict(water=1)
         B = dict(water=0.5, glucose=0.5)
         expected = {
@@ -1671,7 +1671,7 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(actual, expected)
         return
 
-    def test_combine_unknown_composition(self):
+    def test_combine_unknown_composition(self) -> None:
         A = dict(water=1)
         B = None
         expected = None
@@ -1679,7 +1679,7 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertEqual(actual, expected)
         return
 
-    def test_labware_init(self):
+    def test_labware_init(self) -> None:
         minmax = dict(min_volume=0, max_volume=4000)
         # without initial volume, there's no composition tracking
         A = liquidhandling.Labware('glc', 6, 8, **minmax)
@@ -1710,7 +1710,7 @@ class TestCompositionTracking(unittest.TestCase):
         assert set(A.composition) == {"water"}
         return
 
-    def test_get_well_composition(self):
+    def test_get_well_composition(self) -> None:
         A = liquidhandling.Labware('glc', 6, 8, min_volume=0, max_volume=4000)
         A._composition = {
             'glc': 0.25 * numpy.ones_like(A.volumes),
@@ -1722,7 +1722,7 @@ class TestCompositionTracking(unittest.TestCase):
         })
         return
         
-    def test_labware_add(self):
+    def test_labware_add(self) -> None:
         A = liquidhandling.Labware('water', 6, 8, min_volume=0, max_volume=4000, initial_volumes=10, component_names={
             "A01": "water",
             "B01": "water",
@@ -1752,7 +1752,7 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(A.get_well_composition('B01'), dict(water=1/3, glc=2/3))
         return
 
-    def test_dilution_series(self):
+    def test_dilution_series(self) -> None:
         A = liquidhandling.Labware('dilutions', 1, 3, min_volume=0, max_volume=100)
         # 100 % in 1st column
         A.add(
@@ -1791,7 +1791,7 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(A.get_well_composition('A03'), dict(glucose=0.025, water=0.975))
         return
 
-    def test_trough_init(self):
+    def test_trough_init(self) -> None:
         minmax = dict(min_volume=0, max_volume=100_000)
         # Single-column troughs use the labware name for the composition
         W = liquidhandling.Trough('water', 2, 1, **minmax, initial_volumes=10000)
@@ -1818,7 +1818,7 @@ class TestCompositionTracking(unittest.TestCase):
         assert set(A.composition) == {"NaCl", "alice.column_03"}
         numpy.testing.assert_array_equal(A.composition["NaCl"], [[0, 1, 0]])
 
-    def test_trough_composition(self):
+    def test_trough_composition(self) -> None:
         T = liquidhandling.Trough('media', 8, 1, min_volume=1000, max_volume=25000)
         T.add(
             wells=T.wells,
@@ -1839,7 +1839,7 @@ class TestCompositionTracking(unittest.TestCase):
         self.assertDictEqual(T.get_well_composition('B01'), dict(water=0.9, glucose=0.1))
         return
 
-    def test_worklist_dilution(self):
+    def test_worklist_dilution(self) -> None:
         W = liquidhandling.Trough('water', 4, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         G = liquidhandling.Trough('glucose', 4, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         D = liquidhandling.Labware('dilutions', 4, 2, min_volume=0, max_volume=10000)
@@ -1876,7 +1876,7 @@ class TestCompositionTracking(unittest.TestCase):
             
         return
 
-    def test_worklist_distribution(self):
+    def test_worklist_distribution(self) -> None:
         W = liquidhandling.Trough('water', 2, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         G = liquidhandling.Trough('glucose', 2, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         D = liquidhandling.Labware('dilutions', 2, 4, min_volume=0, max_volume=10000)
@@ -1917,7 +1917,7 @@ class TestCompositionTracking(unittest.TestCase):
             
         return
 
-    def test_worklist_mix_no_composition_change(self):
+    def test_worklist_mix_no_composition_change(self) -> None:
         A = liquidhandling.Labware('solution', 2, 3, min_volume=0, max_volume=1000)
         A._composition['water'] = 0.25 * numpy.ones_like(A.volumes)
         A._composition['salt'] = 0.75 * numpy.ones_like(A.volumes)
@@ -1935,7 +1935,7 @@ class TestCompositionTracking(unittest.TestCase):
 
 
 class TestFunctions(unittest.TestCase):
-    def test_automatic_partitioning(self):
+    def test_automatic_partitioning(self) -> None:
         evo_logger = logging.getLogger('evotools')
         S = liquidhandling.Labware('S', 8, 2, min_volume=5000, max_volume=250*1000)
         D = liquidhandling.Labware('D', 8, 2, min_volume=5000, max_volume=250*1000)
@@ -1969,7 +1969,7 @@ class TestFunctions(unittest.TestCase):
 
 
 class TestDilutionPlan(unittest.TestCase):
-    def test_argchecking(self):
+    def test_argchecking(self) -> None:
         with self.assertRaises(ValueError):
             robotools.DilutionPlan(
                 xmin=0.001, xmax=30,
@@ -2012,7 +2012,7 @@ class TestDilutionPlan(unittest.TestCase):
 
         return
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         plan = robotools.DilutionPlan(
             xmin=0.001, xmax=30,
             R=8, C=12,
@@ -2028,7 +2028,7 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertIsInstance(out, str)
         return
 
-    def test_linear_plan(self):
+    def test_linear_plan(self) -> None:
         plan = robotools.DilutionPlan(
             xmin=1, xmax=10,
             R=10, C=1,
@@ -2047,7 +2047,7 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertTrue(numpy.array_equal(plan.instructions[0][3], [500, 450, 400, 350, 300, 250, 200, 150, 100,  50,]))
         return
 
-    def test_log_plan(self):
+    def test_log_plan(self) -> None:
         plan = robotools.DilutionPlan(
             xmin=0.01, xmax=10,
             R=4, C=3,
@@ -2068,7 +2068,7 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertTrue(numpy.array_equal(plan.instructions[2][3], [81, 81, 81, 81]))
         return
 
-    def test_vector_vmax(self):
+    def test_vector_vmax(self) -> None:
         plan = robotools.DilutionPlan(
             xmin=0.01, xmax=10,
             R=4, C=3,
@@ -2089,7 +2089,7 @@ class TestDilutionPlan(unittest.TestCase):
         self.assertTrue(numpy.array_equal(plan.instructions[2][3], [121, 121, 121, 121]))
         return
 
-    def test_to_worklist(self):
+    def test_to_worklist(self) -> None:
         # this test case tries to make it as hard as possible for the `to_worklist` method:
         # + vmax is different in every column
         # + stock has 2 rows, but dilution plan has 3
@@ -2124,9 +2124,9 @@ class TestDilutionPlan(unittest.TestCase):
         )
         assert "Mix column 0 with 75 % of its volume" in dilution.report
         assert "Mix column 1 with 50 % of its volume" in dilution.report
-        pass
+        return
 
-    def test_to_worklist_hooks(self):
+    def test_to_worklist_hooks(self) -> None:
         stock_concentration = 123
         plan = robotools.DilutionPlan(
             xmin=1, xmax=123,
@@ -2197,11 +2197,11 @@ class TestDilutionPlan(unittest.TestCase):
             destinations[1].composition["Stock"] * stock_concentration,
             plan.x[:, [2, 3]]
         )
-        pass
+        return
 
 
 class TestUtils(unittest.TestCase):
-    def test_get_trough_wells(self):
+    def test_get_trough_wells(self) -> None:
         with self.assertRaises(ValueError):
             robotools.get_trough_wells(n=-1, trough_wells=list('ABC'))
         with self.assertRaises(ValueError):
@@ -2215,11 +2215,11 @@ class TestUtils(unittest.TestCase):
         self.assertSequenceEqual(robotools.get_trough_wells(n=3, trough_wells=list('ABC')), list('ABC'))
         self.assertSequenceEqual(robotools.get_trough_wells(n=4, trough_wells=list('ABC')), list('ABCA'))
         self.assertSequenceEqual(robotools.get_trough_wells(n=7, trough_wells=list('ABC')), list('ABCABCA'))
-        pass
+        return
 
 
 class TestWellShifter(unittest.TestCase):
-    def test_identity_transform(self):
+    def test_identity_transform(self) -> None:
         A = (6, 8)
         B = (8, 12)
         shifter = transform.WellShifter(A, B, shifted_A01='A01')
@@ -2231,7 +2231,7 @@ class TestWellShifter(unittest.TestCase):
         self.assertTrue(numpy.array_equal(shifter.unshift(shifted), original))
         return
 
-    def test_center_shift(self):
+    def test_center_shift(self) -> None:
         A = (6, 8)
         B = (8, 12)
         shifter = transform.WellShifter(A, B, shifted_A01='B03')
@@ -2243,7 +2243,7 @@ class TestWellShifter(unittest.TestCase):
         self.assertTrue(numpy.array_equal(shifter.unshift(shifted), original))
         return
 
-    def test_boundcheck(self):
+    def test_boundcheck(self) -> None:
         A = (6, 8)
         B = (8, 12)
         
@@ -2256,13 +2256,13 @@ class TestWellShifter(unittest.TestCase):
 
 
 class TestWellRotator(unittest.TestCase):
-    def test_init(self):
+    def test_init(self) -> None:
         rotator = transform.WellRotator(original_shape=(7,3))
         self.assertEqual(rotator.original_shape, (7,3))
         self.assertEqual(rotator.rotated_shape, (3,7))
         return
 
-    def test_clockwise(self):
+    def test_clockwise(self) -> None:
         A = (6, 8)
         rotator = transform.WellRotator(A)
 
@@ -2272,7 +2272,7 @@ class TestWellRotator(unittest.TestCase):
         self.assertTrue(numpy.array_equal(expected, rotated))
         return
 
-    def test_counterclockwise(self):
+    def test_counterclockwise(self) -> None:
         A = (6, 8)
         rotator = transform.WellRotator(A)
 
