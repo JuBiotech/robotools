@@ -13,7 +13,6 @@ class VolumeOverflowError(Exception):
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold} in step {label}')
         else:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold}')
-        return
 
 
 class VolumeUnderflowError(Exception):
@@ -23,7 +22,6 @@ class VolumeUnderflowError(Exception):
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold} in step {label}')
         else:
             super().__init__(f'Too little volume in "{labware}".{well}: {current} - {change} < {threshold}')
-        return
 
 
 def _combine_composition(
@@ -290,7 +288,6 @@ class Labware:
             initial_volumes=initial_volumes
         )        
         super().__init__()
-        return
     
     def get_well_composition(self, well:str) -> typing.Dict[str, float]:
         """Retrieves the relative composition of a well.
@@ -552,4 +549,3 @@ class Trough(Labware):
             virtual_rows=virtual_rows,
             component_names=component_names
         )
-        return

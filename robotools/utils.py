@@ -142,7 +142,6 @@ class DilutionPlan:
             dsteps
             for _, dsteps, _, _ in instructions
         ])
-        return
 
     def __repr__(self) -> str:
         output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \

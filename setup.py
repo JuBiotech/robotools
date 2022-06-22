@@ -16,6 +16,7 @@
 import setuptools
 import os
 import pathlib
+import re
 
 __packagename__ = 'robotools'
 
@@ -32,7 +33,6 @@ def package_files(directory):
 
 
 def get_version():
-    import os, re   # (Clay) - Why import os and re down here?  Can we just import at top?
     VERSIONFILE = pathlib.Path(__packagename__, '__init__.py')
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"

@@ -323,7 +323,6 @@ class Worklist(list):
         self.max_volume = max_volume
         self.auto_split = auto_split
         super().__init__()
-        return
     
     def __enter__(self) -> None:
         self.clear()

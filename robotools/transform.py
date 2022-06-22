@@ -71,7 +71,6 @@ class WellShifter:
             raise ValueError(f'Invalid shift parameterization. Not enough rows in destination.')
         if shape_A[1] + self.dc > shape_B[1]:
             raise ValueError(f'Invalid shift parameterization. Not enough columns in destination.')
-        return
 
     def shift(self, wells:ArrayLike) -> numpy.ndarray:
         """Apply the forward-transformation.
@@ -134,7 +133,7 @@ class WellRotator:
         self.rotated_indices = make_well_index_dict(*self.rotated_shape)
         self.original_wells = make_well_array(*self.original_shape)
         self.rotated_wells = make_well_array(*self.rotated_shape)
-        # super().__init__()    # Why use super with no inheritence?  Can we remove?
+        super().__init__()
 
     def rotate_ccw(self, wells:ArrayLike) -> numpy.ndarray:
         """Rotate the given wells counterclockwise.
