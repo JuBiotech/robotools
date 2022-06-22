@@ -40,7 +40,7 @@ def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Seque
 
 class DilutionPlan:
     """Represents the result of a dilution series planning."""
-    def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:typing.Union[float, typing.Sequence[float]], min_transfer:float):
+    def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:typing.Union[float, typing.Sequence[float]], min_transfer:float) -> None:
         """Plans a regularly-spaced dilution series with in very few steps.
     
         Parameters
@@ -143,7 +143,7 @@ class DilutionPlan:
             for _, dsteps, _, _ in instructions
         ])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \
             f' from at least {self.v_stock} µL stock and {self.v_diluent} µL diluent:'
         for c, dsteps, src, vtransfer in self.instructions:
@@ -175,7 +175,7 @@ class DilutionPlan:
         lc_diluent_trough: str='Trough_Water_FD_AspLLT',
         lc_mix: str='Water_DispZmax-3_AspZmax-5',
         lc_transfer: str='Water_FD_AspZmax-1',
-    ):
+    ) -> None:
         """Writes the `DilutionPlan` to a `Worklist`.
 
         The stock is assumed to be non-sedimenting (e.g. by stirring), but all aspirations from freshly

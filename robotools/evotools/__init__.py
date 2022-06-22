@@ -42,7 +42,7 @@ def _prepare_aspirate_dispense_parameters(
     rack_id:str='', tube_id:str='',
     rack_type:str='', forced_rack_type:str='',
     max_volume:typing.Optional[int]=None
-):
+) -> typing.Tuple[str, int, float, str, typing.Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -56,7 +56,7 @@ def _prepare_aspirate_dispense_parameters(
     liquid_class : str, optional
         Overrides the liquid class for this step (max 32 characters)
     tip : Tip, int or Iterable of Tip / int, optional
-            Tip that will be selected (Tip, 1-8 or Iterable of the former two)
+        Tip that will be selected (Tip, 1-8 or Iterable of the former two)
     rack_id : str, optional
         Barcode of the labware (max 32 characters)
     tube_id : str, optional
@@ -68,6 +68,28 @@ def _prepare_aspirate_dispense_parameters(
         Overrides rack_type from worktable
     max_volume : int, optional
         Maximum allowed volume
+
+    Returns
+    -------
+    rack_label : str
+        User-defined labware name (max 32 characters)
+    position : int
+        Number of the well
+    volume : float
+        Volume in microliters (will be rounded to 2 decimal places)
+    liquid_class : str
+        Overrides the liquid class for this step (max 32 characters)
+    tip : Tip, int or Iterable of Tip / int
+        Tip that will be selected (Tip, 1-8 or Iterable of the former two)
+    rack_id : str
+        Barcode of the labware (max 32 characters)
+    tube_id : str
+        Barcode of the tube (max 32 characters)
+    rack_type : str
+        Configuration name of the labware (max 32 characters).
+        An error is raised if it missmatches with the underlying worktable.
+    forced_rack_type : str
+        Overrides rack_type from worktable
     """
     # required parameters
     if rack_label is None:
@@ -154,7 +176,7 @@ def _optimize_partition_by(
     destination:liquidhandling.Labware,
     partition_by:str,
     label:typing.Optional[str]=None
-):
+) -> str:
     """Determines optimal partitioning settings.
 
     Parameters
@@ -282,7 +304,7 @@ def _partition_by_column(
 
 class Worklist(list):
     """ Context manager for the creation of Worklists. """
-    def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True):
+    def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True) -> None:
         """Creates a worklist writer.
 
         Parameters
@@ -302,16 +324,16 @@ class Worklist(list):
         self.auto_split = auto_split
         super().__init__()
     
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.clear()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._filepath:
             self.save(self._filepath)
         return
     
-    def save(self, filepath:str):
+    def save(self, filepath:str) -> None:
         """Writes the worklist to the filepath.
 
         Parameters
@@ -326,7 +348,7 @@ class Worklist(list):
             file.write('\n'.join(self))
         return
     
-    def comment(self, comment:typing.Optional[str]):
+    def comment(self, comment:typing.Optional[str]) -> None:
         """Adds a comment.
         
         Parameters
@@ -344,7 +366,7 @@ class Worklist(list):
                 self.append(f'C;{cline}')
         return
     
-    def wash(self, scheme:int=1):
+    def wash(self, scheme:int=1) -> None:
         """Washes fixed tips or replaces DiTis.
 
         Washes/replaces the tip that was used by the preceding aspirate record(s).
@@ -359,17 +381,17 @@ class Worklist(list):
         self.append(f'W{scheme};')
         return
     
-    def decontaminate(self):
+    def decontaminate(self) -> None:
         """Decontamination wash consists of a decontamination wash followed by a normal wash."""
         self.append('WD;')
         return
     
-    def flush(self):
+    def flush(self) -> None:
         """Discards the contents of the tips WITHOUT WASHING or DROPPING of tips."""
         self.append('F;')
         return
     
-    def commit(self):
+    def commit(self) -> None:
         """Inserts a 'break' that forces the execution of aspirate/dispense operations at this point.
 
         WARNING: may be unreliable
@@ -387,7 +409,7 @@ class Worklist(list):
         self.append('B;')
         return
     
-    def set_diti(self, diti_index:int):
+    def set_diti(self, diti_index:int) -> None:
         """Switches the DiTi types within the worklist.
 
         IMPORTANT: As the DiTi index in worklists is 1-based you have to increase the shown DiTi index by one.
@@ -417,7 +439,7 @@ class Worklist(list):
         liquid_class:str='', tip:typing.Union[Tip, int, typing.Iterable]=Tip.Any,
         rack_id:str='', tube_id:str='',
         rack_type:str='', forced_rack_type:str=''
-    ):
+    ) -> None:
         """Command for aspirating with a single tip.
 
         Each Aspirate record specifies the aspiration parameters for a single tip (the next unused tip from the tip selection you have specified).
@@ -457,7 +479,7 @@ class Worklist(list):
         liquid_class:str='', tip:typing.Union[Tip, int]=Tip.Any,
         rack_id:str='', tube_id:str='',
         rack_type:str='', forced_rack_type:str=''
-    ):
+    ) -> None:
         """Command for dispensing with a single tip.
 
         Each Dispense record specifies the dispense parameters for a single tip.
@@ -502,7 +524,7 @@ class Worklist(list):
         liquid_class:str='', direction:str='left_to_right',
         src_rack_id:str='', src_rack_type:str='',
         dst_rack_id:str='', dst_rack_type:str='',
-    ):
+    ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
         Parameters
@@ -585,7 +607,7 @@ class Worklist(list):
         *,
         label:typing.Optional[str]=None,
         **kwargs
-    ):
+    ) -> None:
         """Performs aspiration from the provided labware.
 
         Parameters
@@ -623,7 +645,7 @@ class Worklist(list):
         label:typing.Optional[str]=None,
         compositions:typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]]=None,
         **kwargs
-    ):
+    ) -> None:
         """Performs dispensing into the provided labware.
 
         Parameters
@@ -664,7 +686,7 @@ class Worklist(list):
         wash_scheme:int=1,
         partition_by:str='auto',
         **kwargs
-    ):
+    ) -> None:
         """Transfer operation between two labwares.
 
         Parameters
@@ -773,7 +795,7 @@ class Worklist(list):
         direction:str='left_to_right',
         src_rack_id:str='', src_rack_type:str='',
         dst_rack_id:str='', dst_rack_type:str=''
-    ):
+    ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
         Does NOT support large volume operations.
@@ -844,8 +866,8 @@ class Worklist(list):
         destination.add(destination_wells, volume, label=label, compositions=[src_composition]*n_dst)
         return
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '\n'.join(self)
     
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
