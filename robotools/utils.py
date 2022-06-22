@@ -1,16 +1,17 @@
 """Module with robot-agnostic utilities."""
 import collections
-import numpy
 import typing
-from . import evotools
-from . import liquidhandling
+
+import numpy
+
+from . import evotools, liquidhandling
 
 
 def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Sequence[str]:
     """Creates a list that re-uses trough wells if needed.
 
     When n > trough.virtual_rows, the available wells are repeated.
-    
+
     Parameters
     ----------
     n : int
@@ -24,15 +25,15 @@ def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Seque
         n virtual wells in the trough
     """
     if not isinstance(n, int):
-        raise TypeError('n must be int')
+        raise TypeError("n must be int")
     if not isinstance(trough_wells, (list, tuple, numpy.ndarray)):
-        raise TypeError('trough_wells must be a tuple, list or 1-D numpy array.')
+        raise TypeError("trough_wells must be a tuple, list or 1-D numpy array.")
     if n < 0:
-        raise ValueError('n must be ≥ 0.')
+        raise ValueError("n must be ≥ 0.")
     if len(trough_wells) == 0:
-        raise ValueError('trough_wells must contain at least 1 element.')
+        raise ValueError("trough_wells must contain at least 1 element.")
 
-    trough_wells = list(numpy.array(trough_wells).flatten('F'))
+    trough_wells = list(numpy.array(trough_wells).flatten("F"))
     n_available = len(trough_wells)
     n_repeat = n // n_available + 1
     return (trough_wells * n_repeat)[:n]
@@ -40,9 +41,21 @@ def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Seque
 
 class DilutionPlan:
     """Represents the result of a dilution series planning."""
-    def __init__(self, *, xmin:float, xmax:float, R:int, C:int, stock:float, mode:str, vmax:typing.Union[float, typing.Sequence[float]], min_transfer:float) -> None:
+
+    def __init__(
+        self,
+        *,
+        xmin: float,
+        xmax: float,
+        R: int,
+        C: int,
+        stock: float,
+        mode: str,
+        vmax: typing.Union[float, typing.Sequence[float]],
+        min_transfer: float,
+    ) -> None:
         """Plans a regularly-spaced dilution series with in very few steps.
-    
+
         Parameters
         ----------
         xmin : float
@@ -64,65 +77,64 @@ class DilutionPlan:
         """
         # process arguments
         if stock < xmax:
-            raise ValueError(f'Stock concentration ({stock}) must be >= xmax ({xmax})')
+            raise ValueError(f"Stock concentration ({stock}) must be >= xmax ({xmax})")
         N = R * C
-        
+
         vmax = numpy.atleast_1d(vmax)
         if len(vmax) == 1:
             vmax = numpy.repeat(vmax, C)
         if not len(vmax) == C:
-            raise ValueError('The `vmax` argument must be scalar or of length `C`.')
-        
+            raise ValueError("The `vmax` argument must be scalar or of length `C`.")
+
         # determine target concentrations
-        if mode == 'log':
+        if mode == "log":
             ideal_targets = numpy.exp(numpy.linspace(numpy.log(xmax), numpy.log(xmin), N))
-        elif mode == 'linear':
+        elif mode == "linear":
             ideal_targets = numpy.linspace(xmax, xmin, N)
         else:
             raise ValueError('mode must be either "log" or "linear".')
-        
-        ideal_targets = ideal_targets.reshape((R, C), order='F')
-    
+
+        ideal_targets = ideal_targets.reshape((R, C), order="F")
+
         # collect preparation instructions for each columns
         # (column, dilution steps, prepared from, transfer volumes)
-        instructions:typing.List[typing.Tuple[int, int, typing.Union[int, str], numpy.ndarray]] = []
+        instructions: typing.List[typing.Tuple[int, int, typing.Union[int, str], numpy.ndarray]] = []
         actual_targets = []
-    
+
         # transfer from stock until the volume is too low
         for c in range(C):
-            vtransfer = numpy.round(vmax[c] * ideal_targets[:,c] / stock, 0)
+            vtransfer = numpy.round(vmax[c] * ideal_targets[:, c] / stock, 0)
             if all(vtransfer >= min_transfer):
-                instructions.append(
-                    (c, 0, 'stock', vtransfer)
-                )
+                instructions.append((c, 0, "stock", vtransfer))
                 # compute the actually achieved target concentration
                 actual_targets.append(vtransfer / vmax[c] * stock)
             else:
                 break
-        
+
         # prepare remaining columns by diluting existing ones
         for c in range(len(instructions), C):
             # find the first source column that can be used (with sufficient transfer volume)
             for src_c in range(0, len(instructions)):
                 _, src_df, _, _ = instructions[src_c]
-                vtransfer = numpy.ceil(vmax[c] * ideal_targets[:,c] / actual_targets[src_c])
+                vtransfer = numpy.ceil(vmax[c] * ideal_targets[:, c] / actual_targets[src_c])
                 # take the leftmost column (least dilution steps) where the minimal transfer volume is exceeded
                 if all(vtransfer >= min_transfer):
                     instructions.append(
                         # increment the dilution step counter
-                        (c, src_df+1, src_c, vtransfer)
+                        (c, src_df + 1, src_c, vtransfer)
                     )
                     # compute the actually achieved target concentration
                     actual_targets.append(vtransfer * actual_targets[src_c] / vmax[c])
                     break
-            
+
         if len(actual_targets) < C:
-            message = f'Impossible with current settings.' \
-                f' Only {len(instructions)}/{C} colums can be prepared.'
-            if mode == 'linear':
+            message = (
+                f"Impossible with current settings." f" Only {len(instructions)}/{C} colums can be prepared."
+            )
+            if mode == "linear":
                 message += ' Try switching to "log" mode.'
             raise ValueError(message)
-    
+
         self.R = R
         self.C = C
         self.N = R * C
@@ -132,49 +144,47 @@ class DilutionPlan:
         self.xmax = numpy.max(actual_targets)
         self.instructions = instructions
         self.vmax = vmax
-        self.v_stock = numpy.sum([
-            v
-            for _, dsteps, src, v in instructions
-            if dsteps == 0
-        ])
+        self.v_stock = numpy.sum([v for _, dsteps, src, v in instructions if dsteps == 0])
         self.v_diluent = numpy.sum(R * vmax) - self.v_stock
-        self.max_steps = max([
-            dsteps
-            for _, dsteps, _, _ in instructions
-        ])
+        self.max_steps = max([dsteps for _, dsteps, _, _ in instructions])
 
     def __repr__(self) -> str:
-        output = f'Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})' \
-            f' from at least {self.v_stock} µL stock and {self.v_diluent} µL diluent:'
+        output = (
+            f"Serial dilution plan ({self.xmin:.5f} to {self.xmax:.2f})"
+            f" from at least {self.v_stock} µL stock and {self.v_diluent} µL diluent:"
+        )
         for c, dsteps, src, vtransfer in self.instructions:
-            output += f'\r\n   Prepare column {c+1} with {vtransfer} µL from '
+            output += f"\r\n   Prepare column {c+1} with {vtransfer} µL from "
             if dsteps == 0:
-                output += 'stock'
+                output += "stock"
             else:
-                output += f'column {src}'
-            output += f' and fill up to {self.vmax[c]} µL'
+                output += f"column {src}"
+            output += f" and fill up to {self.vmax[c]} µL"
             if dsteps > 0:
-                output += f' ({dsteps} serial dilutions)'
+                output += f" ({dsteps} serial dilutions)"
         return output
 
     def to_worklist(
-        self, *,
+        self,
+        *,
         worklist: evotools.Worklist,
-        stock: liquidhandling.Labware, stock_column: int=0,
-        diluent: liquidhandling.Labware, diluent_column: int=0,
+        stock: liquidhandling.Labware,
+        stock_column: int = 0,
+        diluent: liquidhandling.Labware,
+        diluent_column: int = 0,
         dilution_plate: liquidhandling.Labware,
-        destination_plate: liquidhandling.Labware=None,
-        v_destination: float=None,
-        pre_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
-        post_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]]=None,
-        mix_threshold: float=0.05,
-        mix_wash: int=2,
-        mix_repeat: int=2,
-        mix_volume: float=0.8,
-        lc_stock_trough: str='Trough_Water_FD_AspLLT',
-        lc_diluent_trough: str='Trough_Water_FD_AspLLT',
-        lc_mix: str='Water_DispZmax-3_AspZmax-5',
-        lc_transfer: str='Water_FD_AspZmax-1',
+        destination_plate: liquidhandling.Labware = None,
+        v_destination: float = None,
+        pre_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]] = None,
+        post_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]] = None,
+        mix_threshold: float = 0.05,
+        mix_wash: int = 2,
+        mix_repeat: int = 2,
+        mix_volume: float = 0.8,
+        lc_stock_trough: str = "Trough_Water_FD_AspLLT",
+        lc_diluent_trough: str = "Trough_Water_FD_AspLLT",
+        lc_mix: str = "Water_DispZmax-3_AspZmax-5",
+        lc_transfer: str = "Water_FD_AspZmax-1",
     ) -> None:
         """Writes the `DilutionPlan` to a `Worklist`.
 
@@ -243,13 +253,21 @@ class DilutionPlan:
             Liquid class for transfers within the `dilution_plate` and to the `destination_plate`
         """
         if dilution_plate.n_rows < self.R:
-            raise ValueError(f'Dilution plate "{dilution_plate.name}" has not enough rows for this dilution plan.')
+            raise ValueError(
+                f'Dilution plate "{dilution_plate.name}" has not enough rows for this dilution plan.'
+            )
         if dilution_plate.n_columns < self.C:
-            raise ValueError(f'Dilution plate "{dilution_plate.name}" has not enough columns for this dilution plan.')
+            raise ValueError(
+                f'Dilution plate "{dilution_plate.name}" has not enough columns for this dilution plan.'
+            )
         if destination_plate and destination_plate.n_rows < self.R:
-            raise ValueError(f'Destination plate "{destination_plate.name}" has not enough rows for this dilution plan.')
+            raise ValueError(
+                f'Destination plate "{destination_plate.name}" has not enough rows for this dilution plan.'
+            )
         if destination_plate and destination_plate.n_columns < self.C:
-            raise ValueError(f'Destination plate "{destination_plate.name}" has not enough columns for this dilution plan.')
+            raise ValueError(
+                f'Destination plate "{destination_plate.name}" has not enough columns for this dilution plan.'
+            )
         if not stock.is_trough:
             raise ValueError(f'The stock labware "{stock.name}" must be a trough.')
         if not diluent.is_trough:
@@ -262,35 +280,39 @@ class DilutionPlan:
         # a given column. This way, we can transfer to them right after diluting/mixing.
         serial_dilution_from_to = collections.defaultdict(list)
         for col, _, src, v in self.instructions:
-            if src != 'stock':
+            if src != "stock":
                 serial_dilution_from_to[src].append((col, v))
 
         # now prepare column by column
         for col, _, src, v_src in self.instructions:
             # this is the first transfer in the entire procedure
-            if src == 'stock':
+            if src == "stock":
                 worklist.transfer(
-                    stock, get_trough_wells(self.R, stock_wells),
-                    dilution_plate, dilution_plate.wells[:self.R, col],
+                    stock,
+                    get_trough_wells(self.R, stock_wells),
+                    dilution_plate,
+                    dilution_plate.wells[: self.R, col],
                     volumes=v_src,
                     liquid_class=lc_stock_trough,
-                    label=f'Distribute from stock'
+                    label=f"Distribute from stock",
                 )
                 worklist.commit()
             else:
                 # transfers for serial dilution are done after the mixing step
                 # at this point this has already happened
-                if not numpy.allclose(dilution_plate.volumes[:self.R, col], v_src):
-                    raise Exception(f'Column {col} volume not as expected.')
+                if not numpy.allclose(dilution_plate.volumes[: self.R, col], v_src):
+                    raise Exception(f"Column {col} volume not as expected.")
 
             # the column already contains the higher-concentrated standards
             # now it's time to dilute it
             worklist.transfer(
-                diluent, get_trough_wells(self.R, diluent_wells),
-                dilution_plate, dilution_plate.wells[:self.R, col],
+                diluent,
+                get_trough_wells(self.R, diluent_wells),
+                dilution_plate,
+                dilution_plate.wells[: self.R, col],
                 volumes=self.vmax[col] - v_src,
                 liquid_class=lc_diluent_trough,
-                label=f'Dilute column {col}'
+                label=f"Dilute column {col}",
             )
             worklist.commit()
 
@@ -305,12 +327,14 @@ class DilutionPlan:
                     mix_vol = min(worklist.max_volume, self.vmax[col] * mix_volume)
                     mix_fraction = round(mix_vol / self.vmax[col], 2)
                     worklist.transfer(
-                        dilution_plate, dilution_plate.wells[:self.R, col],
-                        dilution_plate, dilution_plate.wells[:self.R, col],
+                        dilution_plate,
+                        dilution_plate.wells[: self.R, col],
+                        dilution_plate,
+                        dilution_plate.wells[: self.R, col],
                         volumes=mix_vol,
                         liquid_class=lc_mix,
                         wash_scheme=mix_wash if r < mix_repeat - 1 else 1,
-                        label=f'Mix column {col} with {mix_fraction*100:.0f} % of its volume'
+                        label=f"Mix column {col} with {mix_fraction*100:.0f} % of its volume",
                     )
                     worklist.commit()
 
@@ -322,22 +346,26 @@ class DilutionPlan:
             # transfer to other columns that will be prepared from this one
             for dst, v_dst in serial_dilution_from_to[col]:
                 worklist.transfer(
-                    dilution_plate, dilution_plate.wells[:self.R, col],
-                    dilution_plate, dilution_plate.wells[:self.R, dst],
+                    dilution_plate,
+                    dilution_plate.wells[: self.R, col],
+                    dilution_plate,
+                    dilution_plate.wells[: self.R, dst],
                     volumes=v_dst,
                     liquid_class=lc_transfer,
-                    label=f'Transfer columns {col} -> {dst} for later dilution step'
+                    label=f"Transfer columns {col} -> {dst} for later dilution step",
                 )
                 worklist.commit()
 
             # transfer to a destination is optional
             if destination_plate:
                 worklist.transfer(
-                    dilution_plate, dilution_plate.wells[:self.R, col],
-                    destination_plate, destination_plate.wells[:self.R, col],
+                    dilution_plate,
+                    dilution_plate.wells[: self.R, col],
+                    destination_plate,
+                    destination_plate.wells[: self.R, col],
                     volumes=v_destination,
                     liquid_class=lc_transfer,
-                    label=f'Transfer column {col} to the destination plate'
+                    label=f"Transfer column {col} to the destination plate",
                 )
                 worklist.commit()
 

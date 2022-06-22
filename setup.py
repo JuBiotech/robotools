@@ -13,62 +13,65 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import setuptools
 import os
 import pathlib
 import re
 
-__packagename__ = 'robotools'
+import setuptools
+
+__packagename__ = "robotools"
 
 
 def package_files(directory):
     assert pathlib.Path(directory).exists()
-    fp_typed = pathlib.Path(__packagename__, 'py.typed')
+    fp_typed = pathlib.Path(__packagename__, "py.typed")
     fp_typed.touch()
     paths = [str(fp_typed.absolute())]
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(str(pathlib.Path('..', path, filename)))
+            paths.append(str(pathlib.Path("..", path, filename)))
     return paths
 
 
 def get_version():
-    VERSIONFILE = pathlib.Path(__packagename__, '__init__.py')
-    initfile_lines = open(VERSIONFILE, 'rt').readlines()
+    VERSIONFILE = pathlib.Path(__packagename__, "__init__.py")
+    initfile_lines = open(VERSIONFILE, "rt").readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:
         mo = re.search(VSRE, line, re.M)
         if mo:
             return mo.group(1)
-    raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+
 
 __version__ = get_version()
 
-setuptools.setup(name = __packagename__,
-        packages = setuptools.find_packages(), # this must be the same as the name above
-        version=__version__,
-        description='Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists.',
-        url='https://github.com/jubiotech/robotools',
-        download_url = 'https://github.com/jubiotech/robotools/tarball/%s' % __version__,
-        author='Michael Osthege',
-        author_email='m.osthege@fz-juelich.de',
-        license='GNU Affero General Public License v3',
-        classifiers= [
-            'Programming Language :: Python',
-            'Operating System :: OS Independent',
-            'Programming Language :: Python :: 3.7',
-            'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9',
-            'License :: OSI Approved :: GNU Affero General Public License v3',
-            'Intended Audience :: Science/Research',
-            'Topic :: Scientific/Engineering',
-        ],
-        install_requires=[
-            'numpy',
-            'pandas',
-        ],
-        package_data={
-            'robotools': package_files(str(pathlib.Path(pathlib.Path(__file__).parent, 'robotools').absolute()))
-        },
-        include_package_data=True
+setuptools.setup(
+    name=__packagename__,
+    packages=setuptools.find_packages(),  # this must be the same as the name above
+    version=__version__,
+    description="Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists.",
+    url="https://github.com/jubiotech/robotools",
+    download_url="https://github.com/jubiotech/robotools/tarball/%s" % __version__,
+    author="Michael Osthege",
+    author_email="m.osthege@fz-juelich.de",
+    license="GNU Affero General Public License v3",
+    classifiers=[
+        "Programming Language :: Python",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "License :: OSI Approved :: GNU Affero General Public License v3",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering",
+    ],
+    install_requires=[
+        "numpy",
+        "pandas",
+    ],
+    package_data={
+        "robotools": package_files(str(pathlib.Path(pathlib.Path(__file__).parent, "robotools").absolute()))
+    },
+    include_package_data=True,
 )
