@@ -4,19 +4,20 @@ import collections
 import enum
 import logging
 import math
-import numpy
 import os
 import typing
 
+import numpy
+
 from .. import liquidhandling
 
-
-logger = logging.getLogger('evotools')
+logger = logging.getLogger("evotools")
 
 
 class Labwares(str, enum.Enum):
     """Built-in EVOware labware identifiers."""
-    SystemLiquid = 'Systemliquid'
+
+    SystemLiquid = "Systemliquid"
 
 
 class Tip(enum.IntEnum):
@@ -36,12 +37,16 @@ class InvalidOperationError(Exception):
 
 
 def _prepare_aspirate_dispense_parameters(
-    rack_label:str, position:int, volume:float,
-    liquid_class:str='',
-    tip:typing.Union[Tip, int, collections.abc.Iterable]=Tip.Any,
-    rack_id:str='', tube_id:str='',
-    rack_type:str='', forced_rack_type:str='',
-    max_volume:typing.Optional[int]=None
+    rack_label: str,
+    position: int,
+    volume: float,
+    liquid_class: str = "",
+    tip: typing.Union[Tip, int, collections.abc.Iterable] = Tip.Any,
+    rack_id: str = "",
+    tube_id: str = "",
+    rack_type: str = "",
+    forced_rack_type: str = "",
+    max_volume: typing.Optional[int] = None,
 ) -> typing.Tuple[str, int, float, str, typing.Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
@@ -93,34 +98,36 @@ def _prepare_aspirate_dispense_parameters(
     """
     # required parameters
     if rack_label is None:
-        raise ValueError('Missing required paramter: rack_label')
-    if not isinstance(rack_label, str) or len(rack_label) > 32 or ';' in rack_label:
-        raise ValueError(f'Invalid rack_label: {rack_label}')
+        raise ValueError("Missing required paramter: rack_label")
+    if not isinstance(rack_label, str) or len(rack_label) > 32 or ";" in rack_label:
+        raise ValueError(f"Invalid rack_label: {rack_label}")
 
     if position is None:
-        raise ValueError('Missing required paramter: position')
+        raise ValueError("Missing required paramter: position")
     if not isinstance(position, int) or position < 0:
-        raise ValueError(f'Invalid position: {position}')
+        raise ValueError(f"Invalid position: {position}")
 
     if volume is None:
-        raise ValueError('Missing required paramter: volume')
+        raise ValueError("Missing required paramter: volume")
     try:
         volume = float(volume)
     except:
-        raise ValueError(f'Invalid volume: {volume}')
+        raise ValueError(f"Invalid volume: {volume}")
     if volume < 0 or volume > 7158278 or numpy.isnan(volume):
-        raise ValueError(f'Invalid volume: {volume}')
+        raise ValueError(f"Invalid volume: {volume}")
     if max_volume is not None and volume > max_volume:
-        raise InvalidOperationError(f'Volume of {volume} exceeds max_volume.')
+        raise InvalidOperationError(f"Volume of {volume} exceeds max_volume.")
 
     # optional parameters
-    if not isinstance(liquid_class, str) or ';' in liquid_class:
-        raise ValueError(f'Invalid liquid_class: {liquid_class}')
-    
+    if not isinstance(liquid_class, str) or ";" in liquid_class:
+        raise ValueError(f"Invalid liquid_class: {liquid_class}")
+
     def _int_to_tip(tip_int: int):
         """Asserts a Tecan Tip class to an int between 1 and 8."""
         if not 1 <= tip_int <= 8:
-            raise ValueError(f"Tip is {tip} with type {type(tip)}, but should be an int between 1 and 8 for _int_to_tip conversion.")
+            raise ValueError(
+                f"Tip is {tip} with type {type(tip)}, but should be an int between 1 and 8 for _int_to_tip conversion."
+            )
         if tip_int == 1:
             return Tip.T1
         elif tip_int == 2:
@@ -138,7 +145,6 @@ def _prepare_aspirate_dispense_parameters(
         elif tip_int == 8:
             return Tip.T8
 
-
     if isinstance(tip, int) and not isinstance(tip, Tip):
         # User-specified integers from 1-8 need to be converted to Tecan logic
         tip = _int_to_tip(tip)
@@ -150,32 +156,36 @@ def _prepare_aspirate_dispense_parameters(
                 tips.append(_int_to_tip(element))
             elif isinstance(element, Tip):
                 if element == -1:
-                    raise ValueError("When Iterables are used, no Tip.Any elements are allowed. Pass just one Tip.Any instead.")
+                    raise ValueError(
+                        "When Iterables are used, no Tip.Any elements are allowed. Pass just one Tip.Any instead."
+                    )
                 tips.append(element)
             else:
-                raise ValueError(f'If tip is an Iterable, it may only contain int or Tip values, not {type(element)}.') 
+                raise ValueError(
+                    f"If tip is an Iterable, it may only contain int or Tip values, not {type(element)}."
+                )
         tip = sum(set(tips))
     elif not isinstance(tip, Tip):
-        raise ValueError(f'tip must be an int between 1 and 8, Tip or Iterable, but was {type(tip)}.')
+        raise ValueError(f"tip must be an int between 1 and 8, Tip or Iterable, but was {type(tip)}.")
 
-    if not isinstance(rack_id, str) or len(rack_id) > 32 or ';' in rack_id:
-        raise ValueError(f'Invalid rack_id: {rack_id}')
-    if not isinstance(rack_type, str) or len(rack_type) > 32 or ';' in rack_type:
-        raise ValueError(f'Invalid rack_type: {rack_type}')
-    if not isinstance(forced_rack_type, str) or len(forced_rack_type) > 32 or ';' in forced_rack_type:
-        raise ValueError(f'Invalid forced_rack_type: {forced_rack_type}')
+    if not isinstance(rack_id, str) or len(rack_id) > 32 or ";" in rack_id:
+        raise ValueError(f"Invalid rack_id: {rack_id}")
+    if not isinstance(rack_type, str) or len(rack_type) > 32 or ";" in rack_type:
+        raise ValueError(f"Invalid rack_type: {rack_type}")
+    if not isinstance(forced_rack_type, str) or len(forced_rack_type) > 32 or ";" in forced_rack_type:
+        raise ValueError(f"Invalid forced_rack_type: {forced_rack_type}")
 
     # apply rounding and corrections for the right string formatting
-    volume = f'{numpy.round(volume, decimals=2):.2f}'
-    tip = '' if tip == -1 else tip
+    volume = f"{numpy.round(volume, decimals=2):.2f}"
+    tip = "" if tip == -1 else tip
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
 def _optimize_partition_by(
-    source:liquidhandling.Labware,
-    destination:liquidhandling.Labware,
-    partition_by:str,
-    label:typing.Optional[str]=None
+    source: liquidhandling.Labware,
+    destination: liquidhandling.Labware,
+    partition_by: str,
+    label: typing.Optional[str] = None,
 ) -> str:
     """Determines optimal partitioning settings.
 
@@ -193,33 +203,33 @@ def _optimize_partition_by(
     partition_by : str
         Either 'source' or 'destination'
     """
-    if not partition_by in {'auto', 'source', 'destination'}:
-        raise ValueError(f'Invalid partition_by argument: {partition_by}')
+    if not partition_by in {"auto", "source", "destination"}:
+        raise ValueError(f"Invalid partition_by argument: {partition_by}")
     # automatic partitioning decision
-    if partition_by == 'auto':
+    if partition_by == "auto":
         if source.is_trough and not destination.is_trough:
-            logger.debug(f'')
-            partition_by = 'destination'
+            logger.debug(f"")
+            partition_by = "destination"
         else:
-            partition_by = 'source'
+            partition_by = "source"
     else:
         # log warnings about potentially inefficient partitioning settings
-        if partition_by == 'source' and source.is_trough and not destination.is_trough:
+        if partition_by == "source" and source.is_trough and not destination.is_trough:
             logger.warning(
                 f'Partitioning by "source" ({source.name}), which is a Trough while destination ({destination.name}) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="destination".'
-                f' (label={label})'
+                f" (label={label})"
             )
-        elif partition_by == 'destination' and destination.is_trough and not source.is_trough:
+        elif partition_by == "destination" and destination.is_trough and not source.is_trough:
             logger.warning(
                 f'Partitioning by "destination" ({destination.name}), which is a Trough while source ({source.name}) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="source"'
-                f' (label={label})'
+                f" (label={label})"
             )
     return partition_by
 
 
-def _partition_volume(volume:float, *, max_volume:int) -> typing.List[float]:
+def _partition_volume(volume: float, *, max_volume: int) -> typing.List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Parameters
@@ -240,16 +250,16 @@ def _partition_volume(volume:float, *, max_volume:int) -> typing.List[float]:
         return [volume]
     isteps = math.ceil(volume / max_volume)
     step_volume = math.ceil(volume / isteps)
-    volumes:typing.List[float] = [step_volume] * (isteps - 1)
+    volumes: typing.List[float] = [step_volume] * (isteps - 1)
     volumes.append(volume - numpy.sum(volumes))
     return volumes
 
 
 def _partition_by_column(
-    sources:typing.Iterable[str],
-    destinations:typing.Iterable[str],
-    volumes:typing.Iterable[float],
-    partition_by:str
+    sources: typing.Iterable[str],
+    destinations: typing.Iterable[str],
+    volumes: typing.Iterable[float],
+    partition_by: str,
 ) -> typing.Dict[int, typing.Tuple[typing.List[str], typing.List[str], typing.List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
@@ -272,9 +282,9 @@ def _partition_by_column(
     # first partition the wells into columns
     column_groups = collections.defaultdict(lambda: ([], [], []))
     for s, d, v in zip(sources, destinations, volumes):
-        if partition_by == 'source':
+        if partition_by == "source":
             group = s[1:]
-        elif partition_by == 'destination':
+        elif partition_by == "destination":
             group = d[1:]
         else:
             raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
@@ -282,29 +292,27 @@ def _partition_by_column(
         column_groups[group][1].append(d)
         column_groups[group][2].append(v)
     # bring columns in the right order
-    column_groups = [
-        column_groups[col]
-        for col in sorted(column_groups.keys())
-    ]
+    column_groups = [column_groups[col] for col in sorted(column_groups.keys())]
     # sort the rows within the column
     for c, (srcs, dsts, vols) in enumerate(column_groups):
-        if partition_by == 'source':
+        if partition_by == "source":
             order = numpy.argsort(srcs)
-        elif partition_by == 'destination':
+        elif partition_by == "destination":
             order = numpy.argsort(dsts)
         else:
             raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
         column_groups[c] = (
             list(numpy.array(srcs)[order]),
             list(numpy.array(dsts)[order]),
-            list(numpy.array(vols)[order])
+            list(numpy.array(vols)[order]),
         )
     return column_groups
 
 
 class Worklist(list):
-    """ Context manager for the creation of Worklists. """
-    def __init__(self, filepath:str=None, max_volume:int=950, auto_split:bool=True) -> None:
+    """Context manager for the creation of Worklists."""
+
+    def __init__(self, filepath: str = None, max_volume: int = 950, auto_split: bool = True) -> None:
         """Creates a worklist writer.
 
         Parameters
@@ -319,21 +327,21 @@ class Worklist(list):
         """
         self._filepath = filepath
         if max_volume is None:
-            raise ValueError('The `max_volume` parameter is required.')
+            raise ValueError("The `max_volume` parameter is required.")
         self.max_volume = max_volume
         self.auto_split = auto_split
         super().__init__()
-    
+
     def __enter__(self) -> None:
         self.clear()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._filepath:
             self.save(self._filepath)
         return
-    
-    def save(self, filepath:str) -> None:
+
+    def save(self, filepath: str) -> None:
         """Writes the worklist to the filepath.
 
         Parameters
@@ -341,16 +349,16 @@ class Worklist(list):
         filepath : str
             File name or path to write (must include a .gwl extension)
         """
-        assert '.gwl' in filepath.lower(), 'The filename did not contain the .gwl extension.'
+        assert ".gwl" in filepath.lower(), "The filename did not contain the .gwl extension."
         if os.path.exists(filepath):
             os.remove(filepath)
-        with open(filepath, 'w', newline='\r\n') as file:
-            file.write('\n'.join(self))
+        with open(filepath, "w", newline="\r\n") as file:
+            file.write("\n".join(self))
         return
-    
-    def comment(self, comment:typing.Optional[str]) -> None:
+
+    def comment(self, comment: typing.Optional[str]) -> None:
         """Adds a comment.
-        
+
         Parameters
         ----------
         comment : str
@@ -358,15 +366,15 @@ class Worklist(list):
         """
         if not comment:
             return
-        if ';' in comment:
-            raise ValueError('Illegal semicolon in comment.')
-        for cline in comment.split('\n'):
+        if ";" in comment:
+            raise ValueError("Illegal semicolon in comment.")
+        for cline in comment.split("\n"):
             cline = cline.strip()
             if cline:
-                self.append(f'C;{cline}')
+                self.append(f"C;{cline}")
         return
-    
-    def wash(self, scheme:int=1) -> None:
+
+    def wash(self, scheme: int = 1) -> None:
         """Washes fixed tips or replaces DiTis.
 
         Washes/replaces the tip that was used by the preceding aspirate record(s).
@@ -376,26 +384,26 @@ class Worklist(list):
         scheme : int
             Number indicating the wash scheme (default: 1)
         """
-        if not scheme in {1,2,3,4}:
-            raise ValueError('scheme must be either 1, 2, 3 or 4')
-        self.append(f'W{scheme};')
+        if not scheme in {1, 2, 3, 4}:
+            raise ValueError("scheme must be either 1, 2, 3 or 4")
+        self.append(f"W{scheme};")
         return
-    
+
     def decontaminate(self) -> None:
         """Decontamination wash consists of a decontamination wash followed by a normal wash."""
-        self.append('WD;')
+        self.append("WD;")
         return
-    
+
     def flush(self) -> None:
         """Discards the contents of the tips WITHOUT WASHING or DROPPING of tips."""
-        self.append('F;')
+        self.append("F;")
         return
-    
+
     def commit(self) -> None:
         """Inserts a 'break' that forces the execution of aspirate/dispense operations at this point.
 
         WARNING: may be unreliable
-        
+
         If you don’t specify a Break record, Freedom EVOware normally executes
         pipetting commands in groups to optimize the efficiency. For example, if
         you have specified four tips in the Worklist command, Freedom EVOware
@@ -406,17 +414,17 @@ class Worklist(list):
         worklist which pipettes using only one tip at a time (even if you chose
         more than one tip in the tip selection).
         """
-        self.append('B;')
+        self.append("B;")
         return
-    
-    def set_diti(self, diti_index:int) -> None:
+
+    def set_diti(self, diti_index: int) -> None:
         """Switches the DiTi types within the worklist.
 
         IMPORTANT: As the DiTi index in worklists is 1-based you have to increase the shown DiTi index by one.
 
         Choose the required DiTi type by specifying the DiTi index.
         Freedom EVOware automatically assigns a unique index to each DiTi type.
-        The DiTi index is shown in the Edit Labware dialog box for the DiTi labware (Well dimensions tab). 
+        The DiTi index is shown in the Edit Labware dialog box for the DiTi labware (Well dimensions tab).
 
         The Set DiTi Type record can only be used at the very beginning of the
         worklist or directly after a Break record. A Break record always resets
@@ -429,16 +437,25 @@ class Worklist(list):
         diti_index : int
             Type of DiTis to use in subsequent steps
         """
-        if not (len(self) == 0 or self[-1][0] == 'B'):
-            raise InvalidOperationError('DiTi type can only be switched at the beginning or after a Break/commit step. Read the docstring.')
-        self.append(f'S;{diti_index}')
+        if not (len(self) == 0 or self[-1][0] == "B"):
+            raise InvalidOperationError(
+                "DiTi type can only be switched at the beginning or after a Break/commit step. Read the docstring."
+            )
+        self.append(f"S;{diti_index}")
         return
-    
+
     def aspirate_well(
-        self, rack_label:str, position:int, volume:float, *,
-        liquid_class:str='', tip:typing.Union[Tip, int, typing.Iterable]=Tip.Any,
-        rack_id:str='', tube_id:str='',
-        rack_type:str='', forced_rack_type:str=''
+        self,
+        rack_label: str,
+        position: int,
+        volume: float,
+        *,
+        liquid_class: str = "",
+        tip: typing.Union[Tip, int, typing.Iterable] = Tip.Any,
+        rack_id: str = "",
+        tube_id: str = "",
+        rack_type: str = "",
+        forced_rack_type: str = "",
     ) -> None:
         """Command for aspirating with a single tip.
 
@@ -466,25 +483,52 @@ class Worklist(list):
         forced_rack_type : str, optional
             Overrides rack_type from worktable
         """
-        args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
-        tip_type = ''
+        args = (
+            rack_label,
+            position,
+            volume,
+            liquid_class,
+            tip,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        )
+        (
+            rack_label,
+            position,
+            volume,
+            liquid_class,
+            tip,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        ) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        tip_type = ""
         self.append(
-            f'A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
+            f"A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}"
         )
         return
-    
+
     def dispense_well(
-        self, rack_label:str, position:int, volume:float, *,
-        liquid_class:str='', tip:typing.Union[Tip, int]=Tip.Any,
-        rack_id:str='', tube_id:str='',
-        rack_type:str='', forced_rack_type:str=''
+        self,
+        rack_label: str,
+        position: int,
+        volume: float,
+        *,
+        liquid_class: str = "",
+        tip: typing.Union[Tip, int] = Tip.Any,
+        rack_id: str = "",
+        tube_id: str = "",
+        rack_type: str = "",
+        forced_rack_type: str = "",
     ) -> None:
         """Command for dispensing with a single tip.
 
         Each Dispense record specifies the dispense parameters for a single tip.
         It uses the same tip which was used by the preceding Aspirate record.
-        
+
         Parameters
         ----------
         rack_label : str
@@ -507,23 +551,53 @@ class Worklist(list):
         forced_rack_type : str, optional
             Overrides rack_type from worktable
         """
-        args = (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type)
-        (rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
-        tip_type = ''
+        args = (
+            rack_label,
+            position,
+            volume,
+            liquid_class,
+            tip,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        )
+        (
+            rack_label,
+            position,
+            volume,
+            liquid_class,
+            tip,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        ) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        tip_type = ""
         self.append(
-            f'D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}'
+            f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}"
         )
         return
-        
+
     def reagent_distribution(
         self,
-        src_rack_label:str, src_start:int, src_end:int,
-        dst_rack_label:str, dst_start:int, dst_end:int,
-        *, volume:float, diti_reuse:int=1, multi_disp:int=1,
-        exclude_wells:typing.Optional[typing.Iterable[int]]=None,
-        liquid_class:str='', direction:str='left_to_right',
-        src_rack_id:str='', src_rack_type:str='',
-        dst_rack_id:str='', dst_rack_type:str='',
+        src_rack_label: str,
+        src_start: int,
+        src_end: int,
+        dst_rack_label: str,
+        dst_start: int,
+        dst_end: int,
+        *,
+        volume: float,
+        diti_reuse: int = 1,
+        multi_disp: int = 1,
+        exclude_wells: typing.Optional[typing.Iterable[int]] = None,
+        liquid_class: str = "",
+        direction: str = "left_to_right",
+        src_rack_id: str = "",
+        src_rack_type: str = "",
+        dst_rack_id: str = "",
+        dst_rack_type: str = "",
     ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
@@ -563,10 +637,10 @@ class Worklist(list):
             Configuration name of the destination labware
         """
         # check & convert arguments
-        if not direction in {'left_to_right', 'right_to_left'}:
+        if not direction in {"left_to_right", "right_to_left"}:
             raise ValueError(f'"direction" must be either "left_to_right" or "right_to_left"')
-        direction = 0 if direction == 'left_to_right' else 1
-        
+        direction = 0 if direction == "left_to_right" else 1
+
         if exclude_wells is None:
             exclude_wells = []
         if len(exclude_wells) > 0:
@@ -574,39 +648,63 @@ class Worklist(list):
             dst_range = set(range(dst_start, dst_end + 1))
             invalid_exclusion_wells = set(exclude_wells).difference(dst_range)
             if len(invalid_exclusion_wells) > 0:
-                raise ValueError(f'The excluded wells {invalid_exclusion_wells} are not in the destination interval [{dst_start},{dst_end}]')
+                raise ValueError(
+                    f"The excluded wells {invalid_exclusion_wells} are not in the destination interval [{dst_start},{dst_end}]"
+                )
             # condense into ;-separated text
-            exclude_wells = ';' + ';'.join(map(str, sorted(exclude_wells)))
+            exclude_wells = ";" + ";".join(map(str, sorted(exclude_wells)))
         else:
-            exclude_wells = ''
+            exclude_wells = ""
 
-        src_args = (src_rack_label, 1, volume, '', Tip.Any, src_rack_id, '', src_rack_type, '')
-        (src_rack_label, _, _, _, _, src_rack_id, _, src_rack_type, _) = _prepare_aspirate_dispense_parameters(*src_args, max_volume=self.max_volume)
+        src_args = (src_rack_label, 1, volume, "", Tip.Any, src_rack_id, "", src_rack_type, "")
+        (
+            src_rack_label,
+            _,
+            _,
+            _,
+            _,
+            src_rack_id,
+            _,
+            src_rack_type,
+            _,
+        ) = _prepare_aspirate_dispense_parameters(*src_args, max_volume=self.max_volume)
 
-        dst_args = (dst_rack_label, 1, volume, '', Tip.Any, dst_rack_id, '', dst_rack_type, '')
-        (dst_rack_label, _, _, _, _, dst_rack_id, _, dst_rack_type, _) = _prepare_aspirate_dispense_parameters(*dst_args, max_volume=self.max_volume)
+        dst_args = (dst_rack_label, 1, volume, "", Tip.Any, dst_rack_id, "", dst_rack_type, "")
+        (
+            dst_rack_label,
+            _,
+            _,
+            _,
+            _,
+            dst_rack_id,
+            _,
+            dst_rack_type,
+            _,
+        ) = _prepare_aspirate_dispense_parameters(*dst_args, max_volume=self.max_volume)
 
         # automatically decrease multi_disp to support the large volume
         # at the expense of more washing
         if multi_disp * volume > self.max_volume:
-            logger.warning('Decreasing `multi_disp` to account for a large dispense volume. The number of washs will increase.')
+            logger.warning(
+                "Decreasing `multi_disp` to account for a large dispense volume. The number of washs will increase."
+            )
             multi_disp = math.floor(self.max_volume / volume)
-        
-        src_parameters = f'{src_rack_label};{src_rack_id};{src_rack_type};{src_start};{src_end}'
-        dst_parameters = f'{dst_rack_label};{dst_rack_id};{dst_rack_type};{dst_start};{dst_end}'
+
+        src_parameters = f"{src_rack_label};{src_rack_id};{src_rack_type};{src_start};{src_end}"
+        dst_parameters = f"{dst_rack_label};{dst_rack_id};{dst_rack_type};{dst_start};{dst_end}"
         self.append(
-            f'R;{src_parameters};{dst_parameters};{volume};{liquid_class};{diti_reuse};{multi_disp};{direction}{exclude_wells}'
+            f"R;{src_parameters};{dst_parameters};{volume};{liquid_class};{diti_reuse};{multi_disp};{direction}{exclude_wells}"
         )
         return
-    
+
     def aspirate(
         self,
-        labware:liquidhandling.Labware,
-        wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        labware: liquidhandling.Labware,
+        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
         *,
-        label:typing.Optional[str]=None,
-        **kwargs
+        label: typing.Optional[str] = None,
+        **kwargs,
     ) -> None:
         """Performs aspiration from the provided labware.
 
@@ -625,8 +723,8 @@ class Worklist(list):
             Most prominent example: `liquid_class`.
             Take a look at `Worklist.aspirate_well` for the full list of options.
         """
-        wells = numpy.array(wells).flatten('F')
-        volumes = numpy.array(volumes).flatten('F')
+        wells = numpy.array(wells).flatten("F")
+        volumes = numpy.array(volumes).flatten("F")
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         labware.remove(wells, volumes, label)
@@ -638,13 +736,13 @@ class Worklist(list):
 
     def dispense(
         self,
-        labware:liquidhandling.Labware,
-        wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        labware: liquidhandling.Labware,
+        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
         *,
-        label:typing.Optional[str]=None,
-        compositions:typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]]=None,
-        **kwargs
+        label: typing.Optional[str] = None,
+        compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
+        **kwargs,
     ) -> None:
         """Performs dispensing into the provided labware.
 
@@ -665,8 +763,8 @@ class Worklist(list):
             Most prominent example: `liquid_class`.
             Take a look at `Worklist.dispense_well` for the full list of options.
         """
-        wells = numpy.array(wells).flatten('F')
-        volumes = numpy.array(volumes).flatten('F')
+        wells = numpy.array(wells).flatten("F")
+        volumes = numpy.array(volumes).flatten("F")
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
         labware.add(wells, volumes, label, compositions=compositions)
@@ -675,17 +773,19 @@ class Worklist(list):
             if volume > 0:
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
-    
+
     def transfer(
         self,
-        source:liquidhandling.Labware, source_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        destination:liquidhandling.Labware, destination_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes:typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        source: liquidhandling.Labware,
+        source_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        destination: liquidhandling.Labware,
+        destination_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
         *,
-        label:typing.Optional[str]=None,
-        wash_scheme:int=1,
-        partition_by:str='auto',
-        **kwargs
+        label: typing.Optional[str] = None,
+        wash_scheme: int = 1,
+        partition_by: str = "auto",
+        **kwargs,
     ) -> None:
         """Transfer operation between two labwares.
 
@@ -716,11 +816,11 @@ class Worklist(list):
             Take a look at `Worklist.aspirate_well` for the full list of options.
         """
         # reformat the convenience parameters
-        source_wells = numpy.array(source_wells).flatten('F')
-        destination_wells = numpy.array(destination_wells).flatten('F')
-        volumes = numpy.array(volumes).flatten('F')
+        source_wells = numpy.array(source_wells).flatten("F")
+        destination_wells = numpy.array(destination_wells).flatten("F")
+        volumes = numpy.array(volumes).flatten("F")
         nmax = max((len(source_wells), len(destination_wells), len(volumes)))
-        
+
         if len(source_wells) == 1:
             source_wells = numpy.repeat(source_wells, nmax)
         if len(destination_wells) == 1:
@@ -728,8 +828,10 @@ class Worklist(list):
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, nmax)
         lengths = (len(source_wells), len(destination_wells), len(volumes))
-        assert len(set(lengths)) == 1, f'Number of source/destination/volumes must be equal. They were {lengths}'
-        
+        assert (
+            len(set(lengths)) == 1
+        ), f"Number of source/destination/volumes must be equal. They were {lengths}"
+
         # automatic partitioning
         partition_by = _optimize_partition_by(source, destination, partition_by, label)
 
@@ -757,7 +859,14 @@ class Worklist(list):
                         v = vs[p]
                         if v > 0:
                             self.aspirate(source, s, v, label=None, **kwargs)
-                            self.dispense(destination, d, v, label=None, compositions=[source.get_well_composition(s)], **kwargs)
+                            self.dispense(
+                                destination,
+                                d,
+                                v,
+                                label=None,
+                                compositions=[source.get_well_composition(s)],
+                                **kwargs,
+                            )
                             nsteps += 1
                             if wash_scheme is not None:
                                 self.wash(scheme=wash_scheme)
@@ -778,23 +887,29 @@ class Worklist(list):
             else:
                 label = f"{lvh_extra} LVH steps"
         if destination == source:
-            source.condense_log(nsteps*2, label=label)
+            source.condense_log(nsteps * 2, label=label)
         else:
             source.condense_log(nsteps, label=label)
             destination.condense_log(nsteps, label=label)
         return
-        
+
     def distribute(
-        self, 
-        source:liquidhandling.Labware, source_column:int,
-        destination:liquidhandling.Labware, destination_wells:typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        self,
+        source: liquidhandling.Labware,
+        source_column: int,
+        destination: liquidhandling.Labware,
+        destination_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
         *,
-        volume:float,
-        diti_reuse:int=1, multi_disp:int=1,
-        liquid_class:str='', label:str='',
-        direction:str='left_to_right',
-        src_rack_id:str='', src_rack_type:str='',
-        dst_rack_id:str='', dst_rack_type:str=''
+        volume: float,
+        diti_reuse: int = 1,
+        multi_disp: int = 1,
+        liquid_class: str = "",
+        label: str = "",
+        direction: str = "left_to_right",
+        src_rack_id: str = "",
+        src_rack_type: str = "",
+        dst_rack_id: str = "",
+        dst_rack_type: str = "",
     ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
@@ -832,42 +947,55 @@ class Worklist(list):
             Configuration name of the destination labware
         """
         if source.virtual_rows is None:
-            raise ValueError(f'Reagent distribution only works with Trough sources. "{source.name}" is not a Trough.')
+            raise ValueError(
+                f'Reagent distribution only works with Trough sources. "{source.name}" is not a Trough.'
+            )
 
         if volume > self.max_volume:
-            raise InvalidOperationError(f'Reagent distribution only works with volumes smaller than the diluter volume ({self.max_volume} µl)')
+            raise InvalidOperationError(
+                f"Reagent distribution only works with volumes smaller than the diluter volume ({self.max_volume} µl)"
+            )
 
         # always use the entire first column of the source
         src_start = 1 + source.n_rows * source_column
         src_end = src_start + source.n_rows - 1
 
         # transform destination wells into range + mask
-        destination_wells = numpy.array(destination_wells).flatten('F')
+        destination_wells = numpy.array(destination_wells).flatten("F")
         dst_wells = list(sorted([destination.positions[w] for w in destination_wells]))
         dst_start, dst_end = dst_wells[0], dst_wells[-1]
         excluded_dst_wells = set(range(dst_start, dst_end + 1)).difference(dst_wells)
-        
+
         # hand over to low-level command implementation
         self.comment(label)
         self.reagent_distribution(
-            source.name, src_start, src_end,
-            destination.name, dst_start, dst_end,
-            volume=volume, diti_reuse=diti_reuse, multi_disp=multi_disp,
+            source.name,
+            src_start,
+            src_end,
+            destination.name,
+            dst_start,
+            dst_end,
+            volume=volume,
+            diti_reuse=diti_reuse,
+            multi_disp=multi_disp,
             exclude_wells=excluded_dst_wells,
-            liquid_class=liquid_class, direction=direction,
-            src_rack_id=src_rack_id, src_rack_type=src_rack_type,
-            dst_rack_id=dst_rack_id, dst_rack_type=dst_rack_type,
+            liquid_class=liquid_class,
+            direction=direction,
+            src_rack_id=src_rack_id,
+            src_rack_type=src_rack_type,
+            dst_rack_id=dst_rack_id,
+            dst_rack_type=dst_rack_type,
         )
 
         # update volume tracking
         n_dst = len(dst_wells)
-        source.remove(source.wells[0,source_column], volume*n_dst, label=label)
-        src_composition = source.get_well_composition(source.wells[0,source_column])
-        destination.add(destination_wells, volume, label=label, compositions=[src_composition]*n_dst)
+        source.remove(source.wells[0, source_column], volume * n_dst, label=label)
+        src_composition = source.get_well_composition(source.wells[0, source_column])
+        destination.add(destination_wells, volume, label=label, compositions=[src_composition] * n_dst)
         return
-    
+
     def __repr__(self) -> str:
-        return '\n'.join(self)
-    
+        return "\n".join(self)
+
     def __str__(self) -> str:
         return self.__repr__()

@@ -7,7 +7,7 @@
 # `robotools`
 This is a package for debugging and planning liquid handling operations, writing worklist files for the Tecan FreedomEVO platform on the fly.
 
-You can visit the documentation at https://robotools.readthedocs.io, where the [notebooks](https://github.com/jubiotech/robotools/tree/master/notebooks) 
+You can visit the documentation at https://robotools.readthedocs.io, where the [notebooks](https://github.com/jubiotech/robotools/tree/master/notebooks)
 are rendered next to auto-generated API documentation.
 
 # Installation
@@ -16,6 +16,19 @@ are rendered next to auto-generated API documentation.
 ```
 pip install robotools
 ```
+
+# Contributing
+The easiest way to contribute is to report bugs by opening [Issues](https://github.com/JuBiotech/robotools/issues).
+
+We apply automated code style normalization using `black`.
+This is done with a `pre-commit`, which you can set up like this:
+1. `pip install pre-commit`
+2. `pre-commit install`
+3. `pre-commit run --all`
+
+Step 2.) makes sure that the `pre-commit` runs automatically before you make a commit.
+
+Step 3.) runs it manually.
 
 # Usage and Citing
 `robotools` is licensed under the [GNU Affero General Public License v3.0](https://github.com/JuBiotech/robotools/blob/master/LICENSE).

@@ -1,9 +1,10 @@
 import numpy
 from numpy.typing import ArrayLike
 
-def make_well_index_dict(R:int, C:int) -> dict:
+
+def make_well_index_dict(R: int, C: int) -> dict:
     """Create a dictionary mapping well IDs to their numpy indices.
-    
+
     Parameters
     ----------
     R : int
@@ -17,13 +18,13 @@ def make_well_index_dict(R:int, C:int) -> dict:
         Mapping of IDs to numpy-style indices
     """
     return {
-        f'{row}{column:02d}' : (r, c)
-        for r, row in enumerate('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[:R])
-        for c, column in enumerate(range(1, C+1))
+        f"{row}{column:02d}": (r, c)
+        for r, row in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"[:R])
+        for c, column in enumerate(range(1, C + 1))
     }
 
 
-def make_well_array(R:int, C:int) -> numpy.ndarray:
+def make_well_array(R: int, C: int) -> numpy.ndarray:
     """Create a numpy array of well IDs.
 
     Parameters
@@ -38,15 +39,15 @@ def make_well_array(R:int, C:int) -> numpy.ndarray:
     array : ndarray
         Array of well IDs
     """
-    return numpy.array([
-        [f'{row}{column:02d}' for column in range(1, C+1)]
-        for row in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[:R]
-    ])
+    return numpy.array(
+        [[f"{row}{column:02d}" for column in range(1, C + 1)] for row in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[:R]]
+    )
 
 
 class WellShifter:
-    """ Helper object to shift a set of well IDs within a MTP. """
-    def __init__(self, shape_A:tuple, shape_B:tuple, shifted_A01:str) -> None:
+    """Helper object to shift a set of well IDs within a MTP."""
+
+    def __init__(self, shape_A: tuple, shape_B: tuple, shifted_A01: str) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
@@ -68,11 +69,11 @@ class WellShifter:
         self.dr, self.dc = self.indices_B[shifted_A01]
 
         if shape_A[0] + self.dr > shape_B[0]:
-            raise ValueError(f'Invalid shift parameterization. Not enough rows in destination.')
+            raise ValueError(f"Invalid shift parameterization. Not enough rows in destination.")
         if shape_A[1] + self.dc > shape_B[1]:
-            raise ValueError(f'Invalid shift parameterization. Not enough columns in destination.')
+            raise ValueError(f"Invalid shift parameterization. Not enough columns in destination.")
 
-    def shift(self, wells:ArrayLike) -> numpy.ndarray:
+    def shift(self, wells: ArrayLike) -> numpy.ndarray:
         """Apply the forward-transformation.
 
         Parameters
@@ -91,10 +92,10 @@ class WellShifter:
         shifted = []
         for well in wells.flatten():
             r, c = self.indices_A[well]
-            shifted.append(self.wells_B[r+self.dr, c+self.dc])
+            shifted.append(self.wells_B[r + self.dr, c + self.dc])
         return numpy.array(shifted).reshape(wells_shape)
 
-    def unshift(self, wells:ArrayLike) -> numpy.ndarray:
+    def unshift(self, wells: ArrayLike) -> numpy.ndarray:
         """Apply the reverse-transformation.
 
         Parameters
@@ -113,13 +114,14 @@ class WellShifter:
         shifted = []
         for well in wells.flatten():
             r, c = self.indices_B[well]
-            shifted.append(self.wells_A[r-self.dr, c-self.dc])
+            shifted.append(self.wells_A[r - self.dr, c - self.dc])
         return numpy.array(shifted).reshape(wells_shape)
 
 
 class WellRotator:
-    """ Helper object to rotate a set of well IDs within a MTP. """
-    def __init__(self, original_shape:tuple) -> None:
+    """Helper object to rotate a set of well IDs within a MTP."""
+
+    def __init__(self, original_shape: tuple) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
@@ -135,7 +137,7 @@ class WellRotator:
         self.rotated_wells = make_well_array(*self.rotated_shape)
         super().__init__()
 
-    def rotate_ccw(self, wells:ArrayLike) -> numpy.ndarray:
+    def rotate_ccw(self, wells: ArrayLike) -> numpy.ndarray:
         """Rotate the given wells counterclockwise.
 
         Parameters
@@ -157,7 +159,7 @@ class WellRotator:
             rotated.append(self.rotated_wells[self.original_shape[1] - c - 1, r])
         return numpy.array(rotated).reshape(wells_shape)
 
-    def rotate_cw(self, wells:ArrayLike) -> numpy.ndarray:
+    def rotate_cw(self, wells: ArrayLike) -> numpy.ndarray:
         """Rotate the given wells clockwise.
 
         Parameters
@@ -178,4 +180,3 @@ class WellRotator:
             r, c = self.original_indices[well]
             rotated.append(self.rotated_wells[c, self.original_shape[0] - r - 1])
         return numpy.array(rotated).reshape(wells_shape)
-
