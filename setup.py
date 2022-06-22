@@ -28,7 +28,7 @@ def package_files(directory):
     paths = [str(fp_typed.absolute())]
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(pathlib.Path('..', path, filename))
+            paths.append(str(pathlib.Path('..', path, filename)))
     return paths
 
 
