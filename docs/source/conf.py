@@ -15,6 +15,8 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import sphinx_rtd_theme
 
+from robotools import __version__
+
 # -- Project information -----------------------------------------------------
 
 project = "robotools"
@@ -22,7 +24,7 @@ copyright = "2021, Forschungszentrum Jülich GmbH"
 author = "Michael Osthege"
 
 # The full version, including alpha/beta/rc tags
-release = "1.0.0"
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
