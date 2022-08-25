@@ -1224,6 +1224,21 @@ class TestStandardLabwareWorklist(unittest.TestCase):
             )
         return
 
+    def test_tip_mask(self) -> None:
+        A = liquidhandling.Labware("A", 3, 4, min_volume=10, max_volume=250)
+
+        # Only allow three specific tips to be used...
+        tips = [
+            evotools.Tip.T1,  # 1 +
+            evotools.Tip.T4,  # 8 +
+            evotools.Tip.T7,  # 64
+            # The sum of tips is = 73
+        ]
+        with evotools.Worklist() as wl:
+            wl.dispense(A, "A01", 10, tip=tips)
+        assert wl[-1] == "D;A;;;1;;10.00;;;73;"
+        pass
+
     def test_history_condensation(self) -> None:
         A = liquidhandling.Labware("A", 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
         B = liquidhandling.Labware("B", 3, 2, min_volume=300, max_volume=4600, initial_volumes=1500)
