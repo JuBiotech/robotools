@@ -320,6 +320,194 @@ def _prepare_evo_aspirate_dispense_parameters(
     else:
         return labware, wells, labware_position, volume, liquid_class, tips
 
+def _prepare_evo_wash_parameters(
+    tips: typing.Union[typing.List[Tip], typing.List[int]],
+    waste_location: tuple[int, int],
+    cleaner_location: tuple[int, int],
+    arm: int,
+    waste_vol: float,
+    waste_delay: int,
+    cleaner_vol: float,
+    cleaner_delay: int,
+    airgap: float,
+    airgap_speed: int,
+    retract_speed: int,
+    fastwash: int,
+    low_volume: int,
+) -> typing.Tuple[list, tuple, tuple, int, float, int, float, int, float, int, int, int, int]:
+    """Validates and prepares aspirate/dispense parameters.
+
+    Parameters
+    ----------
+    tips : list
+        Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+    waste_location : tuple
+        Tuple with grid position (1-67) and site number (0-127) of waste as integers
+    cleaner_location : tuple
+        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
+    arm : int
+        number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
+    waste_vol: float
+        Volume in waste in mL (0-100)
+    waste_delay : int
+        Delay before closing valves in waste in ms (0-1000)
+    cleaner_vol: float
+        Volume in cleaner in mL (0-100)
+    cleaner_delay : int
+        Delay before closing valves in cleaner in ms (0-1000)
+    airgap : float
+        Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
+    airgap_speed : int
+        Speed of airgap aspiration in µL/s (1-1000)
+    retract_speed : int
+        Retract speed in mm/s (1-100)
+    fastwash : int
+        Use fast-wash module = 1, don't use it = 0
+    low_volume : int
+        Use pinch valves = 1, don't use them = 0
+
+    Returns
+    -------
+    tips : list
+        Tip(s) that will be selected; have been converted to tip.T1 - tip.T8 here if they weren't originally formatted that way
+    waste_location : tuple
+        Tuple with grid position (1-67) and site number (0-127) of waste as integers
+    cleaner_location : tuple
+        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
+    arm : int
+        number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
+    waste_vol: float
+        Volume in waste in mL (0-100)
+    waste_delay : int
+        Delay before closing valves in waste in ms (0-1000)
+    cleaner_vol: float
+        Volume in cleaner in mL (0-100)
+    cleaner_delay : int
+        Delay before closing valves in cleaner in ms (0-1000)
+    airgap : float
+        Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
+    airgap_speed : int
+        Speed of airgap aspiration in µL/s (1-1000)
+    retract_speed : int
+        Retract speed in mm/s (1-100)
+    fastwash : int
+        Use fast-wash module = 1, don't use it = 0
+    low_volume : int
+        Use pinch valves = 1, don't use them = 0
+    """
+    if tips is None:
+        raise ValueError("Missing required parameter: tips")
+    
+    def _int_to_tip(tip_int: int):
+        """Asserts a Tecan Tip class to an int between 1 and 8."""
+        if not 1 <= tip_int <= 8:
+            raise ValueError(
+                f"Tip is {tip} with type {type(tip)}, but should be an int between 1 and 8 for _int_to_tip conversion."
+            )
+        if tip_int == 1:
+            return Tip.T1
+        elif tip_int == 2:
+            return Tip.T2
+        elif tip_int == 3:
+            return Tip.T3
+        elif tip_int == 4:
+            return Tip.T4
+        elif tip_int == 5:
+            return Tip.T5
+        elif tip_int == 6:
+            return Tip.T6
+        elif tip_int == 7:
+            return Tip.T7
+        elif tip_int == 8:
+            return Tip.T8
+
+    tecan_tips = []
+    for tip in tips:
+        if isinstance(tip, int) and not isinstance(tip, Tip):
+            # User-specified integers from 1-8 need to be converted to Tecan logic
+            tip = _int_to_tip(tip)
+        tecan_tips.append(tip)
+
+    if waste_location is None:
+        raise ValueError("Missing required parameter: waste_location")
+    for grid, site in waste_location:
+        if not isinstance(grid, int) or not 1 <= grid <= 67:
+            raise ValueError("Grid (first number in waste_location tuple) has to be an int from 1 - 67.")
+        if not isinstance(site, int) or not 0 <= site <= 127:
+            raise ValueError("Site (second number in waste_location tuple) has to be an int from 0 - 127.")
+    
+    if cleaner_location is None:
+        raise ValueError("Missing required parameter: cleaner_location")
+    for grid, site in cleaner_location:
+        if not isinstance(grid, int) or not 1 <= grid <= 67:
+            raise ValueError("Grid (first number in cleaner_location tuple) has to be an int from 1 - 67.")
+        if not isinstance(site, int) or not 0 <= site <= 127:
+            raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 0 - 127.")
+    
+    if arm is None:
+        raise ValueError("Missing required paramter: arm")
+    if not isinstance(arm, int):
+        raise ValueError("Parameter arm is not int.")
+    if not arm == 0 and not arm == 1:
+        raise ValueError("Parameter arm has to be 0 (LiHa 1) or 1 (LiHa 2).")
+
+    if waste_vol is None:
+        raise ValueError("Missing required parameter: waste_vol")
+    if not isinstance(waste_vol, float) or not 0 <= waste_vol <= 100:
+        raise ValueError("waste_vol has to be a float from 0 - 100.")
+    # round waste_vol to the first decimal (pre-requisite for Tecan's wash command)
+    waste_vol = numpy.round(waste_vol,1)
+
+    if waste_delay is None:
+        raise ValueError("Missing required parameter: waste_delay")
+    if not isinstance(waste_delay, int) or not 0 <= waste_delay <= 1000:
+        raise ValueError("waste_delay has to be a float from 0 - 1000.")
+
+    if cleaner_vol is None:
+        raise ValueError("Missing required parameter: cleaner_vol")
+    if not isinstance(cleaner_vol, float) or not 0 <= cleaner_vol <= 100:
+        raise ValueError("cleaner_vol has to be a float from 0 - 100.")
+    # round cleaner_vol to the first decimal (pre-requisite for Tecan's wash command)
+    cleaner_vol = numpy.round(cleaner_vol,1)
+
+    if cleaner_delay is None:
+        raise ValueError("Missing required parameter: cleaner_delay")
+    if not isinstance(cleaner_delay, int) or not 0 <= cleaner_delay <= 1000:
+        raise ValueError("cleaner_delay has to be a float from 0 - 1000.")
+    
+    if airgap is None:
+        raise ValueError("Missing required parameter: airgap")
+    if not isinstance(airgap, float) or not 0 <= airgap <= 100:
+        raise ValueError("airgap has to be a float from 0 - 100.")
+
+    if airgap_speed is None:
+        raise ValueError("Missing required parameter: airgap_speed")
+    if not isinstance(airgap_speed, int) or not 1 <= airgap_speed <= 1000:
+        raise ValueError("airgap_speed has to be a float from 1 - 1000.")
+
+    if retract_speed is None:
+        raise ValueError("Missing required parameter: retract_speed")
+    if not isinstance(retract_speed, int) or not 1 <= retract_speed <= 100:
+        raise ValueError("retract_speed has to be a float from 1 - 100.")
+    
+    if fastwash is None:
+        raise ValueError("Missing required paramter: fastwash")
+    if not isinstance(fastwash, int):
+        raise ValueError("Parameter fastwash is not int.")
+    if not fastwash == 0 and not fastwash == 1:
+        raise ValueError("Parameter fastwash has to be 0 (no fast-wash) or 1 (use fast-wash).")
+
+    if low_volume is None:
+        raise ValueError("Missing required paramter: low_volume")
+    if not isinstance(low_volume, int):
+        raise ValueError("Parameter low_volume is not int.")
+    if not low_volume == 0 and not low_volume == 1:
+        raise ValueError("Parameter low_volume has to be 0 (no fast-wash) or 1 (use fast-wash).")
+    
+    if tecan_tips:
+        return tecan_tips, waste_location, cleaner_location, arm, waste_vol, waste_delay, cleaner_vol, cleaner_delay, airgap, airgap_speed, retract_speed, fastwash, low_volume
+    else:
+        return tips, waste_location, cleaner_location, arm, waste_vol, waste_delay, cleaner_vol, cleaner_delay, airgap, airgap_speed, retract_speed, fastwash, low_volume
 
 def _optimize_partition_by(
     source: liquidhandling.Labware,
@@ -809,6 +997,7 @@ class Worklist(list):
             f"B;Aspirate({tip_selection},\"{liquid_class}\",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,\"{code_string}\",0,0);"
         )
         return
+
     def dispense_well(
         self,
         rack_label: str,
