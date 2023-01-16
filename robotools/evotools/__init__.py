@@ -352,7 +352,7 @@ class Worklist(list):
         assert ".gwl" in filepath.lower(), "The filename did not contain the .gwl extension."
         if os.path.exists(filepath):
             os.remove(filepath)
-        with open(filepath, "w", newline="\r\n") as file:
+        with open(filepath, "w", newline="\r\n", encoding="latin-1") as file:
             file.write("\n".join(self))
         return
 
