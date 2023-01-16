@@ -651,6 +651,171 @@ class Worklist(list):
             f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}"
         )
         return
+    
+    def evo_dispense_well(
+        self,
+        labware: liquidhandling.Labware,
+        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        labware_position: tuple[int, int],
+        volume: typing.Union[float, list[float]],
+        liquid_class: str,
+        tips: typing.Union[typing.List[Tip], typing.List[int]]
+    ) -> None:
+        """Command for dispensing using the EvoWARE dispense command. As many wells in one column may be selected as your liquid handling arm has pipettes.
+        This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string 
+        specifying the target wells.
+
+        Parameters
+        ----------
+        labware : liquidhandling.Labware
+            Source labware
+        wells : list of str
+            List with target well ID(s)
+        labware_position : tuple
+            Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        volume : float or list
+            Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
+        liquid_class : str, optional
+            Overwrites the liquid class for this step (max 32 characters)
+        tips : list
+            Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+        """
+        # perform consistency checks
+        args = (
+            labware,
+            wells,
+            labware_position,
+            volume,
+            liquid_class,
+            tips,
+        )
+        (
+            labware,
+            wells,
+            labware_position,
+            volume,
+            liquid_class,
+            tips,
+        ) = _prepare_evo_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+
+        # calculate tip_selection based on tips argument
+        tip_selection = 0
+        for tip in tips:
+            tip_selection += tip.value
+            
+        # prepare volume section (handle both the case of one volume as int and a list of individual volumes per tip)
+        tip_volumes = "" 
+        if type(volume) == list:
+            volume_dict = dict(zip(tips,volume))
+        for tip in tips:
+            if tip.value in [1,2,4,8,16,32,64,128]:
+                if type(volume) == float:
+                    tip_volumes += f"\"{volume}\","
+                elif type(volume) == list:
+                    tip_volumes += f"\"{volume_dict[tip]}\","
+            else:
+                tip_volumes += "0,"
+
+        # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
+        selected = evo_make_selection_array(labware.n_rows, labware.n_columns, wells)
+        # create code string containing information about target well(s)
+        code_string = evo_get_selection(labware.n_rows, labware.n_columns, selected)
+        self.append(
+            f"B;Dispense({tip_selection},\"{liquid_class}\",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,\"{code_string}\",0,0);"
+        )
+        return
+    
+    def evo_wash(
+        self,
+        *,
+        tips: typing.Union[typing.List[Tip], typing.List[int]],
+        waste_location: tuple[int, int],
+        cleaner_location: tuple[int, int],
+        arm: int = 0,
+        waste_vol: float = 3.0,
+        waste_delay: int = 500,
+        cleaner_vol: float = 4.0,
+        cleaner_delay: int = 500,
+        airgap: float = 10,
+        airgap_speed: int = 70,
+        retract_speed: int = 30,
+        fastwash: int = 1,
+        low_volume: int = 0,
+    ) -> None:
+        """Command for aspirating with the EvoWARE aspirate command. As many wells in one column may be selected as your liquid handling arm has pipettes.
+        This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string 
+        specifying the target wells.
+
+        Parameters
+        ----------
+        tips : list
+            Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+        waste_location : tuple
+            Tuple with grid position (1-67) and site number (0-127) of waste as integers
+        cleaner_location : tuple
+            Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
+        arm : int
+            number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
+        waste_vol: float
+            Volume in waste in mL (0-100)
+        waste_delay : int
+            Delay before closing valves in waste in ms (0-1000)
+        cleaner_vol: float
+            Volume in cleaner in mL (0-100)
+        cleaner_delay : int
+            Delay before closing valves in cleaner in ms (0-1000)
+        airgap : float
+            Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
+        airgap_speed : int
+            Speed of airgap aspiration in µL/s (1-1000)
+        retract_speed : int
+            Retract speed in mm/s (1-100)
+        fastwash : int
+            Use fast-wash module = 1, don't use it = 0
+        low_volume : int
+            Use pinch valves = 1, don't use them = 0
+        """
+
+        # perform consistency checks
+        args = (
+            tips,
+            waste_location,
+            cleaner_location,
+            arm,
+            waste_vol,
+            waste_delay,
+            cleaner_vol,
+            cleaner_delay,
+            airgap,
+            airgap_speed,
+            retract_speed,
+            fastwash,
+            low_volume,
+        )
+        (
+            tips,
+            waste_location,
+            cleaner_location,
+            arm,
+            waste_vol,
+            waste_delay,
+            cleaner_vol,
+            cleaner_delay,
+            airgap,
+            airgap_speed,
+            retract_speed,
+            fastwash,
+            low_volume,
+        ) = _prepare_evo_wash_parameters(*args)
+        # calculate tip_selection based on tips argument
+        tip_selection = 0
+        for tip in tips:
+            tip_selection += tip.value
+        
+        self.append(
+            f"B;Wash({tip_selection},{waste_location[0]},{waste_location[1]},{cleaner_location[0]},{cleaner_location[1]},\"{waste_vol}\",{waste_delay},\"{cleaner_vol}\",{cleaner_delay},{airgap},{airgap_speed},{retract_speed},{fastwash},{low_volume},1000,{arm});"
+        )
+        return
 
     def reagent_distribution(
         self,
@@ -883,6 +1048,44 @@ class Worklist(list):
         for well, volume in zip(wells, volumes):
             if volume > 0:
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
+        return
+    def evo_dispense(
+        self,
+        labware: liquidhandling.Labware,
+        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        labware_position: tuple[int, int],
+        tips: typing.Union[typing.List[Tip], typing.List[int]],
+        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        liquid_class: str,
+        *,
+        label: typing.Optional[str] = None,
+        # **kwargs,
+    ) -> None:
+        """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
+        Thus, several wells in a single column can be targeted.
+        
+        Parameters
+        ----------
+        labware : liquidhandling.Labware
+            Source labware
+        labware_position : tuple
+            Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        wells : list of str or iterable
+            List with target well ID(s)
+        tips : list
+            Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+        volumes : float or iterable
+            Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
+        liquid_class : str, optional
+            Overwrites the liquid class for this step (max 32 characters)
+        """
+        wells = numpy.array(wells).flatten("F")
+        volumes = numpy.array(volumes).flatten("F")
+        if len(volumes) == 1:
+            volumes = numpy.repeat(volumes, len(wells))
+        labware.remove(wells, volumes, label)
+        self.comment(label)
+        self.evo_dispense_well(labware, wells, labware_position, volumes, liquid_class, tips)
         return
 
     def transfer(
