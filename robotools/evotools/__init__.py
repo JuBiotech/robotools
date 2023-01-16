@@ -448,6 +448,91 @@ def _partition_by_column(
         )
     return column_groups
 
+def toHex(
+    dec : int
+):
+    """Method from stackoverflow to convert decimal to hex.
+    """
+    digits = "0123456789ABCDEF"
+    x = (dec % 16)
+    rest = dec // 16
+    if (rest == 0):
+        return digits[x]
+    return toHex(rest) + digits[x]
+
+def evo_make_selection_array(
+    rows:int, 
+    columns:int, 
+    wells: numpy.ndarray
+):
+    """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
+
+    Parameters
+    ----------
+    rows : int 
+        Number of rows of target labware object
+    cols : int
+        Number of columns of target labware object
+    wells : List[str]
+        Selected wells by well IDs as strings (e.g. ["A01", "B01"])
+
+    Returns
+    -------
+    selection_array : numpy.ndarray
+        Numpy array in labware dimensions with selected wells as 1 and others as 0
+    """
+    # create array with a shape beffiting the labware dimensions
+    selection_array = numpy.zeros((rows, columns))
+    # get a dictionary with the "coordinates" of well IDs (A01, B01 etc) as tuples
+    well_index_dict = transform.make_well_index_dict(rows, columns)
+    # insert 1s for all selected wells
+    for well in wells:
+        selection_array[well_index_dict[well]] = 1
+    return selection_array
+
+def evo_get_selection(rows:int, cols:int, selected):
+    """Function to generate the code string for the well selection of pipetting actions in EvoWare scripts (.esc). 
+    Adapted from the C++ function detailed in the EvoWare manual to Python by Martin Beyß (except the test at the end).
+
+    Parameters
+    ----------
+    selected : numpy.ndarray
+        Numpy array in labware dimensions with selected wells as 1 and others as 0 (from evo_make_selection_array)
+    rows : int 
+        Number of rows of target labware object
+    cols : int
+        Number of columns of target labware object
+    
+    Returns
+    -------
+    selection : str
+        Code string for well selection of pipetting actions in EvoWare scripts (.esc)
+    """
+    # apply bit mask with 7 bits, adapted from function detailed in EvoWare manual
+    selection = f"0{toHex(cols)}{rows:02d}"
+    bit_counter = 0
+    bit_mask = 0
+    for x in range(cols):
+        for y in range(rows):
+            if selected[y,x] == 1:
+                bit_mask |= 1<<bit_counter
+            bit_counter += 1
+            if bit_counter > 6:
+                selection += chr(bit_mask + 48)
+                bit_counter = 0
+                bit_mask = 0
+    if bit_counter > 0:
+        selection += chr(bit_mask + 48)
+
+    # check if wells from more than one column are selected and raise Exception if so
+    check = 0
+    for column in selected.transpose():
+        if sum(column) >= 1:
+            check+=1
+    if check >= 2:
+        raise Exception("Wells from more than one column are selected.\nSelect only wells from one column per pipetting action.")
+
+    return selection
 
 class Worklist(list):
     """Context manager for the creation of Worklists."""
