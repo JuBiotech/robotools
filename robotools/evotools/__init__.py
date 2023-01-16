@@ -964,7 +964,7 @@ class Worklist(list):
         wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
         *,
         labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, list[float]],
+        volume: typing.Union[float, typing.List[float]],
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
@@ -1105,7 +1105,7 @@ class Worklist(list):
         labware: liquidhandling.Labware,
         wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
         labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, list[float]],
+        volume: typing.Union[float, typing.List[float]],
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
