@@ -98,17 +98,17 @@ def _prepare_aspirate_dispense_parameters(
     """
     # required parameters
     if rack_label is None:
-        raise ValueError("Missing required paramter: rack_label")
+        raise ValueError("Missing required parameter: rack_label")
     if not isinstance(rack_label, str) or len(rack_label) > 32 or ";" in rack_label:
         raise ValueError(f"Invalid rack_label: {rack_label}")
 
     if position is None:
-        raise ValueError("Missing required paramter: position")
+        raise ValueError("Missing required parameter: position")
     if not isinstance(position, int) or position < 0:
         raise ValueError(f"Invalid position: {position}")
 
     if volume is None:
-        raise ValueError("Missing required paramter: volume")
+        raise ValueError("Missing required parameter: volume")
     try:
         volume = float(volume)
     except:
