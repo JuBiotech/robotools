@@ -180,6 +180,146 @@ def _prepare_aspirate_dispense_parameters(
     tip = "" if tip == -1 else tip
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
+def _prepare_evo_aspirate_dispense_parameters(
+    labware: liquidhandling.Labware,
+    wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+    *,
+    labware_position: typing.Tuple[int, int],
+    volume: typing.Union[float, typing.List[float]],
+    liquid_class: str,
+    tips: typing.Union[typing.List[Tip], typing.List[int]],
+    max_volume: typing.Optional[int] = None,
+) -> typing.Tuple[str, list, tuple, float, str, list]:
+    """Validates and prepares aspirate/dispense parameters.
+
+    Parameters
+    ----------
+    labware : liquidhandling.Labware
+        Source labware
+    wells : list of str
+        List with target well ID(s)
+    labware_position : tuple
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+    volume : float or list
+        Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
+    liquid_class : str, optional
+        Overwrites the liquid class for this step (max 32 characters)
+    tips : list of int
+        Tip(s) that will be selected (out of tips 1-8)
+    max_volume : int, optional
+        Maximum allowed volume
+
+    Returns
+    -------
+    labware : liquidhandling.Labware
+        Source labware
+    wells : list of str
+        List with target well ID(s)
+    labware_position : tuple
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+    volume : float or list
+        Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
+    liquid_class : str, optional
+        Overwrites the liquid class for this step (max 32 characters)
+    tips : list of int
+        Tip(s) that will be selected (out of tips 1-8)
+    """
+    # required parameters
+    if labware is None:
+        raise ValueError("Missing required paramter: labware")
+    if not isinstance(labware, liquidhandling.Labware):
+        raise ValueError(f"Invalid labware: {labware}")
+
+    if labware_position is None:
+        raise ValueError("Missing required paramter: position")
+    if not all(isinstance(position, int) for position in labware_position) or any(position < 0 for position in labware_position):
+        raise ValueError(f"Invalid position: {labware_position}")
+
+    if volume is None:
+        raise ValueError("Missing required parameter: volume")
+    if type(volume) == list:
+        for vol in volume:
+            try:
+                vol = float(vol)
+            except:
+                raise ValueError(f"Invalid volume: {vol}")
+            if vol < 0 or vol > 7158278 or numpy.isnan(vol):
+                raise ValueError(f"Invalid volume: {vol}")
+            if max_volume is not None and vol > max_volume:
+                raise InvalidOperationError(f"Volume of {vol} exceeds max_volume.")
+            if not len(vol) == len(tips):
+                raise Exception(f"Tips and volume lists have different lengths ({len(tips)} and {len(vol)}, respectively).")
+    else:
+        try:
+            volume = float(volume)
+        except:
+            raise ValueError(f"Invalid volume: {volume}")
+        if volume < 0 or volume > 7158278 or numpy.isnan(volume):
+            raise ValueError(f"Invalid volume: {volume}")
+        if max_volume is not None and volume > max_volume:
+            raise InvalidOperationError(f"Volume of {volume} exceeds max_volume.")
+
+    # optional parameters
+    if not isinstance(liquid_class, str) or ";" in liquid_class:
+        raise ValueError(f"Invalid liquid_class: {liquid_class}")
+
+    def _int_to_tip(tip_int: int):
+        """Asserts a Tecan Tip class to an int between 1 and 8."""
+        if not 1 <= tip_int <= 8:
+            raise ValueError(
+                f"Tip is {tip} with type {type(tip)}, but should be an int between 1 and 8 for _int_to_tip conversion."
+            )
+        if tip_int == 1:
+            return Tip.T1
+        elif tip_int == 2:
+            return Tip.T2
+        elif tip_int == 3:
+            return Tip.T3
+        elif tip_int == 4:
+            return Tip.T4
+        elif tip_int == 5:
+            return Tip.T5
+        elif tip_int == 6:
+            return Tip.T6
+        elif tip_int == 7:
+            return Tip.T7
+        elif tip_int == 8:
+            return Tip.T8
+    
+    tecan_tips = []
+    for tip in tips:
+        if isinstance(tip, int) and not isinstance(tip, Tip):
+            # User-specified integers from 1-8 need to be converted to Tecan logic
+            tip = _int_to_tip(tip)
+        tecan_tips.append(tip)
+
+    if isinstance(tip, collections.abc.Iterable):
+        tips = []
+        for element in tip:
+            if isinstance(element, int) and not isinstance(element, Tip):
+                tips.append(_int_to_tip(element))
+            elif isinstance(element, Tip):
+                if element == -1:
+                    raise ValueError(
+                        "When Iterables are used, no Tip.Any elements are allowed. Pass just one Tip.Any instead."
+                    )
+                tips.append(element)
+            else:
+                raise ValueError(
+                    f"If tip is an Iterable, it may only contain int or Tip values, not {type(element)}."
+                )
+        tip = sum(set(tips))
+    elif not isinstance(tip, Tip):
+        raise ValueError(f"tip must be an int between 1 and 8, Tip or Iterable, but was {type(tip)}.")
+
+    # apply rounding and corrections for the right string formatting
+    volume = f"{numpy.round(volume, decimals=2):.2f}"
+    tips = ["" if tip == -1 else tip for tip in tips]
+    if tecan_tips:
+        return labware, wells, labware_position, volume, liquid_class, tecan_tips
+    else:
+        return labware, wells, labware_position, volume, liquid_class, tips
+
 
 def _optimize_partition_by(
     source: liquidhandling.Labware,
@@ -1010,6 +1150,7 @@ class Worklist(list):
         self.comment(label)
         self.evo_aspirate_well(labware, wells, labware_position, volumes, liquid_class, tips)
         return
+
     def dispense(
         self,
         labware: liquidhandling.Labware,
@@ -1049,6 +1190,7 @@ class Worklist(list):
             if volume > 0:
                 self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
         return
+    
     def evo_dispense(
         self,
         labware: liquidhandling.Labware,
