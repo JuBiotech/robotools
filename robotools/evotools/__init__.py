@@ -1467,7 +1467,6 @@ class Worklist(list):
         liquid_class: str,
         *,
         label: typing.Optional[str] = None,
-        # **kwargs,
     ) -> None:
         """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
