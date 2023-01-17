@@ -465,6 +465,46 @@ class TestWorklist(unittest.TestCase):
         evotools._prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, forced_rack_type="valid forced rack type"
         )
+
+        # define a labware correctly for testing purposes
+        plate = liquidhandling.Labware('DWP', 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
+        # test labware argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=None, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware="wrong_labware_type", wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        # test labware_position argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=None, volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,-1), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=("a",2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        # test liquid_class argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class=None, tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class=["Water_DispZmax-1_AspZmax-1"], tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water;DispZmax-1;AspZmax-1", tips=[1,2])
+        # test tips argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=None)
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,"2"])
+        _, _, _, _, _, tips = evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=15, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        if type(tips) is not evotools.Tip:
+            raise TypeError(f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, tips are type {type(tips)}.")
+        # test volume argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=None, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume="volume", liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=-10, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(labware=plate, wells=["A01", "B01"], labware_position=(38,2), volume=7158279, liquid_class="Water_DispZmax-1_AspZmax-1", tips=[1,2])
+        
         return
 
     def test_comment(self) -> None:
