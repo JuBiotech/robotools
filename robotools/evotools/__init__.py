@@ -266,9 +266,15 @@ def _prepare_evo_aspirate_dispense_parameters(
             raise InvalidOperationError(f"Volume of {volume} exceeds max_volume.")
 
     # optional parameters
+    if liquid_class is None:
+        raise ValueError(f"Missing required parameter: liquid_class")
     if not isinstance(liquid_class, str) or ";" in liquid_class:
         raise ValueError(f"Invalid liquid_class: {liquid_class}")
 
+    if tips is None:
+        raise ValueError(f"Missing required parameter: tips")
+    if type(tips) is not int and type(tips) is not Tip:
+        raise ValueError(f"Invalid type of tips: {tips}. Has to be int or Tip.")
     tecan_tips = []
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
@@ -276,28 +282,8 @@ def _prepare_evo_aspirate_dispense_parameters(
             tip = _int_to_tip(tip)
         tecan_tips.append(tip)
 
-    if isinstance(tip, collections.abc.Iterable):
-        tips = []
-        for element in tip:
-            if isinstance(element, int) and not isinstance(element, Tip):
-                tips.append(_int_to_tip(element))
-            elif isinstance(element, Tip):
-                if element == -1:
-                    raise ValueError(
-                        "When Iterables are used, no Tip.Any elements are allowed. Pass just one Tip.Any instead."
-                    )
-                tips.append(element)
-            else:
-                raise ValueError(
-                    f"If tip is an Iterable, it may only contain int or Tip values, not {type(element)}."
-                )
-        tip = sum(set(tips))
-    elif not isinstance(tip, Tip):
-        raise ValueError(f"tip must be an int between 1 and 8, Tip or Iterable, but was {type(tip)}.")
-
     # apply rounding and corrections for the right string formatting
     volume = f"{numpy.round(volume, decimals=2):.2f}"
-    tips = ["" if tip == -1 else tip for tip in tips]
     if tecan_tips:
         return labware, wells, labware_position, volume, liquid_class, tecan_tips
     else:
