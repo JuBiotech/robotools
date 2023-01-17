@@ -667,18 +667,18 @@ def evo_make_selection_array(rows: int, columns: int, wells: numpy.ndarray):
     return selection_array
 
 
-def evo_get_selection(rows: int, cols: int, selected):
+def evo_get_selection(rows: int, cols: int, selected: numpy.ndarray):
     """Function to generate the code string for the well selection of pipetting actions in EvoWare scripts (.esc).
     Adapted from the C++ function detailed in the EvoWare manual to Python by Martin Beyß (except the test at the end).
 
     Parameters
     ----------
-    selected : numpy.ndarray
-        Numpy array in labware dimensions with selected wells as 1 and others as 0 (from evo_make_selection_array)
     rows : int
         Number of rows of target labware object
     cols : int
         Number of columns of target labware object
+    selected : numpy.ndarray
+        Numpy array in labware dimensions with selected wells as 1 and others as 0 (from evo_make_selection_array)
 
     Returns
     -------
