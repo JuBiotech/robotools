@@ -35,6 +35,7 @@ class Tip(enum.IntEnum):
 class InvalidOperationError(Exception):
     pass
 
+
 def _int_to_tip(tip_int: int):
     """Asserts a Tecan Tip class to an int between 1 and 8."""
     if not 1 <= tip_int <= 8:
@@ -57,6 +58,7 @@ def _int_to_tip(tip_int: int):
         return Tip.T7
     elif tip_int == 8:
         return Tip.T8
+
 
 def _prepare_aspirate_dispense_parameters(
     rack_label: str,
