@@ -1388,7 +1388,6 @@ class Worklist(list):
         liquid_class: str,
         *,
         label: typing.Optional[str] = None,
-        # **kwargs,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
