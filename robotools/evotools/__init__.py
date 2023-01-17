@@ -627,14 +627,17 @@ def _partition_by_column(
     return column_groups
 
 
-def toHex(dec: int):
-    """Method from stackoverflow to convert decimal to hex."""
+def to_hex(dec: int):
+    """Method from stackoverflow to convert decimal to hex.
+    Link: https://stackoverflow.com/questions/5796238/python-convert-decimal-to-hex
+    Solution posted by user "Chunghee Kim" on 21.11.2020.
+    """
     digits = "0123456789ABCDEF"
     x = dec % 16
     rest = dec // 16
     if rest == 0:
         return digits[x]
-    return toHex(rest) + digits[x]
+    return to_hex(rest) + digits[x]
 
 
 def evo_make_selection_array(rows: int, columns: int, wells: numpy.ndarray):
@@ -683,7 +686,7 @@ def evo_get_selection(rows: int, cols: int, selected):
         Code string for well selection of pipetting actions in EvoWare scripts (.esc)
     """
     # apply bit mask with 7 bits, adapted from function detailed in EvoWare manual
-    selection = f"0{toHex(cols)}{rows:02d}"
+    selection = f"0{to_hex(cols)}{rows:02d}"
     bit_counter = 0
     bit_mask = 0
     for x in range(cols):
