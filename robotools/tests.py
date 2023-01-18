@@ -570,9 +570,9 @@ class TestWorklist(unittest.TestCase):
             liquid_class="Water_DispZmax-1_AspZmax-1",
             tips=[1, 2],
         )
-        if type(tips) is not evotools.Tip:
+        if not all(isinstance(n, evotools.Tip) for n in tips):
             raise TypeError(
-                f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, tips are type {type(tips)}."
+                f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, not all tips are type Tip."
             )
         # test volume argument checks
         with self.assertRaises(ValueError):
