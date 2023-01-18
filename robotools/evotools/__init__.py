@@ -273,8 +273,9 @@ def _prepare_evo_aspirate_dispense_parameters(
 
     if tips is None:
         raise ValueError(f"Missing required parameter: tips")
-    if type(tips) is not int and type(tips) is not Tip:
-        raise ValueError(f"Invalid type of tips: {tips}. Has to be int or Tip.")
+    for tip in tips:
+        if type(tip) is not int and type(tip) is not Tip:
+            raise ValueError(f"Invalid type of tips: {type(tip)}. Has to be int or Tip.")
     tecan_tips = []
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
