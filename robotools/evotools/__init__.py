@@ -414,7 +414,7 @@ def _prepare_evo_wash_parameters(
     if waste_delay is None:
         raise ValueError("Missing required parameter: waste_delay")
     if not isinstance(waste_delay, int) or not 0 <= waste_delay <= 1000:
-        raise ValueError("waste_delay has to be a float from 0 - 1000.")
+        raise ValueError("waste_delay has to be an int from 0 - 1000.")
 
     if cleaner_vol is None:
         raise ValueError("Missing required parameter: cleaner_vol")
@@ -426,7 +426,7 @@ def _prepare_evo_wash_parameters(
     if cleaner_delay is None:
         raise ValueError("Missing required parameter: cleaner_delay")
     if not isinstance(cleaner_delay, int) or not 0 <= cleaner_delay <= 1000:
-        raise ValueError("cleaner_delay has to be a float from 0 - 1000.")
+        raise ValueError("cleaner_delay has to be an int from 0 - 1000.")
 
     if airgap is None:
         raise ValueError("Missing required parameter: airgap")
