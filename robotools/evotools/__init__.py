@@ -233,7 +233,7 @@ def _prepare_evo_aspirate_dispense_parameters(
 
     if wells is None:
         raise ValueError("Missing required paramter: wells")
-    if not isinstance(wells, typing.Union[str, typing.Sequence[str], numpy.ndarray]):
+    if not isinstance(wells, (str, list, tuple, numpy.ndarray)):
         raise ValueError(f"Invalid wells: {wells}")
 
     if labware_position is None:
