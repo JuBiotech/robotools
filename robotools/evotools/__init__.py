@@ -910,9 +910,9 @@ class Worklist(list):
 
     def evo_aspirate_well(
         self,
+        *,
         labware: liquidhandling.Labware,
         wells: typing.Union[str, typing.List[str]],
-        *,
         labware_position: typing.Tuple[int, int],
         volume: typing.Union[float, typing.List[float]],
         liquid_class: str,
@@ -1052,6 +1052,7 @@ class Worklist(list):
 
     def evo_dispense_well(
         self,
+        *,
         labware: liquidhandling.Labware,
         wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
