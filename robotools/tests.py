@@ -631,203 +631,219 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
-        
+
         # test complete _prepare_evo_aspirate_dispense_parameters() command
-        labware, wells, labware_position, volume, liquid_class, tips = evotools._prepare_evo_aspirate_dispense_parameters(
+        (
+            labware,
+            wells,
+            labware_position,
+            volume,
+            liquid_class,
+            tips,
+        ) = evotools._prepare_evo_aspirate_dispense_parameters(
             labware=plate,
-            wells=["E01","F01","G01"],
+            wells=["E01", "F01", "G01"],
             labware_position=(38, 2),
             volume=750,
             liquid_class="Water_DispZmax_AspZmax",
-            tips=[5,6,7],
+            tips=[5, 6, 7],
         )
-        self.assertEqual([labware, wells, labware_position, volume, liquid_class, tips],[plate, ["E01","F01","G01"], 750, "Water_DispZmax_AspZmax", [evotools.Tip.T5,evotools.Tip.T6,evotools.Tip.T7]])
+        self.assertEqual(
+            [labware, wells, labware_position, volume, liquid_class, tips],
+            [
+                plate,
+                ["E01", "F01", "G01"],
+                750,
+                "Water_DispZmax_AspZmax",
+                [evotools.Tip.T5, evotools.Tip.T6, evotools.Tip.T7],
+            ],
+        )
 
         # test _prepare_evo_wash_parameters
         # test tips argument checks
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=None,
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, "2"],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
             )
         tips, _, _, _, _, _, _, _, _, _, _, _, _ = evotools._prepare_evo_aspirate_dispense_parameters(
             tips=[1, 2],
-            waste_location = (52,1),
-            cleaner_location = (52,0),
+            waste_location=(52, 1),
+            cleaner_location=(52, 0),
         )
         if not all(isinstance(n, evotools.Tip) for n in tips):
             raise TypeError(
                 f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, not all tips are type Tip."
             )
-        
+
         # test waste_location argument checks
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = None,
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=None,
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (68, 1),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(68, 1),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (0,1),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(0, 1),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (1.7,1),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(1.7, 1),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,-1),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(52, -1),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,128),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(52, 128),
+                cleaner_location=(52, 0),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1.7),
-                cleaner_location = (52,0),
+                tips=[1, 2],
+                waste_location=(52, 1.7),
+                cleaner_location=(52, 0),
             )
-        
+
         # test cleaner_location argument checks
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = None,
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (68, 1),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(68, 1),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (0,1),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(0, 1),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (1.7,1),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(1.7, 1),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (52,-1),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, -1),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (52,128),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 128),
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1,2],
-                waste_location = (52,1),
-                cleaner_location = (52,1.7),
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 1.7),
             )
-        
+
         # test arm argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 arm=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 arm=2,
             )
-        
+
         # test waste_vol argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_vol=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_vol=-1.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_vol=101.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_vol=1,
             )
-        
+
         # test waste_delay argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_delay=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_delay=-1,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_delay=1001,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 waste_delay=10.0,
             )
 
@@ -835,29 +851,29 @@ class TestWorklist(unittest.TestCase):
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_vol=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_vol=-1.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_vol=101.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_vol=1,
             )
 
@@ -865,226 +881,284 @@ class TestWorklist(unittest.TestCase):
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_delay=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_delay=-1,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_delay=1001,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 cleaner_delay=10.0,
             )
-        
+
         # test airgap argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap=-1.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap=101.0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap=10,
             )
-        
+
         # test airgap_speed argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap_speed=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap_speed=0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap_speed=1001,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 airgap_speed=10.0,
             )
-        
+
         # test retract_speed argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 retract_speed=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 retract_speed=0,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 retract_speed=101,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 retract_speed=10.0,
             )
-        
+
         # test fastwash argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 fastwash=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 fastwash=2,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 fastwash=1.0,
             )
-        
+
         # test low_volume argument check
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 low_volume=None,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 low_volume=2,
             )
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
                 low_volume=1.0,
             )
 
         # test complete _prepare_evo_wash_parameters() command
-        tips, waste_location, cleaner_location, arm, waste_vol, waste_delay, cleaner_vol, cleaner_delay, airgap, airgap_speed, retract_speed, fastwash, low_volume = evotools._prepare_evo_aspirate_dispense_parameters(
+        (
+            tips,
+            waste_location,
+            cleaner_location,
+            arm,
+            waste_vol,
+            waste_delay,
+            cleaner_vol,
+            cleaner_delay,
+            airgap,
+            airgap_speed,
+            retract_speed,
+            fastwash,
+            low_volume,
+        ) = evotools._prepare_evo_aspirate_dispense_parameters(
             tips=[1, 2, 3, 4, 5, 6, 7, 8],
-            waste_location = (52,1),
-            cleaner_location = (52,0),
+            waste_location=(52, 1),
+            cleaner_location=(52, 0),
         )
-        self.assertEqual([tips, waste_location, cleaner_location, arm, waste_vol, waste_delay, cleaner_vol, cleaner_delay, airgap, airgap_speed, retract_speed, fastwash, low_volume],[[evotools.Tip.T1,evotools.Tip.T2,evotools.Tip.T3,evotools.Tip.T4,evotools.Tip.T5,evotools.Tip.T6,evotools.Tip.T7,evotools.Tip.T8],(52,1),(52,0),0,3.0,500,4.0,500,10,70,30,1,0])
+        self.assertEqual(
+            [
+                tips,
+                waste_location,
+                cleaner_location,
+                arm,
+                waste_vol,
+                waste_delay,
+                cleaner_vol,
+                cleaner_delay,
+                airgap,
+                airgap_speed,
+                retract_speed,
+                fastwash,
+                low_volume,
+            ],
+            [
+                [
+                    evotools.Tip.T1,
+                    evotools.Tip.T2,
+                    evotools.Tip.T3,
+                    evotools.Tip.T4,
+                    evotools.Tip.T5,
+                    evotools.Tip.T6,
+                    evotools.Tip.T7,
+                    evotools.Tip.T8,
+                ],
+                (52, 1),
+                (52, 0),
+                0,
+                3.0,
+                500,
+                4.0,
+                500,
+                10,
+                70,
+                30,
+                1,
+                0,
+            ],
+        )
 
         return
-    
+
     # test complete evo_aspirate() command
     def test_evo_aspirate(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.evo_aspirate(
                 labware=plate,
-                wells=["E01","F01","G01"],
-                labware_position=(38,2),
-                tips=[5,6,7],
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
                 volumes=750,
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
-                wl, ['B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);']
+                wl,
+                [
+                    'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                ],
             )
         return
-    
+
     # test complete evo_dispense() command
     def test_evo_dispense(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.evo_dispense(
                 labware=plate,
-                wells=["E01","F01","G01"],
-                labware_position=(38,2),
-                tips=[5,6,7],
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
                 volumes=750,
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
-                wl, ['B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);']
+                wl,
+                [
+                    'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                ],
             )
         return
-    
+
     # test complete evo_wash() command
     def test_evo_wash(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.evo_wash(
                 tips=[1, 2, 3, 4, 5, 6, 7, 8],
-                waste_location = (52,1),
-                cleaner_location = (52,0),
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
             )
-            self.assertEqual(
-                wl, ['B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);']
-            )
+            self.assertEqual(wl, ['B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);'])
         return
-    
+
     def test_comment(self) -> None:
         with evotools.Worklist() as wl:
             # empty and None comments should be ignored

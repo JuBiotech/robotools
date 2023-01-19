@@ -230,7 +230,7 @@ def _prepare_evo_aspirate_dispense_parameters(
         raise ValueError("Missing required paramter: labware")
     if not isinstance(labware, liquidhandling.Labware):
         raise ValueError(f"Invalid labware: {labware}")
-    
+
     if wells is None:
         raise ValueError("Missing required paramter: wells")
     if not isinstance(wells, typing.Union[str, typing.Sequence[str], numpy.ndarray]):
