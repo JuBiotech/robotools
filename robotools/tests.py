@@ -468,7 +468,7 @@ class TestWorklist(unittest.TestCase):
 
         # test _prepare_evo_aspirate_dispense_parameters
         # define a labware correctly for testing purposes
-        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         # test labware argument checks
         with pytest.raises(ValueError, match="Invalid labware:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
@@ -961,7 +961,7 @@ class TestWorklist(unittest.TestCase):
 
     # test complete evo_aspirate() command
     def test_evo_aspirate(self) -> None:
-        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
             wl.evo_aspirate(
                 labware=plate,
@@ -981,7 +981,7 @@ class TestWorklist(unittest.TestCase):
 
     # test complete evo_dispense() command
     def test_evo_dispense(self) -> None:
-        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
             wl.evo_dispense(
                 labware=plate,
@@ -1001,7 +1001,6 @@ class TestWorklist(unittest.TestCase):
 
     # test complete evo_wash() command
     def test_evo_wash(self) -> None:
-        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         with evotools.Worklist() as wl:
             wl.evo_wash(
                 tips=[1, 2, 3, 4, 5, 6, 7, 8],
