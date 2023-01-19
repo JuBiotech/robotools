@@ -631,7 +631,7 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
-
+        
         # test complete _prepare_evo_aspirate_dispense_parameters() command
         labware, wells, labware_position, volume, liquid_class, tips = evotools._prepare_evo_aspirate_dispense_parameters(
             labware=plate,
@@ -1084,7 +1084,7 @@ class TestWorklist(unittest.TestCase):
                 wl, ['B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);']
             )
         return
-
+    
     def test_comment(self) -> None:
         with evotools.Worklist() as wl:
             # empty and None comments should be ignored
