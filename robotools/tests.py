@@ -487,6 +487,25 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
+        # test wells argument checks
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=None,
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        with self.assertRaises(ValueError):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells="A01",
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
         # test labware_position argument checks
         with self.assertRaises(ValueError):
             evotools._prepare_evo_aspirate_dispense_parameters(
