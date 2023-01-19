@@ -296,6 +296,7 @@ def _prepare_evo_aspirate_dispense_parameters(
 
 
 def _prepare_evo_wash_parameters(
+    *,
     tips: typing.Union[typing.List[Tip], typing.List[int]],
     waste_location: typing.Tuple[int, int],
     cleaner_location: typing.Tuple[int, int],
