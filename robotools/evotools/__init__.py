@@ -383,19 +383,19 @@ def _prepare_evo_wash_parameters(
 
     if waste_location is None:
         raise ValueError("Missing required parameter: waste_location")
-    for grid, site in waste_location:
-        if not isinstance(grid, int) or not 1 <= grid <= 67:
-            raise ValueError("Grid (first number in waste_location tuple) has to be an int from 1 - 67.")
-        if not isinstance(site, int) or not 0 <= site <= 127:
-            raise ValueError("Site (second number in waste_location tuple) has to be an int from 0 - 127.")
+    grid, site = waste_location
+    if not isinstance(grid, int) or not 1 <= grid <= 67:
+        raise ValueError("Grid (first number in waste_location tuple) has to be an int from 1 - 67.")
+    if not isinstance(site, int) or not 0 <= site <= 127:
+        raise ValueError("Site (second number in waste_location tuple) has to be an int from 0 - 127.")
 
     if cleaner_location is None:
         raise ValueError("Missing required parameter: cleaner_location")
-    for grid, site in cleaner_location:
-        if not isinstance(grid, int) or not 1 <= grid <= 67:
-            raise ValueError("Grid (first number in cleaner_location tuple) has to be an int from 1 - 67.")
-        if not isinstance(site, int) or not 0 <= site <= 127:
-            raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 0 - 127.")
+    grid, site = cleaner_location
+    if not isinstance(grid, int) or not 1 <= grid <= 67:
+        raise ValueError("Grid (first number in cleaner_location tuple) has to be an int from 1 - 67.")
+    if not isinstance(site, int) or not 0 <= site <= 127:
+        raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 0 - 127.")
 
     if arm is None:
         raise ValueError("Missing required paramter: arm")
