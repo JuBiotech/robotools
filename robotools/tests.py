@@ -466,6 +466,7 @@ class TestWorklist(unittest.TestCase):
             rack_label="WaterTrough", position=1, volume=15, forced_rack_type="valid forced rack type"
         )
 
+        # test _prepare_evo_aspirate_dispense_parameters
         # define a labware correctly for testing purposes
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         # test labware argument checks
