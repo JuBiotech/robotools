@@ -911,7 +911,7 @@ class Worklist(list):
     def evo_aspirate_well(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        wells: typing.Union[str, typing.List[str]],
         *,
         labware_position: typing.Tuple[int, int],
         volume: typing.Union[float, typing.List[float]],
@@ -1053,7 +1053,7 @@ class Worklist(list):
     def evo_dispense_well(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
         volume: typing.Union[float, typing.List[float]],
         liquid_class: str,
@@ -1373,10 +1373,10 @@ class Worklist(list):
     def evo_aspirate(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
         tips: typing.Union[typing.List[Tip], typing.List[int]],
-        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
         label: typing.Optional[str] = None,
@@ -1399,11 +1399,12 @@ class Worklist(list):
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
         """
-        wells = numpy.array(wells).flatten("F")
-        volumes = numpy.array(volumes).flatten("F")
-        if len(volumes) == 1:
-            volumes = numpy.repeat(volumes, len(wells))
-        labware.remove(wells, volumes, label)
+        # diferentiate between what is needed for volume calculation and for pipetting commands
+        wells_calc = numpy.array(wells).flatten("F")
+        volumes_calc = numpy.array(volumes).flatten("F")
+        if len(volumes_calc) == 1:
+            volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
+        labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
         self.evo_aspirate_well(labware, wells, labware_position, volumes, liquid_class, tips)
         return
@@ -1451,10 +1452,10 @@ class Worklist(list):
     def evo_dispense(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
         tips: typing.Union[typing.List[Tip], typing.List[int]],
-        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
         label: typing.Optional[str] = None,
@@ -1477,11 +1478,12 @@ class Worklist(list):
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
         """
-        wells = numpy.array(wells).flatten("F")
-        volumes = numpy.array(volumes).flatten("F")
-        if len(volumes) == 1:
-            volumes = numpy.repeat(volumes, len(wells))
-        labware.remove(wells, volumes, label)
+        # diferentiate between what is needed for volume calculation and for pipetting commands
+        wells_calc = numpy.array(wells).flatten("F")
+        volumes_calc = numpy.array(volumes).flatten("F")
+        if len(volumes_calc) == 1:
+            volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
+        labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
         self.evo_dispense_well(labware, wells, labware_position, volumes, liquid_class, tips)
         return
