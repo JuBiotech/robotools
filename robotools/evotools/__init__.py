@@ -938,13 +938,13 @@ class Worklist(list):
             Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
         """
         # perform consistency checks
-        args = (
-            labware,
-            wells,
-            labware_position,
-            volume,
-            liquid_class,
-            tips,
+        kwargs = dict(
+            labware=labware,
+            wells=wells,
+            labware_position=labware_position,
+            volume=volume,
+            liquid_class=liquid_class,
+            tips=tips,
         )
         (
             labware,
@@ -953,7 +953,7 @@ class Worklist(list):
             volume,
             liquid_class,
             tips,
-        ) = _prepare_evo_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
 
         # calculate tip_selection based on tips argument
         tip_selection = 0
@@ -1079,13 +1079,13 @@ class Worklist(list):
             Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
         """
         # perform consistency checks
-        args = (
-            labware,
-            wells,
-            labware_position,
-            volume,
-            liquid_class,
-            tips,
+        kwargs = dict(
+            labware=labware,
+            wells=wells,
+            labware_position=labware_position,
+            volume=volume,
+            liquid_class=liquid_class,
+            tips=tips,
         )
         (
             labware,
@@ -1094,7 +1094,7 @@ class Worklist(list):
             volume,
             liquid_class,
             tips,
-        ) = _prepare_evo_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+        ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
 
         # calculate tip_selection based on tips argument
         tip_selection = 0
@@ -1175,20 +1175,20 @@ class Worklist(list):
         """
 
         # perform consistency checks
-        args = (
-            tips,
-            waste_location,
-            cleaner_location,
-            arm,
-            waste_vol,
-            waste_delay,
-            cleaner_vol,
-            cleaner_delay,
-            airgap,
-            airgap_speed,
-            retract_speed,
-            fastwash,
-            low_volume,
+        kwargs = dict(
+            tips=tips,
+            waste_location=waste_location,
+            cleaner_location=cleaner_location,
+            arm=arm,
+            waste_vol=waste_vol,
+            waste_delay=waste_delay,
+            cleaner_vol=cleaner_vol,
+            cleaner_delay=cleaner_delay,
+            airgap=airgap,
+            airgap_speed=airgap_speed,
+            retract_speed=retract_speed,
+            fastwash=fastwash,
+            low_volume=low_volume,
         )
         (
             tips,
@@ -1204,7 +1204,7 @@ class Worklist(list):
             retract_speed,
             fastwash,
             low_volume,
-        ) = _prepare_evo_wash_parameters(*args)
+        ) = _prepare_evo_wash_parameters(**kwargs)
         # calculate tip_selection based on tips argument
         tip_selection = 0
         for tip in tips:
