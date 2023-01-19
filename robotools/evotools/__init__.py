@@ -254,10 +254,10 @@ def _prepare_evo_aspirate_dispense_parameters(
             if vol < 0 or vol > 7158278 or numpy.isnan(vol):
                 raise ValueError(f"Invalid volume: {vol}")
             if max_volume is not None and vol > max_volume:
-                raise InvalidOperationError(f"Volume of {vol} exceeds max_volume.")
+                raise InvalidOperationError(f"Invalid volume: volume of {vol} exceeds max_volume.")
             if not len(vol) == len(tips):
                 raise Exception(
-                    f"Tips and volume lists have different lengths ({len(tips)} and {len(vol)}, respectively)."
+                    f"Invalid volume: Tips and volume lists have different lengths ({len(tips)} and {len(vol)}, respectively)."
                 )
     else:
         try:
@@ -436,12 +436,12 @@ def _prepare_evo_wash_parameters(
     if airgap_speed is None:
         raise ValueError("Missing required parameter: airgap_speed")
     if not isinstance(airgap_speed, int) or not 1 <= airgap_speed <= 1000:
-        raise ValueError("airgap_speed has to be a float from 1 - 1000.")
+        raise ValueError("airgap_speed has to be an int from 1 - 1000.")
 
     if retract_speed is None:
         raise ValueError("Missing required parameter: retract_speed")
     if not isinstance(retract_speed, int) or not 1 <= retract_speed <= 100:
-        raise ValueError("retract_speed has to be a float from 1 - 100.")
+        raise ValueError("retract_speed has to be an int from 1 - 100.")
 
     if fastwash is None:
         raise ValueError("Missing required paramter: fastwash")
