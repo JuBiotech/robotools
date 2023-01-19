@@ -226,11 +226,15 @@ def _prepare_evo_aspirate_dispense_parameters(
     tips : list of int
         Tip(s) that will be selected (out of tips 1-8)
     """
-    # required parameters
     if labware is None:
         raise ValueError("Missing required paramter: labware")
     if not isinstance(labware, liquidhandling.Labware):
         raise ValueError(f"Invalid labware: {labware}")
+    
+    if wells is None:
+        raise ValueError("Missing required paramter: wells")
+    if not isinstance(wells, typing.Union[str, typing.Sequence[str], numpy.ndarray]):
+        raise ValueError(f"Invalid wells: {wells}")
 
     if labware_position is None:
         raise ValueError("Missing required paramter: position")
