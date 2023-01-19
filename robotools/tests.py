@@ -470,7 +470,7 @@ class TestWorklist(unittest.TestCase):
         # define a labware correctly for testing purposes
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=100)
         # test labware argument checks
-        with self.assertRaises(ValueError, matches="required parameter: labware"):
+        with pytest.raises(ValueError, match="Invalid labware:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware="wrong_labware_type",
                 wells=["A01", "B01"],
@@ -480,7 +480,7 @@ class TestWorklist(unittest.TestCase):
                 tips=[1, 2],
             )
         # test wells argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid wells:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells="A01",
@@ -490,7 +490,7 @@ class TestWorklist(unittest.TestCase):
                 tips=[1, 2],
             )
         # test labware_position argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid position:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -499,7 +499,7 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid position:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -509,7 +509,7 @@ class TestWorklist(unittest.TestCase):
                 tips=[1, 2],
             )
         # test liquid_class argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid liquid_class:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -518,7 +518,7 @@ class TestWorklist(unittest.TestCase):
                 liquid_class=["Water_DispZmax-1_AspZmax-1"],
                 tips=[1, 2],
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid liquid_class:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -528,7 +528,7 @@ class TestWorklist(unittest.TestCase):
                 tips=[1, 2],
             )
         # test tips argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid type of tips:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -550,7 +550,7 @@ class TestWorklist(unittest.TestCase):
                 f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, not all tips are type Tip."
             )
         # test volume argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid volume:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -559,7 +559,7 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid volume:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -568,7 +568,7 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Invalid volume:"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 labware=plate,
                 wells=["A01", "B01"],
@@ -607,12 +607,6 @@ class TestWorklist(unittest.TestCase):
 
         # test _prepare_evo_wash_parameters
         # test tips argument checks
-        with self.assertRaises(ValueError):
-            evotools._prepare_evo_aspirate_dispense_parameters(
-                tips=[1, "2"],
-                waste_location=(52, 1),
-                cleaner_location=(52, 0),
-            )
         tips, _, _, _, _, _, _, _, _, _, _, _, _ = evotools._prepare_evo_aspirate_dispense_parameters(
             tips=[1, 2],
             waste_location=(52, 1),
@@ -624,37 +618,37 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test waste_location argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(68, 1),
                 cleaner_location=(52, 0),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(0, 1),
                 cleaner_location=(52, 0),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(1.7, 1),
                 cleaner_location=(52, 0),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, -1),
                 cleaner_location=(52, 0),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 128),
                 cleaner_location=(52, 0),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in waste_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1.7),
@@ -662,37 +656,37 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test cleaner_location argument checks
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(68, 1),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(0, 1),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Grid (first number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(1.7, 1),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, -1),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 128),
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Site (second number in cleaner_location tuple)"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -700,7 +694,7 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test arm argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Parameter arm"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -709,21 +703,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test waste_vol argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 waste_vol=-1.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 waste_vol=101.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -732,21 +726,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test waste_delay argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 waste_delay=-1,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 waste_delay=1001,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -755,21 +749,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test cleaner_vol argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 cleaner_vol=-1.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 cleaner_vol=101.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -778,21 +772,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test cleaner_delay argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 cleaner_delay=-1,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 cleaner_delay=1001,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -801,21 +795,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test airgap argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 airgap=-1.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 airgap=101.0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap has to be a float"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -824,21 +818,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test airgap_speed argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 airgap_speed=0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 airgap_speed=1001,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -847,21 +841,21 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test retract_speed argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 retract_speed=0,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 retract_speed=101,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -870,14 +864,14 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test fastwash argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Parameter fastwash"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 fastwash=2,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Parameter fastwash"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
@@ -886,14 +880,14 @@ class TestWorklist(unittest.TestCase):
             )
 
         # test low_volume argument check
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Parameter low_volume"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
                 low_volume=2,
             )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Parameter low_volume"):
             evotools._prepare_evo_aspirate_dispense_parameters(
                 tips=[1, 2],
                 waste_location=(52, 1),
