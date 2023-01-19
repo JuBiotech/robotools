@@ -1407,7 +1407,7 @@ class Worklist(list):
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
-        self.evo_aspirate_well(labware=labware, wells=wells, labware_position=labware_position, volumes=volumes, liquid_class=liquid_class, tips=tips)
+        self.evo_aspirate_well(labware=labware, wells=wells, labware_position=labware_position, volume=volumes, liquid_class=liquid_class, tips=tips)
         return
 
     def dispense(
@@ -1486,7 +1486,7 @@ class Worklist(list):
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
-        self.evo_dispense_well(labware=labware, wells=wells, labware_position=labware_position, volumes=volumes, liquid_class=liquid_class, tips=tips)
+        self.evo_dispense_well(labware=labware, wells=wells, labware_position=labware_position, volume=volumes, liquid_class=liquid_class, tips=tips)
         return
 
     def transfer(
