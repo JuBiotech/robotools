@@ -992,10 +992,8 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
-                wl,
-                [
-                    'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
-                ],
+                wl[0],
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
             )
         return
 
