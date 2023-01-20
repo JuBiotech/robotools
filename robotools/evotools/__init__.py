@@ -964,8 +964,8 @@ class Worklist(list):
         tip_volumes = ""
         if type(volume) == list:
             volume_dict = dict(zip(tips, volume))
-        for tip in tips:
-            if tip.value in [1, 2, 4, 8, 16, 32, 64, 128]:
+        for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
+            if tip.value in tips:
                 if type(volume) == float:
                     tip_volumes += f'"{volume}",'
                 elif type(volume) == list:
@@ -1103,17 +1103,17 @@ class Worklist(list):
             tip_selection += tip.value
 
         # prepare volume section (handle both the case of one volume as int and a list of individual volumes per tip)
-        tip_volumes = ""
+        tip_volumes = ''
         if type(volume) == list:
             volume_dict = dict(zip(tips, volume))
-        for tip in tips:
-            if tip.value in [1, 2, 4, 8, 16, 32, 64, 128]:
+        for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
+            if tip.value in tips:
                 if type(volume) == float:
-                    tip_volumes += f'"{volume}",'
+                    tip_volumes += f'\"{volume}\",'
                 elif type(volume) == list:
-                    tip_volumes += f'"{volume_dict[tip]}",'
+                    tip_volumes += f'\"{volume_dict[tip]}\",'
             else:
-                tip_volumes += "0,"
+                tip_volumes += '0,'
 
         # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
         selected = evo_make_selection_array(labware.n_rows, labware.n_columns, wells)
