@@ -235,7 +235,8 @@ def _prepare_evo_aspirate_dispense_parameters(
         raise ValueError("Missing required paramter: wells")
     if not isinstance(wells, (str, list, tuple, numpy.ndarray)):
         raise ValueError(f"Invalid wells: {wells}")
-
+    if not len(wells) == len(tips):
+        raise ValueError(f"wells and tips need to have the same length.")
     if labware_position is None:
         raise ValueError("Missing required paramter: position")
     if not all(isinstance(position, int) for position in labware_position) or any(
@@ -255,21 +256,22 @@ def _prepare_evo_aspirate_dispense_parameters(
                 raise ValueError(f"Invalid volume: {vol}")
             if max_volume is not None and vol > max_volume:
                 raise InvalidOperationError(f"Invalid volume: volume of {vol} exceeds max_volume.")
-            if not len(vol) == len(tips):
-                raise Exception(
-                    f"Invalid volume: Tips and volume lists have different lengths ({len(tips)} and {len(vol)}, respectively)."
-                )
-    else:
-        try:
-            volume = float(volume)
-        except:
-            raise ValueError(f"Invalid volume: {volume}")
+        if not len(volume) == len(tips) == len(wells):
+            raise Exception(
+                f"Invalid volume: Tips, wells, and volume lists have different lengths ({len(tips)}, {len(wells)} and {len(volume)}, respectively)."
+            )
+    elif type(volume) == float or type(volume) == int:
+        # test volume like in the list section
         if volume < 0 or volume > 7158278 or numpy.isnan(volume):
-            raise ValueError(f"Invalid volume: {volume}")
+                raise ValueError(f"Invalid volume: {volume}")
         if max_volume is not None and volume > max_volume:
-            raise InvalidOperationError(f"Volume of {volume} exceeds max_volume.")
+            raise InvalidOperationError(f"Invalid volume: volume of {volume} exceeds max_volume.")
+        # convert volume to list and multiply list to reach identical length as wells
+        volume = [float(volume)]
+        volume = volume * len(wells)  
+    else:
+        raise ValueError(f"Invalid volume: {volume}")
 
-    # optional parameters
     if liquid_class is None:
         raise ValueError(f"Missing required parameter: liquid_class")
     if not isinstance(liquid_class, str) or ";" in liquid_class:
@@ -287,8 +289,6 @@ def _prepare_evo_aspirate_dispense_parameters(
             tip = _int_to_tip(tip)
         tecan_tips.append(tip)
 
-    # apply rounding and corrections for the right string formatting
-    volume = f"{numpy.round(volume, decimals=2):.2f}"
     if tecan_tips:
         return labware, wells, labware_position, volume, liquid_class, tecan_tips
     else:
@@ -955,21 +955,17 @@ class Worklist(list):
             tips,
         ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
 
-        # calculate tip_selection based on tips argument
+        # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
         tip_selection = 0
         for tip in tips:
             tip_selection += tip.value
 
-        # prepare volume section (handle both the case of one volume as int and a list of individual volumes per tip)
+        # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
         tip_volumes = ""
-        if type(volume) == list:
-            volume_dict = dict(zip(tips, volume))
         for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-            if tip.value in tips:
-                if type(volume) == float:
-                    tip_volumes += f'"{volume}",'
-                elif type(volume) == list:
-                    tip_volumes += f'"{volume_dict[tip]}",'
+            if tip in [tecantip.value for tecantip in tips]:
+                tip_volumes += f'"{volume[0]}",'
+                volume.pop(0)
             else:
                 tip_volumes += "0,"
 
@@ -1097,23 +1093,19 @@ class Worklist(list):
             tips,
         ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
 
-        # calculate tip_selection based on tips argument
+        # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
         tip_selection = 0
         for tip in tips:
             tip_selection += tip.value
 
-        # prepare volume section (handle both the case of one volume as int and a list of individual volumes per tip)
-        tip_volumes = ''
-        if type(volume) == list:
-            volume_dict = dict(zip(tips, volume))
+        # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
+        tip_volumes = ""
         for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-            if tip.value in tips:
-                if type(volume) == float:
-                    tip_volumes += f'\"{volume}\",'
-                elif type(volume) == list:
-                    tip_volumes += f'\"{volume_dict[tip]}\",'
+            if tip in [tecantip.value for tecantip in tips]:
+                tip_volumes += f'"{volume[0]}",'
+                volume.pop(0)
             else:
-                tip_volumes += '0,'
+                tip_volumes += "0,"
 
         # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
         selected = evo_make_selection_array(labware.n_rows, labware.n_columns, wells)

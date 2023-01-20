@@ -960,7 +960,7 @@ class TestWorklist(unittest.TestCase):
         return
 
     # test complete evo_aspirate() command
-    def test_evo_aspirate(self) -> None:
+    def test_evo_aspirate1(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
             wl.evo_aspirate(
@@ -972,15 +972,30 @@ class TestWorklist(unittest.TestCase):
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
-                wl,
-                [
-                    'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
-                ],
+                wl[0],
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+            )
+        return
+    
+    def test_evo_aspirate2(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_aspirate(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=[750,730,710],
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
             )
         return
 
     # test complete evo_dispense() command
-    def test_evo_dispense(self) -> None:
+    def test_evo_dispense1(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
             wl.evo_dispense(
@@ -993,7 +1008,25 @@ class TestWorklist(unittest.TestCase):
             )
             self.assertEqual(
                 wl[0],
-                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","750","750",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+            )
+        return
+
+    # test complete evo_dispense() command
+    def test_evo_dispense2(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_dispense(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=[750,730,710],
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
             )
         return
 
@@ -1005,7 +1038,7 @@ class TestWorklist(unittest.TestCase):
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
             )
-            self.assertEqual(wl, ['B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);'])
+            self.assertEqual(wl[0], ['B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);'])
         return
 
     def test_comment(self) -> None:
