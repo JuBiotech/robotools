@@ -973,10 +973,10 @@ class TestWorklist(unittest.TestCase):
             )
             self.assertEqual(
                 wl[0],
-                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
             )
         return
-    
+
     def test_evo_aspirate2(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
@@ -985,12 +985,12 @@ class TestWorklist(unittest.TestCase):
                 wells=["E01", "F01", "G01"],
                 labware_position=(38, 2),
                 tips=[5, 6, 7],
-                volumes=[750,730,710],
+                volumes=[750, 730, 710],
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
                 wl[0],
-                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
             )
         return
 
@@ -1008,7 +1008,7 @@ class TestWorklist(unittest.TestCase):
             )
             self.assertEqual(
                 wl[0],
-                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
             )
         return
 
@@ -1021,12 +1021,12 @@ class TestWorklist(unittest.TestCase):
                 wells=["E01", "F01", "G01"],
                 labware_position=(38, 2),
                 tips=[5, 6, 7],
-                volumes=[750,730,710],
+                volumes=[750, 730, 710],
                 liquid_class="Water_DispZmax_AspZmax",
             )
             self.assertEqual(
                 wl[0],
-                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);'
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
             )
         return
 

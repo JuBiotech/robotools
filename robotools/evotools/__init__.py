@@ -263,12 +263,12 @@ def _prepare_evo_aspirate_dispense_parameters(
     elif type(volume) == float or type(volume) == int:
         # test volume like in the list section
         if volume < 0 or volume > 7158278 or numpy.isnan(volume):
-                raise ValueError(f"Invalid volume: {volume}")
+            raise ValueError(f"Invalid volume: {volume}")
         if max_volume is not None and volume > max_volume:
             raise InvalidOperationError(f"Invalid volume: volume of {volume} exceeds max_volume.")
         # convert volume to list and multiply list to reach identical length as wells
         volume = [float(volume)]
-        volume = volume * len(wells)  
+        volume = volume * len(wells)
     else:
         raise ValueError(f"Invalid volume: {volume}")
 
