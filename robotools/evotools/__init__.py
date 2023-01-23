@@ -271,7 +271,7 @@ def _prepare_evo_aspirate_dispense_parameters(
         volume = volume * len(wells)
     else:
         raise ValueError(f"Invalid volume: {volume}")
-    
+
     # apply rounding and corrections for the right string formatting
     volume = [numpy.round(vol, decimals=2) for vol in volume]
 
