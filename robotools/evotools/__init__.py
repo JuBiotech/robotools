@@ -187,7 +187,7 @@ def _prepare_evo_aspirate_dispense_parameters(
     wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
     *,
     labware_position: typing.Tuple[int, int],
-    volume: typing.Union[float, typing.List[float]],
+    volume: typing.Union[float, typing.List[float], int],
     liquid_class: str,
     tips: typing.Union[typing.List[Tip], typing.List[int]],
     max_volume: typing.Optional[int] = None,
@@ -202,7 +202,7 @@ def _prepare_evo_aspirate_dispense_parameters(
         List with target well ID(s)
     labware_position : tuple
         Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-    volume : float or list
+    volume : int, float or list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
         Overwrites the liquid class for this step (max 32 characters)
@@ -219,7 +219,7 @@ def _prepare_evo_aspirate_dispense_parameters(
         List with target well ID(s)
     labware_position : tuple
         Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-    volume : float or list
+    volume : list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
         Overwrites the liquid class for this step (max 32 characters)
@@ -227,18 +227,18 @@ def _prepare_evo_aspirate_dispense_parameters(
         Tip(s) that will be selected (out of tips 1-8)
     """
     if labware is None:
-        raise ValueError("Missing required paramter: labware")
+        raise ValueError("Missing required parameter: labware")
     if not isinstance(labware, liquidhandling.Labware):
         raise ValueError(f"Invalid labware: {labware}")
 
     if wells is None:
-        raise ValueError("Missing required paramter: wells")
+        raise ValueError("Missing required parameter: wells")
     if not isinstance(wells, (str, list, tuple, numpy.ndarray)):
         raise ValueError(f"Invalid wells: {wells}")
     if not len(wells) == len(tips):
-        raise ValueError(f"wells and tips need to have the same length.")
+        raise ValueError(f"Invalid wells: wells and tips need to have the same length.")
     if labware_position is None:
-        raise ValueError("Missing required paramter: position")
+        raise ValueError("Missing required parameter: position")
     if not all(isinstance(position, int) for position in labware_position) or any(
         position < 0 for position in labware_position
     ):
@@ -300,17 +300,17 @@ def _prepare_evo_wash_parameters(
     tips: typing.Union[typing.List[Tip], typing.List[int]],
     waste_location: typing.Tuple[int, int],
     cleaner_location: typing.Tuple[int, int],
-    arm: int,
-    waste_vol: float,
-    waste_delay: int,
-    cleaner_vol: float,
-    cleaner_delay: int,
-    airgap: float,
-    airgap_speed: int,
-    retract_speed: int,
-    fastwash: int,
-    low_volume: int,
-) -> typing.Tuple[list, tuple, tuple, int, float, int, float, int, float, int, int, int, int]:
+    arm: int = 0,
+    waste_vol: float = 3.0,
+    waste_delay: int = 500,
+    cleaner_vol: float = 4.0,
+    cleaner_delay: int = 500,
+    airgap: int = 10,
+    airgap_speed: int = 70,
+    retract_speed: int = 30,
+    fastwash: int = 1,
+    low_volume: int = 0,
+) -> typing.Tuple[list, tuple, tuple, int, float, int, float, int, int, int, int, int, int]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -331,7 +331,7 @@ def _prepare_evo_wash_parameters(
         Volume in cleaner in mL (0-100)
     cleaner_delay : int
         Delay before closing valves in cleaner in ms (0-1000)
-    airgap : float
+    airgap : int
         Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
     airgap_speed : int
         Speed of airgap aspiration in µL/s (1-1000)
@@ -360,7 +360,7 @@ def _prepare_evo_wash_parameters(
         Volume in cleaner in mL (0-100)
     cleaner_delay : int
         Delay before closing valves in cleaner in ms (0-1000)
-    airgap : float
+    airgap : int
         Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
     airgap_speed : int
         Speed of airgap aspiration in µL/s (1-1000)
@@ -430,8 +430,8 @@ def _prepare_evo_wash_parameters(
 
     if airgap is None:
         raise ValueError("Missing required parameter: airgap")
-    if not isinstance(airgap, float) or not 0 <= airgap <= 100:
-        raise ValueError("airgap has to be a float from 0 - 100.")
+    if not isinstance(airgap, int) or not 0 <= airgap <= 100:
+        raise ValueError("airgap has to be an int from 0 - 100.")
 
     if airgap_speed is None:
         raise ValueError("Missing required parameter: airgap_speed")
@@ -914,7 +914,7 @@ class Worklist(list):
         labware: liquidhandling.Labware,
         wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float]],
+        volume: typing.Union[float, typing.List[float], int],
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
@@ -930,7 +930,7 @@ class Worklist(list):
             List with target well ID(s)
         labware_position : tuple
             Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-        volume : float or list
+        volume : int, float or list
             Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
@@ -1052,7 +1052,7 @@ class Worklist(list):
         labware: liquidhandling.Labware,
         wells: typing.Union[str, typing.List[str]],
         labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float]],
+        volume: typing.Union[float, typing.List[float], int],
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
@@ -1068,7 +1068,7 @@ class Worklist(list):
             List with target well ID(s)
         labware_position : tuple
             Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-        volume : float or list
+        volume : int, float or list
             Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
@@ -1127,7 +1127,7 @@ class Worklist(list):
         waste_delay: int = 500,
         cleaner_vol: float = 4.0,
         cleaner_delay: int = 500,
-        airgap: float = 10,
+        airgap: int = 10,
         airgap_speed: int = 70,
         retract_speed: int = 30,
         fastwash: int = 1,
@@ -1155,7 +1155,7 @@ class Worklist(list):
             Volume in cleaner in mL (0-100)
         cleaner_delay : int
             Delay before closing valves in cleaner in ms (0-1000)
-        airgap : float
+        airgap : int
             Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
         airgap_speed : int
             Speed of airgap aspiration in µL/s (1-1000)
