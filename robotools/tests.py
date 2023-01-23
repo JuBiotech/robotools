@@ -1039,10 +1039,7 @@ class TestWorklist(unittest.TestCase):
                 waste_location=(52, 1),
                 cleaner_location=(52, 0),
             )
-            self.assertEqual(
-                wl[0], 
-                'B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);'
-            )
+            self.assertEqual(wl[0], 'B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);')
         return
 
     def test_comment(self) -> None:
