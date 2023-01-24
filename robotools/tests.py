@@ -960,7 +960,6 @@ class TestWorklist(unittest.TestCase):
 
         return
 
-    # test complete evo_aspirate() command
     def test_evo_aspirate1(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
@@ -995,7 +994,6 @@ class TestWorklist(unittest.TestCase):
             )
         return
 
-    # test complete evo_dispense() command
     def test_evo_dispense1(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
@@ -1013,7 +1011,6 @@ class TestWorklist(unittest.TestCase):
             )
         return
 
-    # test complete evo_dispense() command
     def test_evo_dispense2(self) -> None:
         plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
         with evotools.Worklist() as wl:
@@ -1031,7 +1028,6 @@ class TestWorklist(unittest.TestCase):
             )
         return
 
-    # test complete evo_wash() command
     def test_evo_wash(self) -> None:
         with evotools.Worklist() as wl:
             wl.evo_wash(

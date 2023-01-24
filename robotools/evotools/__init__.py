@@ -291,10 +291,7 @@ def _prepare_evo_aspirate_dispense_parameters(
             tip = _int_to_tip(tip)
         tecan_tips.append(tip)
 
-    if tecan_tips:
-        return labware, wells, labware_position, volume, liquid_class, tecan_tips
-    else:
-        return labware, wells, labware_position, volume, liquid_class, tips
+    return labware, wells, labware_position, volume, liquid_class, tecan_tips
 
 
 def _prepare_evo_wash_parameters(
@@ -459,38 +456,21 @@ def _prepare_evo_wash_parameters(
     if not low_volume == 0 and not low_volume == 1:
         raise ValueError("Parameter low_volume has to be 0 (no fast-wash) or 1 (use fast-wash).")
 
-    if tecan_tips:
-        return (
-            tecan_tips,
-            waste_location,
-            cleaner_location,
-            arm,
-            waste_vol,
-            waste_delay,
-            cleaner_vol,
-            cleaner_delay,
-            airgap,
-            airgap_speed,
-            retract_speed,
-            fastwash,
-            low_volume,
-        )
-    else:
-        return (
-            tips,
-            waste_location,
-            cleaner_location,
-            arm,
-            waste_vol,
-            waste_delay,
-            cleaner_vol,
-            cleaner_delay,
-            airgap,
-            airgap_speed,
-            retract_speed,
-            fastwash,
-            low_volume,
-        )
+    return (
+        tecan_tips,
+        waste_location,
+        cleaner_location,
+        arm,
+        waste_vol,
+        waste_delay,
+        cleaner_vol,
+        cleaner_delay,
+        airgap,
+        airgap_speed,
+        retract_speed,
+        fastwash,
+        low_volume,
+    )
 
 
 def _optimize_partition_by(
