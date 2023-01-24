@@ -246,7 +246,7 @@ def _prepare_evo_aspirate_dispense_parameters(
 
     if volume is None:
         raise ValueError("Missing required parameter: volume")
-    if type(volume) == list:
+    if isinstance(volume, list):
         for vol in volume:
             try:
                 vol = float(vol)
