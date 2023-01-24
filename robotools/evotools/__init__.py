@@ -260,20 +260,19 @@ def _prepare_evo_aspirate_dispense_parameters(
             raise Exception(
                 f"Invalid volume: Tips, wells, and volume lists have different lengths ({len(tips)}, {len(wells)} and {len(volume)}, respectively)."
             )
-    elif type(volume) == float or type(volume) == int:
+    elif isinstance(volume, (float, int)):
         # test volume like in the list section
         if volume < 0 or volume > 7158278 or numpy.isnan(volume):
             raise ValueError(f"Invalid volume: {volume}")
         if max_volume is not None and volume > max_volume:
             raise InvalidOperationError(f"Invalid volume: volume of {volume} exceeds max_volume.")
         # convert volume to list and multiply list to reach identical length as wells
-        volume = [float(volume)]
-        volume = volume * len(wells)
+        volume = [float(volume)] * len(wells)
     else:
         raise ValueError(f"Invalid volume: {volume}")
 
     # apply rounding and corrections for the right string formatting
-    volume = [numpy.round(vol, decimals=2) for vol in volume]
+    volume = numpy.round(volume, decimals=2).tolist()
 
     if liquid_class is None:
         raise ValueError(f"Missing required parameter: liquid_class")
@@ -283,7 +282,7 @@ def _prepare_evo_aspirate_dispense_parameters(
     if tips is None:
         raise ValueError(f"Missing required parameter: tips")
     for tip in tips:
-        if type(tip) is not int and type(tip) is not Tip:
+        if not isinstance(tip, (int, Tip)):
             raise ValueError(f"Invalid type of tips: {type(tip)}. Has to be int or Tip.")
     tecan_tips = []
     for tip in tips:
