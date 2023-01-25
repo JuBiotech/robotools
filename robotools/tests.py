@@ -2846,34 +2846,35 @@ class TestWellRotator(unittest.TestCase):
         numpy.testing.assert_array_equal(expected, rotated)
         return
 
+
 class TestWellRandomizer(unittest.TestCase):
-    
     def test_init(self):
-        randomizer = transform.WellRandomizer(original_shape=(1,4), random_seed=13)
-        assert(randomizer.original_shape == (1,4))
-        assert(randomizer.random_seed == 13)
-        numpy.testing.assert_array_equal(randomizer.randomized_wells, ['A02', 'A04', 'A01', 'A03'])
+        randomizer = transform.WellRandomizer(original_shape=(1, 4), random_seed=13)
+        assert randomizer.original_shape == (1, 4)
+        assert randomizer.random_seed == 13
+        numpy.testing.assert_array_equal(randomizer.randomized_wells, ["A02", "A04", "A01", "A03"])
         return
-    
+
     def test_randomize_wells(self) -> None:
-        A = (6,8)
+        A = (6, 8)
         S = 13
-        randomizer = transform.WellRandomizer(A,S)
-        original = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06']
-        expected = ['A01', 'F02', 'A05', 'A07', 'B07', 'D06']
+        randomizer = transform.WellRandomizer(A, S)
+        original = ["A01", "A02", "A03", "A04", "A05", "A06"]
+        expected = ["A01", "F02", "A05", "A07", "B07", "D06"]
         randomized = randomizer.randomize_wells(original)
-        numpy.testing.assert_array_equal(expected,randomized)
+        numpy.testing.assert_array_equal(expected, randomized)
         return
-    
+
     def test_derandomize_wells(self) -> None:
-        A = (6,8)
+        A = (6, 8)
         S = 13
-        randomizer = transform.WellRandomizer(A,S)
-        original = ['A01', 'F02', 'A05', 'A07', 'B07', 'D06']
-        expected = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06']
+        randomizer = transform.WellRandomizer(A, S)
+        original = ["A01", "F02", "A05", "A07", "B07", "D06"]
+        expected = ["A01", "A02", "A03", "A04", "A05", "A06"]
         derandomized = randomizer.derandomize_wells(original)
-        numpy.testing.assert_array_equal(expected,derandomized)
+        numpy.testing.assert_array_equal(expected, derandomized)
         return
+
 
 if __name__ == "__main__":
     unittest.main()
