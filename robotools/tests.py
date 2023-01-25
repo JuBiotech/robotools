@@ -465,6 +465,577 @@ class TestWorklist(unittest.TestCase):
         evotools._prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, forced_rack_type="valid forced rack type"
         )
+
+        # test _prepare_evo_aspirate_dispense_parameters
+        # define a labware correctly for testing purposes
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        # test labware argument checks
+        with pytest.raises(ValueError, match="Invalid labware:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware="wrong_labware_type",
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        # test wells argument checks
+        with pytest.raises(ValueError, match="Invalid wells:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells="A01",
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        # test labware_position argument checks
+        with pytest.raises(ValueError, match="Invalid position:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, -1),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        with pytest.raises(ValueError, match="Invalid position:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=("a", 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        # test liquid_class argument checks
+        with pytest.raises(ValueError, match="Invalid liquid_class:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class=["Water_DispZmax-1_AspZmax-1"],
+                tips=[1, 2],
+            )
+        with pytest.raises(ValueError, match="Invalid liquid_class:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water;DispZmax-1;AspZmax-1",
+                tips=[1, 2],
+            )
+        # test tips argument checks
+        with pytest.raises(ValueError, match="Invalid type of tips:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=15,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, "2"],
+            )
+        _, _, _, _, _, tips = evotools._prepare_evo_aspirate_dispense_parameters(
+            labware=plate,
+            wells=["A01", "B01"],
+            labware_position=(38, 2),
+            volume=15,
+            liquid_class="Water_DispZmax-1_AspZmax-1",
+            tips=[1, 2],
+        )
+        if not all(isinstance(n, evotools.Tip) for n in tips):
+            raise TypeError(
+                f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, not all tips are type Tip."
+            )
+        # test volume argument checks
+        with pytest.raises(ValueError, match="Invalid volume:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume="volume",
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        with pytest.raises(ValueError, match="Invalid volume:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=-10,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+        with pytest.raises(ValueError, match="Invalid volume:"):
+            evotools._prepare_evo_aspirate_dispense_parameters(
+                labware=plate,
+                wells=["A01", "B01"],
+                labware_position=(38, 2),
+                volume=7158279,
+                liquid_class="Water_DispZmax-1_AspZmax-1",
+                tips=[1, 2],
+            )
+
+        # test complete _prepare_evo_aspirate_dispense_parameters() command
+        (
+            labware,
+            wells,
+            labware_position,
+            volume,
+            liquid_class,
+            tips,
+        ) = evotools._prepare_evo_aspirate_dispense_parameters(
+            labware=plate,
+            wells=["E01", "F01", "G01"],
+            labware_position=(38, 2),
+            volume=750,
+            liquid_class="Water_DispZmax_AspZmax",
+            tips=[5, 6, 7],
+        )
+        self.assertEqual(
+            [labware, wells, labware_position, volume, liquid_class, tips],
+            [
+                plate,
+                ["E01", "F01", "G01"],
+                (38, 2),
+                [750.0, 750.0, 750.0],
+                "Water_DispZmax_AspZmax",
+                [evotools.Tip.T5, evotools.Tip.T6, evotools.Tip.T7],
+            ],
+        )
+
+        # test _prepare_evo_wash_parameters
+        # test tips argument checks
+        tips, _, _, _, _, _, _, _, _, _, _, _, _ = evotools._prepare_evo_wash_parameters(
+            tips=[1, 2],
+            waste_location=(52, 1),
+            cleaner_location=(52, 0),
+        )
+        if not all(isinstance(n, evotools.Tip) for n in tips):
+            raise TypeError(
+                f"Even after completing the _prepare_evo_aspirate_dispense_parameters method, not all tips are type Tip."
+            )
+
+        # test waste_location argument checks
+        with pytest.raises(ValueError, match="Grid \\(first number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(68, 1),
+                cleaner_location=(52, 0),
+            )
+        with pytest.raises(ValueError, match="Grid \\(first number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(0, 1),
+                cleaner_location=(52, 0),
+            )
+        with pytest.raises(ValueError, match="Grid \\(first number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(1.7, 1),
+                cleaner_location=(52, 0),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, -1),
+                cleaner_location=(52, 0),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 128),
+                cleaner_location=(52, 0),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in waste_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1.7),
+                cleaner_location=(52, 0),
+            )
+
+        # test cleaner_location argument checks
+        with pytest.raises(ValueError, match="Grid \\(first number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(68, 1),
+            )
+        with pytest.raises(ValueError, match="Grid \\(first number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(0, 1),
+            )
+        with pytest.raises(ValueError, match="Grid \\(first number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(1.7, 1),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, -1),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 128),
+            )
+        with pytest.raises(ValueError, match="Site \\(second number in cleaner_location tuple\\)"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 1.7),
+            )
+
+        # test arm argument check
+        with pytest.raises(ValueError, match="Parameter arm"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                arm=2,
+            )
+
+        # test waste_vol argument check
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_vol=-1.0,
+            )
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_vol=101.0,
+            )
+        with pytest.raises(ValueError, match="waste_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_vol=1,
+            )
+
+        # test waste_delay argument check
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_delay=-1,
+            )
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_delay=1001,
+            )
+        with pytest.raises(ValueError, match="waste_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                waste_delay=10.0,
+            )
+
+        # test cleaner_vol argument check
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_vol=-1.0,
+            )
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_vol=101.0,
+            )
+        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_vol=1,
+            )
+
+        # test cleaner_delay argument check
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_delay=-1,
+            )
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_delay=1001,
+            )
+        with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                cleaner_delay=10.0,
+            )
+
+        # test airgap argument check
+        with pytest.raises(ValueError, match="airgap has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap=-1,
+            )
+        with pytest.raises(ValueError, match="airgap has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap=101,
+            )
+        with pytest.raises(ValueError, match="airgap has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap=10.0,
+            )
+
+        # test airgap_speed argument check
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap_speed=0,
+            )
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap_speed=1001,
+            )
+        with pytest.raises(ValueError, match="airgap_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                airgap_speed=10.0,
+            )
+
+        # test retract_speed argument check
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                retract_speed=0,
+            )
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                retract_speed=101,
+            )
+        with pytest.raises(ValueError, match="retract_speed has to be an int"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                retract_speed=10.0,
+            )
+
+        # test fastwash argument check
+        with pytest.raises(ValueError, match="Parameter fastwash"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                fastwash=2,
+            )
+        with pytest.raises(ValueError, match="Parameter fastwash"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                fastwash=1.0,
+            )
+
+        # test low_volume argument check
+        with pytest.raises(ValueError, match="Parameter low_volume"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                low_volume=2,
+            )
+        with pytest.raises(ValueError, match="Parameter low_volume"):
+            evotools._prepare_evo_wash_parameters(
+                tips=[1, 2],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+                low_volume=1.0,
+            )
+
+        # test complete _prepare_evo_wash_parameters() command
+        (
+            tips,
+            waste_location,
+            cleaner_location,
+            arm,
+            waste_vol,
+            waste_delay,
+            cleaner_vol,
+            cleaner_delay,
+            airgap,
+            airgap_speed,
+            retract_speed,
+            fastwash,
+            low_volume,
+        ) = evotools._prepare_evo_wash_parameters(
+            tips=[1, 2, 3, 4, 5, 6, 7, 8],
+            waste_location=(52, 1),
+            cleaner_location=(52, 0),
+        )
+        self.assertEqual(
+            [
+                tips,
+                waste_location,
+                cleaner_location,
+                arm,
+                waste_vol,
+                waste_delay,
+                cleaner_vol,
+                cleaner_delay,
+                airgap,
+                airgap_speed,
+                retract_speed,
+                fastwash,
+                low_volume,
+            ],
+            [
+                [
+                    evotools.Tip.T1,
+                    evotools.Tip.T2,
+                    evotools.Tip.T3,
+                    evotools.Tip.T4,
+                    evotools.Tip.T5,
+                    evotools.Tip.T6,
+                    evotools.Tip.T7,
+                    evotools.Tip.T8,
+                ],
+                (52, 1),
+                (52, 0),
+                0,
+                3.0,
+                500,
+                4.0,
+                500,
+                10,
+                70,
+                30,
+                1,
+                0,
+            ],
+        )
+
+        return
+
+    def test_evo_aspirate1(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_aspirate(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=750,
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
+            )
+        return
+
+    def test_evo_aspirate2(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_aspirate(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=[750, 730, 710],
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Aspirate(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
+            )
+        return
+
+    def test_evo_dispense1(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_dispense(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=750,
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750.0","750.0","750.0",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
+            )
+        return
+
+    def test_evo_dispense2(self) -> None:
+        plate = liquidhandling.Labware("DWP", 8, 12, min_volume=0, max_volume=2000, initial_volumes=1000)
+        with evotools.Worklist() as wl:
+            wl.evo_dispense(
+                labware=plate,
+                wells=["E01", "F01", "G01"],
+                labware_position=(38, 2),
+                tips=[5, 6, 7],
+                volumes=[750, 730, 710],
+                liquid_class="Water_DispZmax_AspZmax",
+            )
+            self.assertEqual(
+                wl[0],
+                'B;Dispense(112,"Water_DispZmax_AspZmax",0,0,0,0,"750","730","710",0,0,0,0,0,38,2,1,"0C08\xa00000000000000",0,0);',
+            )
+        return
+
+    def test_evo_wash(self) -> None:
+        with evotools.Worklist() as wl:
+            wl.evo_wash(
+                tips=[1, 2, 3, 4, 5, 6, 7, 8],
+                waste_location=(52, 1),
+                cleaner_location=(52, 0),
+            )
+            self.assertEqual(wl[0], 'B;Wash(255,52,1,52,0,"3.0",500,"4.0",500,10,70,30,1,0,1000,0);')
         return
 
     def test_comment(self) -> None:
