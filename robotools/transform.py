@@ -190,9 +190,9 @@ class WellRandomizer:
 
         Parameters
         ----------
-        original_shape : tuple
+        original_shape : typing.Tuple[int,int]
             (n_rows, n_cols) of all wells in the source labware
-        random_state_int : int
+        random_seed : int
             Integer for defined and reproduceable randomization
         """
         self.original_shape = original_shape
@@ -204,7 +204,7 @@ class WellRandomizer:
         super().__init__()
 
     def randomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
-        """Randomize the given wells with in init given random state and assignment.
+        """Randomize the given wells with the random state and assignment specified in __init__.
 
         Parameters
         ----------
@@ -223,7 +223,7 @@ class WellRandomizer:
         return numpy.array(self.randomized_output_wells)
 
     def derandomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
-        """Derandomize the given wells with in init given random state and assignment.
+        """Derandomize the given wells with the random state and assignment specified in __init__.
 
         Parameters
         ----------
