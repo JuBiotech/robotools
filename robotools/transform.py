@@ -1,6 +1,7 @@
+import typing
+
 import numpy
 from numpy.typing import ArrayLike
-import typing
 
 def make_well_index_dict(R: int, C: int) -> dict:
     """Create a dictionary mapping well IDs to their numpy indices.
