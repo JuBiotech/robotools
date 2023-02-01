@@ -1,3 +1,5 @@
+import typing
+
 import numpy
 from numpy.typing import ArrayLike
 
@@ -180,3 +182,64 @@ class WellRotator:
             r, c = self.original_indices[well]
             rotated.append(self.rotated_wells[c, self.original_shape[0] - r - 1])
         return numpy.array(rotated).reshape(wells_shape)
+
+
+class WellRandomizer:
+    """Helper object to randomize a set of well IDs within a MTP."""
+
+    def __init__(self, original_shape: tuple, random_seed: int) -> None:
+        """Create a helper object for randomizing wells.
+
+        Parameters
+        ----------
+        original_shape : typing.Tuple[int,int]
+            (n_rows, n_cols) of all wells in the source labware
+        random_seed : int
+            Integer for defined and reproduceable randomization
+        """
+        self.original_shape = original_shape
+        self.random_seed = random_seed
+        self.rng = numpy.random.RandomState(self.random_seed)
+        self.original_wells = make_well_array(*self.original_shape).flatten()
+        self.randomized_wells = self.rng.permutation(self.original_wells).tolist()
+        self.lookup = {owell: rwell for owell, rwell in zip(self.original_wells, self.randomized_wells)}
+        super().__init__()
+
+    def randomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
+        """Randomize the given wells with the random state and assignment specified in __init__.
+
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids
+
+        Returns
+        -------
+        randomized : ndarray
+            Array of well ids
+        """
+
+        self.input_wells = numpy.array(wells)
+        self.randomized_output_wells = [self.lookup.get(well) for well in self.input_wells]
+
+        return numpy.array(self.randomized_output_wells)
+
+    def derandomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
+        """Derandomize the given wells with the random state and assignment specified in __init__.
+
+        Parameters
+        ----------
+        wells : array-like
+            List or array of well ids
+
+        Returns
+        -------
+        derandomized_output_wells : ndarray
+            Array of well ids
+        """
+        self.input_wells = numpy.array(wells)
+        self.derandomized_output_wells = [
+            key for key, value in self.lookup.items() if value in self.input_wells
+        ]
+
+        return numpy.array(self.derandomized_output_wells)
