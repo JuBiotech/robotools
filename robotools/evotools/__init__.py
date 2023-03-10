@@ -500,7 +500,6 @@ def _optimize_partition_by(
     # automatic partitioning decision
     if partition_by == "auto":
         if source.is_trough and not destination.is_trough:
-            logger.debug(f"")
             partition_by = "destination"
         else:
             partition_by = "source"
