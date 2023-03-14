@@ -203,6 +203,7 @@ class WellRandomizer:
         self.original_wells = make_well_array(*self.original_shape).flatten()
         self.randomized_wells = self.rng.permutation(self.original_wells).tolist()
         self.lookup = {owell: rwell for owell, rwell in zip(self.original_wells, self.randomized_wells)}
+        self.lookup_reverse = {rwell: owell for owell, rwell in self.lookup.items()}
         super().__init__()
 
     def randomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
@@ -237,9 +238,8 @@ class WellRandomizer:
         derandomized_output_wells : ndarray
             Array of well ids
         """
-        self.input_wells = numpy.array(wells)
-        self.derandomized_output_wells = [
-            key for key, value in self.lookup.items() if value in self.input_wells
-        ]
+        input_wells = numpy.array(wells)
+        wells_shape = input_wells.shape
+        derandomized_output_wells = [self.lookup_reverse.get(well) for well in input_wells]
 
-        return numpy.array(self.derandomized_output_wells)
+        return numpy.array(derandomized_output_wells).reshape(wells_shape)

@@ -3446,6 +3446,16 @@ class TestWellRandomizer(unittest.TestCase):
         numpy.testing.assert_array_equal(expected, derandomized)
         return
 
+    def test_derandomize_wells_bug_29(self) -> None:
+        A = (6, 8)
+        S = 13
+        randomizer = transform.WellRandomizer(A, S)
+        original = ["A01", "F02", "A05", "A07", "B07", "D06"][::-1]
+        expected = ["A01", "A02", "A03", "A04", "A05", "A06"][::-1]
+        derandomized = randomizer.derandomize_wells(original)
+        numpy.testing.assert_array_equal(expected, derandomized)
+        return
+
 
 if __name__ == "__main__":
     unittest.main()
