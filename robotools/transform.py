@@ -187,7 +187,7 @@ class WellRotator:
 class WellRandomizer:
     """Helper object to randomize a set of well IDs within a MTP."""
 
-    def __init__(self, original_shape: tuple, random_seed: int, *, mode: str="full") -> None:
+    def __init__(self, original_shape: tuple, random_seed: int, *, mode: str = "full") -> None:
         """Create a helper object for randomizing wells.
 
         Parameters

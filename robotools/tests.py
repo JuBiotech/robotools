@@ -3461,27 +3461,27 @@ class TestWellRandomizer(unittest.TestCase):
         S = 13
         randomizer = transform.WellRandomizer(A, S, mode="row")
         original = ["A01", "A02", "A03", "B01", "C02", "B04"]
-        expected = ['A02', 'A05', 'A04', 'B08', 'C05', 'B06']
+        expected = ["A02", "A05", "A04", "B08", "C05", "B06"]
         randomized = randomizer.randomize_wells(original)
         numpy.testing.assert_array_equal(expected, randomized)
         return
-    
+
     def test_derandomize_wells_in_row(self) -> None:
         A = (6, 8)
         S = 13
         randomizer = transform.WellRandomizer(A, S, mode="row")
-        original = ['A02', 'A05', 'A04', 'B08', 'C05', 'B06']
+        original = ["A02", "A05", "A04", "B08", "C05", "B06"]
         expected = ["A01", "A02", "A03", "B01", "C02", "B04"]
         randomized = randomizer.derandomize_wells(original)
         numpy.testing.assert_array_equal(expected, randomized)
         return
-    
+
     def test_randomize_wells_in_column(self) -> None:
         A = (6, 8)
         S = 13
         randomizer = transform.WellRandomizer(A, S, mode="column")
         original = ["A01", "A02", "A03", "B01", "C02", "B04"]
-        expected = ['B01', 'D02', 'B03', 'D01', 'A02', 'E04']
+        expected = ["B01", "D02", "B03", "D01", "A02", "E04"]
         randomized = randomizer.randomize_wells(original)
         numpy.testing.assert_array_equal(expected, randomized)
         return
@@ -3490,11 +3490,12 @@ class TestWellRandomizer(unittest.TestCase):
         A = (6, 8)
         S = 13
         randomizer = transform.WellRandomizer(A, S, mode="column")
-        original = ['B01', 'D02', 'B03', 'D01', 'A02', 'E04']
+        original = ["B01", "D02", "B03", "D01", "A02", "E04"]
         expected = ["A01", "A02", "A03", "B01", "C02", "B04"]
         randomized = randomizer.derandomize_wells(original)
         numpy.testing.assert_array_equal(expected, randomized)
         return
+
 
 if __name__ == "__main__":
     unittest.main()
