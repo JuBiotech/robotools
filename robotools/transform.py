@@ -196,6 +196,10 @@ class WellRandomizer:
             (n_rows, n_cols) of all wells in the source labware
         random_seed : int
             Integer for defined and reproduceable randomization
+        mode : str
+            To switch between `"full"` randomization,
+            or randomization only within each `"row"`,
+            or randomization only within each `"column"`.
         """
         self.original_shape = original_shape
         self.random_seed = random_seed
