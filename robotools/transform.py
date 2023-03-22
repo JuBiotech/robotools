@@ -1,4 +1,4 @@
-import typing
+from typing import Dict
 
 import numpy
 from numpy.typing import ArrayLike
@@ -187,7 +187,7 @@ class WellRotator:
 class WellRandomizer:
     """Helper object to randomize a set of well IDs within a MTP."""
 
-    def __init__(self, original_shape: tuple, random_seed: int) -> None:
+    def __init__(self, original_shape: tuple, random_seed: int, *, mode: str = "full") -> None:
         """Create a helper object for randomizing wells.
 
         Parameters
@@ -196,13 +196,36 @@ class WellRandomizer:
             (n_rows, n_cols) of all wells in the source labware
         random_seed : int
             Integer for defined and reproduceable randomization
+        mode : str
+            To switch between `"full"` randomization,
+            or randomization only within each `"row"`,
+            or randomization only within each `"column"`.
         """
         self.original_shape = original_shape
         self.random_seed = random_seed
         self.rng = numpy.random.RandomState(self.random_seed)
-        self.original_wells = make_well_array(*self.original_shape).flatten()
-        self.randomized_wells = self.rng.permutation(self.original_wells).tolist()
-        self.lookup = {owell: rwell for owell, rwell in zip(self.original_wells, self.randomized_wells)}
+        self.lookup: Dict[str, str] = {}
+        full = make_well_array(*self.original_shape)
+        if mode == "full":
+            self.original_wells = full.flatten()
+            self.randomized_wells = []
+            self.randomized_wells = self.rng.permutation(self.original_wells).tolist()
+            self.lookup = {owell: rwell for owell, rwell in zip(self.original_wells, self.randomized_wells)}
+        elif mode == "row":
+            for r in range(self.original_shape[0]):
+                rowwells = full[r, :]
+                randomized = self.rng.permutation(rowwells)
+                for owell, rwell in zip(rowwells, randomized):
+                    self.lookup[owell] = rwell
+        elif mode == "column":
+            self.original_wells = []
+            for c in range(self.original_shape[1]):
+                columnwells = full[:, c]
+                randomized = self.rng.permutation(columnwells)
+                for owell, rwell in zip(columnwells, randomized):
+                    self.lookup[owell] = rwell
+        else:
+            raise ValueError(f"Unsupported mode: {mode}")
         self.lookup_reverse = {rwell: owell for owell, rwell in self.lookup.items()}
         super().__init__()
 
@@ -220,10 +243,11 @@ class WellRandomizer:
             Array of well ids
         """
 
-        self.input_wells = numpy.array(wells)
-        self.randomized_output_wells = [self.lookup.get(well) for well in self.input_wells]
+        input_wells = numpy.array(wells)
+        wells_shape = input_wells.shape
+        randomized_output_wells = [self.lookup.get(well) for well in input_wells]
 
-        return numpy.array(self.randomized_output_wells)
+        return numpy.array(randomized_output_wells).reshape(wells_shape)
 
     def derandomize_wells(self, wells: ArrayLike) -> numpy.ndarray:
         """Derandomize the given wells with the random state and assignment specified in __init__.
