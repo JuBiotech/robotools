@@ -10,6 +10,7 @@ import numpy
 
 from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Labwares, Tip, int_to_tip
+from robotools.evotools.utils import to_hex
 
 from .. import liquidhandling, transform
 
@@ -554,19 +555,6 @@ def _partition_by_column(
             list(numpy.array(vols)[order]),
         )
     return column_groups
-
-
-def to_hex(dec: int):
-    """Method from stackoverflow to convert decimal to hex.
-    Link: https://stackoverflow.com/questions/5796238/python-convert-decimal-to-hex
-    Solution posted by user "Chunghee Kim" on 21.11.2020.
-    """
-    digits = "0123456789ABCDEF"
-    x = dec % 16
-    rest = dec // 16
-    if rest == 0:
-        return digits[x]
-    return to_hex(rest) + digits[x]
 
 
 def evo_make_selection_array(rows: int, columns: int, wells: numpy.ndarray):
