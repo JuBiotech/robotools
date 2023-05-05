@@ -1161,7 +1161,7 @@ class TestWorklist(unittest.TestCase):
 
     def test_aspirate_systemliquid(self) -> None:
         with evotools.Worklist() as wl:
-            wl.aspirate_well(evotools.Labwares.SystemLiquid, 1, 200)
+            wl.aspirate_well(evotools.Labwares.SystemLiquid.value, 1, 200)
             self.assertEqual(wl[-1], "A;Systemliquid;;;1;;200.00;;;;")
         return
 
