@@ -23,7 +23,7 @@ jobs:
         pip install flake8 pytest pytest-cov twine wheel
     - name: Test with pytest
       run: |
-        pytest --cov=./robotools --cov-report xml --cov-report term-missing robotools robotools/tests.py
+        pytest --cov=./robotools --cov-report xml --cov-report term-missing robotools
     - name: Build package
       run: |
         python setup.py sdist bdist_wheel
