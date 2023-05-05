@@ -59,9 +59,10 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
