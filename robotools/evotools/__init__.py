@@ -9,6 +9,8 @@ import typing
 
 import numpy
 
+from robotools.evotools.exceptions import InvalidOperationError
+
 from .. import liquidhandling, transform
 
 logger = logging.getLogger("evotools")
@@ -30,10 +32,6 @@ class Tip(enum.IntEnum):
     T6 = 32
     T7 = 64
     T8 = 128
-
-
-class InvalidOperationError(Exception):
-    pass
 
 
 def _int_to_tip(tip_int: int):
