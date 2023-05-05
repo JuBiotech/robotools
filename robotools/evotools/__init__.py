@@ -1,7 +1,6 @@
 """ Creating worklist files for the Tecan Freedom EVO.
 """
 import collections
-import enum
 import logging
 import math
 import os
@@ -10,52 +9,11 @@ import typing
 import numpy
 
 from robotools.evotools.exceptions import InvalidOperationError
+from robotools.evotools.types import Labwares, Tip, int_to_tip
 
 from .. import liquidhandling, transform
 
 logger = logging.getLogger("evotools")
-
-
-class Labwares(str, enum.Enum):
-    """Built-in EVOware labware identifiers."""
-
-    SystemLiquid = "Systemliquid"
-
-
-class Tip(enum.IntEnum):
-    Any = -1
-    T1 = 1
-    T2 = 2
-    T3 = 4
-    T4 = 8
-    T5 = 16
-    T6 = 32
-    T7 = 64
-    T8 = 128
-
-
-def _int_to_tip(tip_int: int):
-    """Asserts a Tecan Tip class to an int between 1 and 8."""
-    if not 1 <= tip_int <= 8:
-        raise ValueError(
-            f"Tip is {tip_int} with type {type(tip_int)}, but should be an int between 1 and 8 for _int_to_tip conversion."
-        )
-    if tip_int == 1:
-        return Tip.T1
-    elif tip_int == 2:
-        return Tip.T2
-    elif tip_int == 3:
-        return Tip.T3
-    elif tip_int == 4:
-        return Tip.T4
-    elif tip_int == 5:
-        return Tip.T5
-    elif tip_int == 6:
-        return Tip.T6
-    elif tip_int == 7:
-        return Tip.T7
-    elif tip_int == 8:
-        return Tip.T8
 
 
 def _prepare_aspirate_dispense_parameters(
@@ -146,13 +104,13 @@ def _prepare_aspirate_dispense_parameters(
 
     if isinstance(tip, int) and not isinstance(tip, Tip):
         # User-specified integers from 1-8 need to be converted to Tecan logic
-        tip = _int_to_tip(tip)
+        tip = int_to_tip(tip)
 
     if isinstance(tip, collections.abc.Iterable):
         tips = []
         for element in tip:
             if isinstance(element, int) and not isinstance(element, Tip):
-                tips.append(_int_to_tip(element))
+                tips.append(int_to_tip(element))
             elif isinstance(element, Tip):
                 if element == -1:
                     raise ValueError(
@@ -286,7 +244,7 @@ def _prepare_evo_aspirate_dispense_parameters(
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
             # User-specified integers from 1-8 need to be converted to Tecan logic
-            tip = _int_to_tip(tip)
+            tip = int_to_tip(tip)
         tecan_tips.append(tip)
 
     return labware, wells, labware_position, volume, liquid_class, tecan_tips
@@ -375,7 +333,7 @@ def _prepare_evo_wash_parameters(
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
             # User-specified integers from 1-8 need to be converted to Tecan logic
-            tip = _int_to_tip(tip)
+            tip = int_to_tip(tip)
         tecan_tips.append(tip)
 
     if waste_location is None:
