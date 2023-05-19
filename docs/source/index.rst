@@ -7,7 +7,7 @@ Welcome to the ``robotools`` documentation!
 .. image:: https://zenodo.org/badge/358629210.svg
    :target: https://zenodo.org/badge/latestdoi/358629210
 
-``robotools`` is a Python package for planning _in-silico_ liquid handling operations.
+``robotools`` is a Python package for planning *in silico* liquid handling operations.
 It can create Tecan Freedom EVO worklist files on the fly, making it possible to program complicated liquid handling operations
 from Python scripts or Jupyter notebooks.
 
