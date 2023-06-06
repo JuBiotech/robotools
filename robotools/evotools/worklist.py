@@ -5,14 +5,15 @@ import logging
 import math
 import os
 import typing
+import warnings
 
 import numpy
 
+from robotools.evotools import commands
 from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip, int_to_tip
-from robotools.evotools.utils import to_hex
 
-from .. import liquidhandling, transform
+from .. import liquidhandling
 
 __all__ = ("Worklist",)
 
@@ -141,297 +142,6 @@ def _prepare_aspirate_dispense_parameters(
     return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
-def _prepare_evo_aspirate_dispense_parameters(
-    labware: liquidhandling.Labware,
-    wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
-    *,
-    labware_position: typing.Tuple[int, int],
-    volume: typing.Union[float, typing.List[float], int],
-    liquid_class: str,
-    tips: typing.Union[typing.List[Tip], typing.List[int]],
-    max_volume: typing.Optional[int] = None,
-) -> typing.Tuple[str, list, tuple, float, str, list]:
-    """Validates and prepares aspirate/dispense parameters.
-
-    Parameters
-    ----------
-    labware : liquidhandling.Labware
-        Source labware
-    wells : list of str
-        List with target well ID(s)
-    labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-    volume : int, float or list
-        Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
-    liquid_class : str, optional
-        Overwrites the liquid class for this step (max 32 characters)
-    tips : list of int
-        Tip(s) that will be selected (out of tips 1-8)
-    max_volume : int, optional
-        Maximum allowed volume
-
-    Returns
-    -------
-    labware : liquidhandling.Labware
-        Source labware
-    wells : list of str
-        List with target well ID(s)
-    labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-    volume : list
-        Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
-    liquid_class : str, optional
-        Overwrites the liquid class for this step (max 32 characters)
-    tips : list of int
-        Tip(s) that will be selected (out of tips 1-8)
-    """
-    if labware is None:
-        raise ValueError("Missing required parameter: labware")
-    if not isinstance(labware, liquidhandling.Labware):
-        raise ValueError(f"Invalid labware: {labware}")
-
-    if wells is None:
-        raise ValueError("Missing required parameter: wells")
-    if not isinstance(wells, (str, list, tuple, numpy.ndarray)):
-        raise ValueError(f"Invalid wells: {wells}")
-    if not len(wells) == len(tips):
-        raise ValueError(f"Invalid wells: wells and tips need to have the same length.")
-    if labware_position is None:
-        raise ValueError("Missing required parameter: position")
-    if not all(isinstance(position, int) for position in labware_position) or any(
-        position < 0 for position in labware_position
-    ):
-        raise ValueError(f"Invalid position: {labware_position}")
-
-    if volume is None:
-        raise ValueError("Missing required parameter: volume")
-    if isinstance(volume, list):
-        for vol in volume:
-            try:
-                vol = float(vol)
-            except:
-                raise ValueError(f"Invalid volume: {vol}")
-            if vol < 0 or vol > 7158278 or numpy.isnan(vol):
-                raise ValueError(f"Invalid volume: {vol}")
-            if max_volume is not None and vol > max_volume:
-                raise InvalidOperationError(f"Invalid volume: volume of {vol} exceeds max_volume.")
-        if not len(volume) == len(tips) == len(wells):
-            raise Exception(
-                f"Invalid volume: Tips, wells, and volume lists have different lengths ({len(tips)}, {len(wells)} and {len(volume)}, respectively)."
-            )
-    elif isinstance(volume, (float, int)):
-        # test volume like in the list section
-        if volume < 0 or volume > 7158278 or numpy.isnan(volume):
-            raise ValueError(f"Invalid volume: {volume}")
-        if max_volume is not None and volume > max_volume:
-            raise InvalidOperationError(f"Invalid volume: volume of {volume} exceeds max_volume.")
-        # convert volume to list and multiply list to reach identical length as wells
-        volume = [float(volume)] * len(wells)
-    else:
-        raise ValueError(f"Invalid volume: {volume}")
-
-    # apply rounding and corrections for the right string formatting
-    volume = numpy.round(volume, decimals=2).tolist()
-
-    if liquid_class is None:
-        raise ValueError(f"Missing required parameter: liquid_class")
-    if not isinstance(liquid_class, str) or ";" in liquid_class:
-        raise ValueError(f"Invalid liquid_class: {liquid_class}")
-
-    if tips is None:
-        raise ValueError(f"Missing required parameter: tips")
-    for tip in tips:
-        if not isinstance(tip, (int, Tip)):
-            raise ValueError(f"Invalid type of tips: {type(tip)}. Has to be int or Tip.")
-    tecan_tips = []
-    for tip in tips:
-        if isinstance(tip, int) and not isinstance(tip, Tip):
-            # User-specified integers from 1-8 need to be converted to Tecan logic
-            tip = int_to_tip(tip)
-        tecan_tips.append(tip)
-
-    return labware, wells, labware_position, volume, liquid_class, tecan_tips
-
-
-def _prepare_evo_wash_parameters(
-    *,
-    tips: typing.Union[typing.List[Tip], typing.List[int]],
-    waste_location: typing.Tuple[int, int],
-    cleaner_location: typing.Tuple[int, int],
-    arm: int = 0,
-    waste_vol: float = 3.0,
-    waste_delay: int = 500,
-    cleaner_vol: float = 4.0,
-    cleaner_delay: int = 500,
-    airgap: int = 10,
-    airgap_speed: int = 70,
-    retract_speed: int = 30,
-    fastwash: int = 1,
-    low_volume: int = 0,
-) -> typing.Tuple[list, tuple, tuple, int, float, int, float, int, int, int, int, int, int]:
-    """Validates and prepares aspirate/dispense parameters.
-
-    Parameters
-    ----------
-    tips : list
-        Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
-    waste_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of waste as integers
-    cleaner_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
-    arm : int
-        number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
-    waste_vol: float
-        Volume in waste in mL (0-100)
-    waste_delay : int
-        Delay before closing valves in waste in ms (0-1000)
-    cleaner_vol: float
-        Volume in cleaner in mL (0-100)
-    cleaner_delay : int
-        Delay before closing valves in cleaner in ms (0-1000)
-    airgap : int
-        Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
-    airgap_speed : int
-        Speed of airgap aspiration in µL/s (1-1000)
-    retract_speed : int
-        Retract speed in mm/s (1-100)
-    fastwash : int
-        Use fast-wash module = 1, don't use it = 0
-    low_volume : int
-        Use pinch valves = 1, don't use them = 0
-
-    Returns
-    -------
-    tips : list
-        Tip(s) that will be selected; have been converted to tip.T1 - tip.T8 here if they weren't originally formatted that way
-    waste_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of waste as integers
-    cleaner_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
-    arm : int
-        number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
-    waste_vol: float
-        Volume in waste in mL (0-100)
-    waste_delay : int
-        Delay before closing valves in waste in ms (0-1000)
-    cleaner_vol: float
-        Volume in cleaner in mL (0-100)
-    cleaner_delay : int
-        Delay before closing valves in cleaner in ms (0-1000)
-    airgap : int
-        Volume of airgap in µL which is aspirated after washing the tips (system trailing airgap) (0-100)
-    airgap_speed : int
-        Speed of airgap aspiration in µL/s (1-1000)
-    retract_speed : int
-        Retract speed in mm/s (1-100)
-    fastwash : int
-        Use fast-wash module = 1, don't use it = 0
-    low_volume : int
-        Use pinch valves = 1, don't use them = 0
-    """
-    if tips is None:
-        raise ValueError("Missing required parameter: tips")
-
-    tecan_tips = []
-    for tip in tips:
-        if isinstance(tip, int) and not isinstance(tip, Tip):
-            # User-specified integers from 1-8 need to be converted to Tecan logic
-            tip = int_to_tip(tip)
-        tecan_tips.append(tip)
-
-    if waste_location is None:
-        raise ValueError("Missing required parameter: waste_location")
-    grid, site = waste_location
-    if not isinstance(grid, int) or not 1 <= grid <= 67:
-        raise ValueError("Grid (first number in waste_location tuple) has to be an int from 1 - 67.")
-    if not isinstance(site, int) or not 0 <= site <= 127:
-        raise ValueError("Site (second number in waste_location tuple) has to be an int from 0 - 127.")
-
-    if cleaner_location is None:
-        raise ValueError("Missing required parameter: cleaner_location")
-    grid, site = cleaner_location
-    if not isinstance(grid, int) or not 1 <= grid <= 67:
-        raise ValueError("Grid (first number in cleaner_location tuple) has to be an int from 1 - 67.")
-    if not isinstance(site, int) or not 0 <= site <= 127:
-        raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 0 - 127.")
-
-    if arm is None:
-        raise ValueError("Missing required paramter: arm")
-    if not isinstance(arm, int):
-        raise ValueError("Parameter arm is not int.")
-    if not arm == 0 and not arm == 1:
-        raise ValueError("Parameter arm has to be 0 (LiHa 1) or 1 (LiHa 2).")
-
-    if waste_vol is None:
-        raise ValueError("Missing required parameter: waste_vol")
-    if not isinstance(waste_vol, float) or not 0 <= waste_vol <= 100:
-        raise ValueError("waste_vol has to be a float from 0 - 100.")
-    # round waste_vol to the first decimal (pre-requisite for Tecan's wash command)
-    waste_vol = numpy.round(waste_vol, 1)
-
-    if waste_delay is None:
-        raise ValueError("Missing required parameter: waste_delay")
-    if not isinstance(waste_delay, int) or not 0 <= waste_delay <= 1000:
-        raise ValueError("waste_delay has to be an int from 0 - 1000.")
-
-    if cleaner_vol is None:
-        raise ValueError("Missing required parameter: cleaner_vol")
-    if not isinstance(cleaner_vol, float) or not 0 <= cleaner_vol <= 100:
-        raise ValueError("cleaner_vol has to be a float from 0 - 100.")
-    # round cleaner_vol to the first decimal (pre-requisite for Tecan's wash command)
-    cleaner_vol = numpy.round(cleaner_vol, 1)
-
-    if cleaner_delay is None:
-        raise ValueError("Missing required parameter: cleaner_delay")
-    if not isinstance(cleaner_delay, int) or not 0 <= cleaner_delay <= 1000:
-        raise ValueError("cleaner_delay has to be an int from 0 - 1000.")
-
-    if airgap is None:
-        raise ValueError("Missing required parameter: airgap")
-    if not isinstance(airgap, int) or not 0 <= airgap <= 100:
-        raise ValueError("airgap has to be an int from 0 - 100.")
-
-    if airgap_speed is None:
-        raise ValueError("Missing required parameter: airgap_speed")
-    if not isinstance(airgap_speed, int) or not 1 <= airgap_speed <= 1000:
-        raise ValueError("airgap_speed has to be an int from 1 - 1000.")
-
-    if retract_speed is None:
-        raise ValueError("Missing required parameter: retract_speed")
-    if not isinstance(retract_speed, int) or not 1 <= retract_speed <= 100:
-        raise ValueError("retract_speed has to be an int from 1 - 100.")
-
-    if fastwash is None:
-        raise ValueError("Missing required paramter: fastwash")
-    if not isinstance(fastwash, int):
-        raise ValueError("Parameter fastwash is not int.")
-    if not fastwash == 0 and not fastwash == 1:
-        raise ValueError("Parameter fastwash has to be 0 (no fast-wash) or 1 (use fast-wash).")
-
-    if low_volume is None:
-        raise ValueError("Missing required paramter: low_volume")
-    if not isinstance(low_volume, int):
-        raise ValueError("Parameter low_volume is not int.")
-    if not low_volume == 0 and not low_volume == 1:
-        raise ValueError("Parameter low_volume has to be 0 (no fast-wash) or 1 (use fast-wash).")
-
-    return (
-        tecan_tips,
-        waste_location,
-        cleaner_location,
-        arm,
-        waste_vol,
-        waste_delay,
-        cleaner_vol,
-        cleaner_delay,
-        airgap,
-        airgap_speed,
-        retract_speed,
-        fastwash,
-        low_volume,
-    )
-
-
 def _optimize_partition_by(
     source: liquidhandling.Labware,
     destination: liquidhandling.Labware,
@@ -557,80 +267,6 @@ def _partition_by_column(
             list(numpy.array(vols)[order]),
         )
     return column_groups
-
-
-def evo_make_selection_array(rows: int, columns: int, wells: numpy.ndarray):
-    """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
-
-    Parameters
-    ----------
-    rows : int
-        Number of rows of target labware object
-    cols : int
-        Number of columns of target labware object
-    wells : List[str]
-        Selected wells by well IDs as strings (e.g. ["A01", "B01"])
-
-    Returns
-    -------
-    selection_array : numpy.ndarray
-        Numpy array in labware dimensions with selected wells as 1 and others as 0
-    """
-    # create array with a shape beffiting the labware dimensions
-    selection_array = numpy.zeros((rows, columns))
-    # get a dictionary with the "coordinates" of well IDs (A01, B01 etc) as tuples
-    well_index_dict = transform.make_well_index_dict(rows, columns)
-    # insert 1s for all selected wells
-    for well in wells:
-        selection_array[well_index_dict[well]] = 1
-    return selection_array
-
-
-def evo_get_selection(rows: int, cols: int, selected: numpy.ndarray):
-    """Function to generate the code string for the well selection of pipetting actions in EvoWare scripts (.esc).
-    Adapted from the C++ function detailed in the EvoWare manual to Python by Martin Beyß (except the test at the end).
-
-    Parameters
-    ----------
-    rows : int
-        Number of rows of target labware object
-    cols : int
-        Number of columns of target labware object
-    selected : numpy.ndarray
-        Numpy array in labware dimensions with selected wells as 1 and others as 0 (from evo_make_selection_array)
-
-    Returns
-    -------
-    selection : str
-        Code string for well selection of pipetting actions in EvoWare scripts (.esc)
-    """
-    # apply bit mask with 7 bits, adapted from function detailed in EvoWare manual
-    selection = f"0{to_hex(cols)}{rows:02d}"
-    bit_counter = 0
-    bit_mask = 0
-    for x in range(cols):
-        for y in range(rows):
-            if selected[y, x] == 1:
-                bit_mask |= 1 << bit_counter
-            bit_counter += 1
-            if bit_counter > 6:
-                selection += chr(bit_mask + 48)
-                bit_counter = 0
-                bit_mask = 0
-    if bit_counter > 0:
-        selection += chr(bit_mask + 48)
-
-    # check if wells from more than one column are selected and raise Exception if so
-    check = 0
-    for column in selected.transpose():
-        if sum(column) >= 1:
-            check += 1
-    if check >= 2:
-        raise Exception(
-            "Wells from more than one column are selected.\nSelect only wells from one column per pipetting action."
-        )
-
-    return selection
 
 
 class Worklist(list):
@@ -845,64 +481,22 @@ class Worklist(list):
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
-        """Command for aspirating with the EvoWARE aspirate command. As many wells in one column may be selected as your liquid handling arm has pipettes.
-        This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string
-        specifying the target wells.
-
-        Parameters
-        ----------
-        labware : liquidhandling.Labware
-            Source labware
-        wells : list of str
-            List with target well ID(s)
-        labware_position : tuple
-            Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-        volume : int, float or list
-            Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
-        liquid_class : str, optional
-            Overwrites the liquid class for this step (max 32 characters)
-        tips : list
-            Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
-        """
-        # perform consistency checks
-        kwargs = dict(
+        warnings.warn(
+            "The `evo_aspirate_well` method is deprecated because it's just a wrapper for the `evo_aspirate` function."
+            "Replace your `evo_aspirate_well(...)` call with `wl.append(robotools.evotools.evo_aspirate(...))`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        cmd = commands.evo_aspirate(
             labware=labware,
             wells=wells,
             labware_position=labware_position,
             volume=volume,
             liquid_class=liquid_class,
             tips=tips,
+            max_volume=self.max_volume,
         )
-        (
-            labware,
-            wells,
-            labware_position,
-            volume,
-            liquid_class,
-            tips,
-        ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
-
-        # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
-        tip_selection = 0
-        for tip in tips:
-            tip_selection += tip.value
-
-        # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
-        tip_volumes = ""
-        for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-            if tip in [tecantip.value for tecantip in tips]:
-                tip_volumes += f'"{volume[0]}",'
-                volume.pop(0)
-            else:
-                tip_volumes += "0,"
-
-        # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
-        selected = evo_make_selection_array(labware.n_rows, labware.n_columns, wells)
-        # create code string containing information about target well(s)
-        code_string = evo_get_selection(labware.n_rows, labware.n_columns, selected)
-        self.append(
-            f'B;Aspirate({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,0);'
-        )
+        self.append(cmd)
         return
 
     def dispense_well(
@@ -983,64 +577,22 @@ class Worklist(list):
         liquid_class: str,
         tips: typing.Union[typing.List[Tip], typing.List[int]],
     ) -> None:
-        """Command for dispensing using the EvoWARE dispense command. As many wells in one column may be selected as your liquid handling arm has pipettes.
-        This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string
-        specifying the target wells.
-
-        Parameters
-        ----------
-        labware : liquidhandling.Labware
-            Source labware
-        wells : list of str
-            List with target well ID(s)
-        labware_position : tuple
-            Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
-        volume : int, float or list
-            Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
-        liquid_class : str, optional
-            Overwrites the liquid class for this step (max 32 characters)
-        tips : list
-            Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
-        """
-        # perform consistency checks
-        kwargs = dict(
+        warnings.warn(
+            "The `evo_dispense_well` method is deprecated because it's just a wrapper for the `evo_dispense` function."
+            "Replace your `evo_dispense_well(...)` call with `wl.append(robotools.evotools.evo_dispense(...))`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        cmd = commands.evo_dispense(
             labware=labware,
             wells=wells,
             labware_position=labware_position,
             volume=volume,
             liquid_class=liquid_class,
             tips=tips,
+            max_volume=self.max_volume,
         )
-        (
-            labware,
-            wells,
-            labware_position,
-            volume,
-            liquid_class,
-            tips,
-        ) = _prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=self.max_volume)
-
-        # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
-        tip_selection = 0
-        for tip in tips:
-            tip_selection += tip.value
-
-        # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
-        tip_volumes = ""
-        for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-            if tip in [tecantip.value for tecantip in tips]:
-                tip_volumes += f'"{volume[0]}",'
-                volume.pop(0)
-            else:
-                tip_volumes += "0,"
-
-        # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
-        selected = evo_make_selection_array(labware.n_rows, labware.n_columns, wells)
-        # create code string containing information about target well(s)
-        code_string = evo_get_selection(labware.n_rows, labware.n_columns, selected)
-        self.append(
-            f'B;Dispense({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,0);'
-        )
+        self.append(cmd)
         return
 
     def evo_wash(
@@ -1093,9 +645,7 @@ class Worklist(list):
         low_volume : int
             Use pinch valves = 1, don't use them = 0
         """
-
-        # perform consistency checks
-        kwargs = dict(
+        cmd = commands.evo_wash(
             tips=tips,
             waste_location=waste_location,
             cleaner_location=cleaner_location,
@@ -1110,29 +660,7 @@ class Worklist(list):
             fastwash=fastwash,
             low_volume=low_volume,
         )
-        (
-            tips,
-            waste_location,
-            cleaner_location,
-            arm,
-            waste_vol,
-            waste_delay,
-            cleaner_vol,
-            cleaner_delay,
-            airgap,
-            airgap_speed,
-            retract_speed,
-            fastwash,
-            low_volume,
-        ) = _prepare_evo_wash_parameters(**kwargs)
-        # calculate tip_selection based on tips argument
-        tip_selection = 0
-        for tip in tips:
-            tip_selection += tip.value
-
-        self.append(
-            f'B;Wash({tip_selection},{waste_location[0]},{waste_location[1]},{cleaner_location[0]},{cleaner_location[1]},"{waste_vol}",{waste_delay},"{cleaner_vol}",{cleaner_delay},{airgap},{airgap_speed},{retract_speed},{fastwash},{low_volume},1000,{arm});'
-        )
+        self.append(cmd)
         return
 
     def reagent_distribution(
@@ -1326,14 +854,16 @@ class Worklist(list):
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
-        self.evo_aspirate_well(
+        cmd = commands.evo_aspirate(
             labware=labware,
             wells=wells,
             labware_position=labware_position,
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            max_volume=self.max_volume,
         )
+        self.append(cmd)
         return
 
     def dispense(
@@ -1412,7 +942,7 @@ class Worklist(list):
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
-        self.evo_dispense_well(
+        cmd = commands.evo_dispense(
             labware=labware,
             wells=wells,
             labware_position=labware_position,
@@ -1420,6 +950,7 @@ class Worklist(list):
             liquid_class=liquid_class,
             tips=tips,
         )
+        self.append(cmd)
         return
 
     def transfer(

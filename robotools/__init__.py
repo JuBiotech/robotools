@@ -1,5 +1,6 @@
 from . import evotools, liquidhandling
 from .evotools import InvalidOperationError, Labwares, Tip, Worklist
+from .evotools import commands as evo_cmd
 from .liquidhandling import Labware, Trough, VolumeOverflowError, VolumeUnderflowError
 from .transform import (
     WellRandomizer,
@@ -10,4 +11,4 @@ from .transform import (
 )
 from .utils import DilutionPlan, get_trough_wells
 
-__version__ = "1.6.0"
+__version__ = "1.6.1"
