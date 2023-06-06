@@ -1,13 +1,41 @@
+import numpy as np
 import pytest
 
 from robotools.evotools.commands import (
     evo_aspirate,
     evo_dispense,
+    evo_get_selection,
     evo_wash,
     prepare_evo_aspirate_dispense_parameters,
     prepare_evo_wash_parameters,
 )
 from robotools.evotools.types import Tip
+
+
+def test_evo_get_selection():
+    with pytest.raises(ValueError, match="from more than one column"):
+        evo_get_selection(
+            rows=2,
+            cols=3,
+            selected=np.array(
+                [
+                    [True, False, False],
+                    [False, True, False],
+                ]
+            ),
+        )
+    selection = evo_get_selection(
+        rows=2,
+        cols=3,
+        selected=np.array(
+            [
+                [True, False, False],
+                [True, False, False],
+            ]
+        ),
+    )
+    assert selection == "03023"
+    pass
 
 
 class TestPrepareEvoAspirateDispenseParameters:
