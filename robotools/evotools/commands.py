@@ -85,7 +85,7 @@ def evo_get_selection(rows: int, cols: int, selected: np.ndarray):
         if sum(column) >= 1:
             check += 1
     if check >= 2:
-        raise Exception(
+        raise ValueError(
             "Wells from more than one column are selected.\nSelect only wells from one column per pipetting action."
         )
 
