@@ -5,12 +5,14 @@
 [![DOI](https://zenodo.org/badge/358629210.svg)](https://zenodo.org/badge/latestdoi/358629210)
 
 # `robotools`
+
 This is a package for debugging and planning liquid handling operations, writing worklist files for the Tecan FreedomEVO platform on the fly.
 
 You can visit the documentation at https://robotools.readthedocs.io, where the [notebooks](https://github.com/jubiotech/robotools/tree/master/notebooks)
 are rendered next to auto-generated API documentation.
 
 # Installation
+
 `robotools` is available through [PyPI](https://pypi.org/project/robotools/):
 
 ```
@@ -18,6 +20,7 @@ pip install robotools
 ```
 
 # Contributing
+
 The easiest way to contribute is to report bugs by opening [Issues](https://github.com/JuBiotech/robotools/issues).
 
 We apply automated code style normalization using `black`.
@@ -31,6 +34,7 @@ Step 2.) makes sure that the `pre-commit` runs automatically before you make a c
 Step 3.) runs it manually.
 
 # Usage and Citing
+
 `robotools` is licensed under the [GNU Affero General Public License v3.0](https://github.com/JuBiotech/robotools/blob/master/LICENSE).
 
 When using `robotools` in your work, please cite the [corresponding software version](https://doi.org/10.5281/zenodo.4697605).
