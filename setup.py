@@ -51,6 +51,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),  # this must be the same as the name above
     version=__version__,
     description="Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists.",
+    long_description=open(pathlib.Path(__file__).parent / "README.md").read(),
+    long_description_content_type="text/markdown",
     url="https://github.com/jubiotech/robotools",
     download_url="https://github.com/jubiotech/robotools/tarball/%s" % __version__,
     author="Michael Osthege",
