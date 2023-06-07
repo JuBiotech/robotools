@@ -40,3 +40,7 @@ jobs:
         cd dist
         pip install robotools*.whl
         python -c "import robotools; print(robotools.__version__)"
+    - name: Test Wheel with twine
+      run: |
+        pip install twine
+        twine check dist/*
