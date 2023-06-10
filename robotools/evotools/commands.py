@@ -1,5 +1,5 @@
 """This module implements functions to create advanced worklist commands."""
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -17,7 +17,7 @@ __all__ = (
 )
 
 
-def evo_make_selection_array(rows: int, columns: int, wells: np.ndarray):
+def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
     """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
 
     Parameters
@@ -26,7 +26,7 @@ def evo_make_selection_array(rows: int, columns: int, wells: np.ndarray):
         Number of rows of target labware object
     cols : int
         Number of columns of target labware object
-    wells : List[str]
+    wells
         Selected wells by well IDs as strings (e.g. ["A01", "B01"])
 
     Returns
@@ -39,12 +39,12 @@ def evo_make_selection_array(rows: int, columns: int, wells: np.ndarray):
     # get a dictionary with the "coordinates" of well IDs (A01, B01 etc) as tuples
     well_index_dict = transform.make_well_index_dict(rows, columns)
     # insert 1s for all selected wells
-    for well in wells:
+    for well in np.asarray(wells).flatten():
         selection_array[well_index_dict[well]] = 1
     return selection_array
 
 
-def evo_get_selection(rows: int, cols: int, selected: np.ndarray):
+def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
     """Function to generate the code string for the well selection of pipetting actions in EvoWare scripts (.esc).
 
     Adapted from the C++ function detailed in the EvoWare manual to Python by Martin Beyß (except the test at the end).
