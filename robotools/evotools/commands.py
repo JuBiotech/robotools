@@ -108,7 +108,8 @@ def prepare_evo_aspirate_dispense_parameters(
     wells : list of str
         List with target well ID(s)
     labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2).
+        NOTE: The site numbering starts at 1.
     volume : int, float or list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
@@ -123,7 +124,8 @@ def prepare_evo_aspirate_dispense_parameters(
     wells : list of str
         List with target well ID(s)
     labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2).
+        NOTE: The returned site number starts at 1.
     volume : list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
@@ -139,10 +141,12 @@ def prepare_evo_aspirate_dispense_parameters(
         raise ValueError(f"Invalid wells: wells and tips need to have the same length.")
     if labware_position is None:
         raise ValueError("Missing required parameter: position")
-    if not all(isinstance(position, int) for position in labware_position) or any(
-        position < 0 for position in labware_position
-    ):
-        raise ValueError(f"Invalid position: {labware_position}")
+    grid, site = labware_position
+    if not isinstance(grid, int) or not 1 <= grid <= 67:
+        raise ValueError("Grid (first number in labware_position tuple) has to be an int from 1 - 67.")
+    if not isinstance(site, int) or not 1 <= site <= 128:
+        raise ValueError("Site (second number in labware_position tuple) has to be an int from 1 - 128.")
+    labware_position = (grid, site - 1)
 
     if volume is None:
         raise ValueError("Missing required parameter: volume")
@@ -220,7 +224,8 @@ def evo_aspirate(
     wells : list of str
         List with target well ID(s)
     labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2).
+        NOTE: The site numbering starts at 1.
     volume : int, float or list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
@@ -293,7 +298,8 @@ def evo_dispense(
     wells : list of str
         List with target well ID(s)
     labware_position : tuple
-        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2)
+        Grid position of the target labware on the robotic deck and site position on its carrier, e.g. labware on grid 38, site 2 -> (38,2).
+        NOTE: The site numbering starts at 1.
     volume : int, float or list
         Volume in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
     liquid_class : str, optional
@@ -363,9 +369,9 @@ def prepare_evo_wash_parameters(
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
     waste_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of waste as integers
+        Tuple with grid position (1-67) and site number (1-128) of waste as integers
     cleaner_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
+        Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
     arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
@@ -431,16 +437,18 @@ def prepare_evo_wash_parameters(
     grid, site = waste_location
     if not isinstance(grid, int) or not 1 <= grid <= 67:
         raise ValueError("Grid (first number in waste_location tuple) has to be an int from 1 - 67.")
-    if not isinstance(site, int) or not 0 <= site <= 127:
-        raise ValueError("Site (second number in waste_location tuple) has to be an int from 0 - 127.")
+    if not isinstance(site, int) or not 1 <= site <= 128:
+        raise ValueError("Site (second number in waste_location tuple) has to be an int from 1 - 128.")
+    waste_location = (grid, site - 1)
 
     if cleaner_location is None:
         raise ValueError("Missing required parameter: cleaner_location")
     grid, site = cleaner_location
     if not isinstance(grid, int) or not 1 <= grid <= 67:
         raise ValueError("Grid (first number in cleaner_location tuple) has to be an int from 1 - 67.")
-    if not isinstance(site, int) or not 0 <= site <= 127:
-        raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 0 - 127.")
+    if not isinstance(site, int) or not 1 <= site <= 128:
+        raise ValueError("Site (second number in cleaner_location tuple) has to be an int from 1 - 128.")
+    cleaner_location = (grid, site - 1)
 
     if arm is None:
         raise ValueError("Missing required paramter: arm")
@@ -544,9 +552,9 @@ def evo_wash(
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
     waste_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of waste as integers
+        Tuple with grid position (1-67) and site number (1-128) of waste as integers
     cleaner_location : tuple
-        Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
+        Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
     arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
