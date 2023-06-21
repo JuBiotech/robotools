@@ -26,7 +26,7 @@ def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str]
         Number of rows of target labware object
     cols : int
         Number of columns of target labware object
-    wells
+    wells : Union[Iterable[str], np.ndarray]
         Selected wells by well IDs as strings (e.g. ["A01", "B01"])
 
     Returns
