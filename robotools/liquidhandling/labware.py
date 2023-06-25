@@ -86,7 +86,7 @@ class Labware:
         max_volume: float,
         initial_volumes: Optional[Union[float, np.ndarray]] = None,
         virtual_rows: Optional[int] = None,
-        component_names: Optional[Dict[str, str]] = None,
+        component_names: Optional[Dict[str, Optional[str]]] = None,
     ) -> None:
         """Creates a `Labware` object.
 
@@ -262,6 +262,8 @@ class Labware:
                 # update the volumentric composition for this well
                 original_composition = self.get_well_composition(well)
                 new_composition = combine_composition(v_original, original_composition, volume, composition)
+                if new_composition is None:
+                    continue
                 for k, f in new_composition.items():
                     if not k in self._composition:
                         # a new liquid is being added
@@ -341,10 +343,10 @@ class Labware:
         self._history.append(state)
         return
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"{self.name}\n{np.round(self.volumes, decimals=1)}"
 
-    def __str__(self) -> None:
+    def __str__(self) -> str:
         return self.__repr__()
 
 

@@ -1,15 +1,15 @@
 """Functions for tracking fluid composition through liquid handling operations."""
 
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import numpy as np
 
 
 def combine_composition(
     volume_A: float,
-    composition_A: Optional[Dict[str, float]],
+    composition_A: Optional[Mapping[str, float]],
     volume_B: float,
-    composition_B: Optional[Dict[str, float]],
+    composition_B: Optional[Mapping[str, float]],
 ) -> Optional[Dict[str, float]]:
     """Computes the composition of a liquid, created by the mixing of two liquids (A and B).
 
@@ -46,9 +46,9 @@ def combine_composition(
 def get_initial_composition(
     name: str,
     real_wells: np.ndarray,
-    component_names: Dict[str, Union[str, None]],
+    component_names: Mapping[str, Optional[str]],
     initial_volumes: np.ndarray,
-) -> Dict[str, Union[str, None]]:
+) -> Dict[str, np.ndarray]:
     """Creates a dictionary of initial composition arrays.
 
     Parameters
@@ -73,7 +73,7 @@ def get_initial_composition(
         raise ValueError(f"Invalid component name keys: {illegal_component_wells}")
 
     is_multiwell = len(real_wells) > 1
-    composition = {}
+    composition: Dict[str, np.ndarray] = {}
     for idx, w in np.ndenumerate(real_wells):
         # Ignore None-valued component names, but don't allow naming of empty wells.
         if initial_volumes[idx] == 0:
@@ -84,8 +84,10 @@ def get_initial_composition(
             continue
 
         # Fetch a name for identifying the liquid from this non-empty well
-        default_name = f"{name}.{w}" if is_multiwell else name
-        cname = component_names.get(w, default_name)
+        cname = component_names.get(w, None)
+        if cname is None:
+            default_name = f"{name}.{w}" if is_multiwell else name
+            cname = default_name
 
         # Make sure that a composition array exists
         if cname not in composition:
@@ -99,9 +101,9 @@ def get_initial_composition(
 def get_trough_component_names(
     name: str,
     columns: int,
-    column_names: Sequence[Union[str, None]],
+    column_names: Sequence[Optional[str]],
     initial_volumes: Sequence[Union[int, float]],
-) -> Dict[str, Union[str, None]]:
+) -> Dict[str, Optional[str]]:
     """Determines a fully-specified component name dictionary for a trough.
 
     This helper function exists to provide a different default naming pattern for troughs.
