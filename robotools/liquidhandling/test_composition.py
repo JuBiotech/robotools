@@ -120,7 +120,8 @@ class TestCompositionTracking:
         # Single-well Labware defaults to the labware name for components
         A = Labware("x", 1, 1, **minmax, initial_volumes=300)
         assert set(A.composition) == {"x"}
-        A = Labware("x", 1, 1, virtual_rows=3, **minmax, initial_volumes=300)
+        with pytest.warns(UserWarning, match="Trough class"):
+            A = Labware("x", 1, 1, virtual_rows=3, **minmax, initial_volumes=300)
         assert set(A.composition) == {"x"}
 
         # by setting an initial volume, the well-wise liquids take part in composition tracking

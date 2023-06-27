@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -174,9 +176,9 @@ class TestTroughLabware:
         with pytest.warns(UserWarning, match="Troughs should be created with"):
             Labware("test", rows=1, columns=2, min_volume=100, max_volume=3000, virtual_rows=4)
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             Trough("test", virtual_rows=6, columns=2, min_volume=100, max_volume=3000)
-        assert len(record) == 0
         return
 
     def test_init_trough(self) -> None:

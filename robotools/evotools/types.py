@@ -27,12 +27,8 @@ class Tip(enum.IntEnum):
     T8 = 128
 
 
-def int_to_tip(tip_int: int):
+def int_to_tip(tip_int: int) -> Tip:
     """Checks and convert a tip number [1-8] to the Tecan Tip ID."""
-    if not 1 <= tip_int <= 8:
-        raise ValueError(
-            f"Tip is {tip_int} with type {type(tip_int)}, but should be an int between 1 and 8 for _int_to_tip conversion."
-        )
     if tip_int == 1:
         return Tip.T1
     elif tip_int == 2:
@@ -49,3 +45,6 @@ def int_to_tip(tip_int: int):
         return Tip.T7
     elif tip_int == 8:
         return Tip.T8
+    raise ValueError(
+        f"Tip is {tip_int} with type {type(tip_int)}, but should be an int between 1 and 8 for _int_to_tip conversion."
+    )

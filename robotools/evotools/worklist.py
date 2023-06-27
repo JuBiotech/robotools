@@ -6,6 +6,7 @@ import math
 import os
 import typing
 import warnings
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy
 
@@ -31,7 +32,7 @@ def _prepare_aspirate_dispense_parameters(
     rack_type: str = "",
     forced_rack_type: str = "",
     max_volume: typing.Optional[int] = None,
-) -> typing.Tuple[str, int, float, str, typing.Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
+) -> Tuple[str, int, str, str, Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -64,7 +65,7 @@ def _prepare_aspirate_dispense_parameters(
         User-defined labware name (max 32 characters)
     position : int
         Number of the well
-    volume : float
+    volume : str
         Volume in microliters (will be rounded to 2 decimal places)
     liquid_class : str
         Overrides the liquid class for this step (max 32 characters)
@@ -137,9 +138,9 @@ def _prepare_aspirate_dispense_parameters(
         raise ValueError(f"Invalid forced_rack_type: {forced_rack_type}")
 
     # apply rounding and corrections for the right string formatting
-    volume = f"{numpy.round(volume, decimals=2):.2f}"
+    volume_str = f"{numpy.round(volume, decimals=2):.2f}"
     tip = "" if tip == -1 else tip
-    return rack_label, position, volume, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
+    return rack_label, position, volume_str, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
 
 
 def _optimize_partition_by(
@@ -220,7 +221,7 @@ def _partition_by_column(
     destinations: typing.Iterable[str],
     volumes: typing.Iterable[float],
     partition_by: str,
-) -> typing.Dict[int, typing.Tuple[typing.List[str], typing.List[str], typing.List[float]]]:
+) -> List[Tuple[List[str], List[str], List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
     Parameters
@@ -240,7 +241,9 @@ def _partition_by_column(
         A list of (sources, destinations, volumes)
     """
     # first partition the wells into columns
-    column_groups = collections.defaultdict(lambda: ([], [], []))
+    column_groups_dd: Dict[str, Tuple[List[str], List[str], List[float]]] = collections.defaultdict(
+        lambda: ([], [], [])
+    )
     for s, d, v in zip(sources, destinations, volumes):
         if partition_by == "source":
             group = s[1:]
@@ -248,11 +251,11 @@ def _partition_by_column(
             group = d[1:]
         else:
             raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
-        column_groups[group][0].append(s)
-        column_groups[group][1].append(d)
-        column_groups[group][2].append(v)
+        column_groups_dd[group][0].append(s)
+        column_groups_dd[group][1].append(d)
+        column_groups_dd[group][2].append(v)
     # bring columns in the right order
-    column_groups = [column_groups[col] for col in sorted(column_groups.keys())]
+    column_groups = [column_groups_dd[col] for col in sorted(column_groups_dd.keys())]
     # sort the rows within the column
     for c, (srcs, dsts, vols) in enumerate(column_groups):
         if partition_by == "source":
@@ -272,7 +275,9 @@ def _partition_by_column(
 class Worklist(list):
     """Context manager for the creation of Worklists."""
 
-    def __init__(self, filepath: str = None, max_volume: int = 950, auto_split: bool = True) -> None:
+    def __init__(
+        self, filepath: Optional[str] = None, max_volume: int = 950, auto_split: bool = True
+    ) -> None:
         """Creates a worklist writer.
 
         Parameters
@@ -292,7 +297,7 @@ class Worklist(list):
         self.auto_split = auto_split
         super().__init__()
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "Worklist":
         self.clear()
         return self
 
@@ -443,20 +448,19 @@ class Worklist(list):
         forced_rack_type : str, optional
             Overrides rack_type from worktable
         """
-        args = (
-            rack_label,
-            position,
-            volume,
-            liquid_class,
-            tip,
-            rack_id,
-            tube_id,
-            rack_type,
-            forced_rack_type,
-        )
         (
             rack_label,
             position,
+            volume_s,
+            liquid_class,
+            tip,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        ) = _prepare_aspirate_dispense_parameters(
+            rack_label,
+            position,
             volume,
             liquid_class,
             tip,
@@ -464,10 +468,11 @@ class Worklist(list):
             tube_id,
             rack_type,
             forced_rack_type,
-        ) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+            max_volume=self.max_volume,
+        )
         tip_type = ""
         self.append(
-            f"A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}"
+            f"A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tip};{forced_rack_type}"
         )
         return
 
@@ -488,7 +493,8 @@ class Worklist(list):
             stacklevel=2,
         )
         cmd = commands.evo_aspirate(
-            labware=labware,
+            n_rows=labware.n_rows,
+            n_columns=labware.n_columns,
             wells=wells,
             labware_position=labware_position,
             volume=volume,
@@ -539,20 +545,19 @@ class Worklist(list):
         forced_rack_type : str, optional
             Overrides rack_type from worktable
         """
-        args = (
-            rack_label,
-            position,
-            volume,
-            liquid_class,
-            tip,
-            rack_id,
-            tube_id,
-            rack_type,
-            forced_rack_type,
-        )
         (
             rack_label,
             position,
+            volume_s,
+            liquid_class,
+            tipv,
+            rack_id,
+            tube_id,
+            rack_type,
+            forced_rack_type,
+        ) = _prepare_aspirate_dispense_parameters(
+            rack_label,
+            position,
             volume,
             liquid_class,
             tip,
@@ -560,10 +565,11 @@ class Worklist(list):
             tube_id,
             rack_type,
             forced_rack_type,
-        ) = _prepare_aspirate_dispense_parameters(*args, max_volume=self.max_volume)
+            max_volume=self.max_volume,
+        )
         tip_type = ""
         self.append(
-            f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume};{liquid_class};{tip_type};{tip};{forced_rack_type}"
+            f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tipv};{forced_rack_type}"
         )
         return
 
@@ -584,7 +590,8 @@ class Worklist(list):
             stacklevel=2,
         )
         cmd = commands.evo_dispense(
-            labware=labware,
+            n_rows=labware.n_rows,
+            n_columns=labware.n_columns,
             wells=wells,
             labware_position=labware_position,
             volume=volume,
@@ -685,6 +692,8 @@ class Worklist(list):
     ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
+        ⚠ This is the low-level version. Use ``.distribute()`` for a more user-friendly signature. ⚠
+
         Parameters
         ----------
         src_rack_label : str
@@ -723,22 +732,24 @@ class Worklist(list):
         # check & convert arguments
         if not direction in {"left_to_right", "right_to_left"}:
             raise ValueError(f'"direction" must be either "left_to_right" or "right_to_left"')
-        direction = 0 if direction == "left_to_right" else 1
+        direction_i = 0 if direction == "left_to_right" else 1
 
         if exclude_wells is None:
-            exclude_wells = []
-        if len(exclude_wells) > 0:
+            exclude_list = []
+        else:
+            exclude_list = list(exclude_wells)
+        if len(exclude_list) > 0:
             # check that all excluded wells fall in the range
             dst_range = set(range(dst_start, dst_end + 1))
-            invalid_exclusion_wells = set(exclude_wells).difference(dst_range)
+            invalid_exclusion_wells = set(exclude_list).difference(dst_range)
             if len(invalid_exclusion_wells) > 0:
                 raise ValueError(
                     f"The excluded wells {invalid_exclusion_wells} are not in the destination interval [{dst_start},{dst_end}]"
                 )
             # condense into ;-separated text
-            exclude_wells = ";" + ";".join(map(str, sorted(exclude_wells)))
+            exclude_str = ";" + ";".join(map(str, sorted(exclude_list)))
         else:
-            exclude_wells = ""
+            exclude_str = ""
 
         src_args = (src_rack_label, 1, volume, "", Tip.Any, src_rack_id, "", src_rack_type, "")
         (
@@ -777,7 +788,7 @@ class Worklist(list):
         src_parameters = f"{src_rack_label};{src_rack_id};{src_rack_type};{src_start};{src_end}"
         dst_parameters = f"{dst_rack_label};{dst_rack_id};{dst_rack_type};{dst_start};{dst_end}"
         self.append(
-            f"R;{src_parameters};{dst_parameters};{volume};{liquid_class};{diti_reuse};{multi_disp};{direction}{exclude_wells}"
+            f"R;{src_parameters};{dst_parameters};{volume};{liquid_class};{diti_reuse};{multi_disp};{direction_i}{exclude_str}"
         )
         return
 
@@ -855,7 +866,8 @@ class Worklist(list):
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
         cmd = commands.evo_aspirate(
-            labware=labware,
+            n_rows=labware.n_rows,
+            n_columns=labware.n_columns,
             wells=wells,
             labware_position=labware_position,
             volume=volumes,
@@ -943,12 +955,14 @@ class Worklist(list):
         labware.remove(wells_calc, volumes_calc, label)
         self.comment(label)
         cmd = commands.evo_dispense(
-            labware=labware,
+            n_rows=labware.n_rows,
+            n_columns=labware.n_columns,
             wells=wells,
             labware_position=labware_position,
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            max_volume=self.max_volume,
         )
         self.append(cmd)
         return
@@ -1021,18 +1035,18 @@ class Worklist(list):
 
         for srcs, dsts, vols in _partition_by_column(source_wells, destination_wells, volumes, partition_by):
             # make vector of volumes into vector of volume-lists
-            vols = [
+            vol_lists = [
                 _partition_volume(float(v), max_volume=self.max_volume) if self.auto_split else [v]
                 for v in vols
             ]
             # transfer from this source column until all wells are done
-            npartitions = max(map(len, vols))
+            npartitions = max(map(len, vol_lists))
             # Count only the extra steps created by LVH
-            lvh_extra += sum([len(vs) - 1 for vs in vols])
+            lvh_extra += sum([len(vs) - 1 for vs in vol_lists])
             for p in range(npartitions):
                 naccessed = 0
                 # iterate the rows
-                for s, d, vs in zip(srcs, dsts, vols):
+                for s, d, vs in zip(srcs, dsts, vol_lists):
                     # transfer the next volume-fraction for this well
                     if len(vs) > p:
                         v = vs[p]

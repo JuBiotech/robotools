@@ -96,11 +96,12 @@ def prepare_evo_aspirate_dispense_parameters(
     wells: Union[str, Sequence[str], np.ndarray],
     *,
     labware_position: Tuple[int, int],
-    volume: Union[float, List[float], int],
+    volume: Union[float, Sequence[float], int],
     liquid_class: str,
-    tips: Union[List[Tip], List[int]],
+    tips: Union[Sequence[Tip], Sequence[int]],
     max_volume: Optional[int] = None,
-) -> Tuple[list, tuple, float, str, list]:
+) -> Tuple[List[str], Tuple[int, int], List[float], str, List[Tip]]:
+    # wells, labware_position, volume, liquid_class, tecan_tips
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -137,7 +138,8 @@ def prepare_evo_aspirate_dispense_parameters(
         raise ValueError("Missing required parameter: wells")
     if not isinstance(wells, (str, list, tuple, np.ndarray)):
         raise ValueError(f"Invalid wells: {wells}")
-    if not len(wells) == len(tips):
+    wells_list = list(np.atleast_1d(wells).flatten("F"))
+    if not len(wells_list) == len(tips):
         raise ValueError(f"Invalid wells: wells and tips need to have the same length.")
     if labware_position is None:
         raise ValueError("Missing required parameter: position")
@@ -160,9 +162,9 @@ def prepare_evo_aspirate_dispense_parameters(
                 raise ValueError(f"Invalid volume: {vol}")
             if max_volume is not None and vol > max_volume:
                 raise InvalidOperationError(f"Invalid volume: volume of {vol} exceeds max_volume.")
-        if not len(volume) == len(tips) == len(wells):
+        if not len(volume) == len(tips) == len(wells_list):
             raise Exception(
-                f"Invalid volume: Tips, wells, and volume lists have different lengths ({len(tips)}, {len(wells)} and {len(volume)}, respectively)."
+                f"Invalid volume: Tips, wells, and volume lists have different lengths ({len(tips)}, {len(wells_list)} and {len(volume)}, respectively)."
             )
     elif isinstance(volume, (float, int)):
         # test volume like in the list section
@@ -171,12 +173,12 @@ def prepare_evo_aspirate_dispense_parameters(
         if max_volume is not None and volume > max_volume:
             raise InvalidOperationError(f"Invalid volume: volume of {volume} exceeds max_volume.")
         # convert volume to list and multiply list to reach identical length as wells
-        volume = [float(volume)] * len(wells)
+        volume = [float(volume)] * len(wells_list)
     else:
         raise ValueError(f"Invalid volume: {volume}")
 
     # apply rounding and corrections for the right string formatting
-    volume = np.round(volume, decimals=2).tolist()
+    volume_list: List[float] = np.round(volume, decimals=2).tolist()
 
     if liquid_class is None:
         raise ValueError(f"Missing required parameter: liquid_class")
@@ -195,20 +197,20 @@ def prepare_evo_aspirate_dispense_parameters(
             tip = int_to_tip(tip)
         tecan_tips.append(tip)
 
-    return wells, labware_position, volume, liquid_class, tecan_tips
+    return wells_list, labware_position, volume_list, liquid_class, tecan_tips
 
 
 def evo_aspirate(
     *,
     n_rows: int,
     n_columns: int,
-    wells: Union[str, List[str]],
+    wells: Union[str, Sequence[str]],
     labware_position: Tuple[int, int],
-    volume: Union[float, List[float], int],
+    volume: Union[float, Sequence[float], int],
     liquid_class: str,
-    tips: Union[List[Tip], List[int]],
-    max_volume: float,
-) -> None:
+    tips: Union[Sequence[Tip], Sequence[int]],
+    max_volume: int,
+) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
 
     As many wells in one column may be selected as your liquid handling arm has pipettes.
@@ -236,20 +238,14 @@ def evo_aspirate(
         Maximum allowed dilutor volume.
     """
     # perform consistency checks
-    kwargs = dict(
+    (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
         labware_position=labware_position,
         volume=volume,
         liquid_class=liquid_class,
         tips=tips,
+        max_volume=max_volume,
     )
-    (
-        wells,
-        labware_position,
-        volume,
-        liquid_class,
-        tips,
-    ) = prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=max_volume)
 
     # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
     tip_selection = 0
@@ -258,8 +254,8 @@ def evo_aspirate(
 
     # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
     tip_volumes = ""
-    for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-        if tip in [tecantip.value for tecantip in tips]:
+    for tipv in [1, 2, 4, 8, 16, 32, 64, 128]:
+        if tipv in [tecantip.value for tecantip in tips]:
             tip_volumes += f'"{volume[0]}",'
             volume.pop(0)
         else:
@@ -276,12 +272,12 @@ def evo_dispense(
     *,
     n_rows: int,
     n_columns: int,
-    wells: Union[str, List[str]],
+    wells: Union[str, Sequence[str]],
     labware_position: Tuple[int, int],
-    volume: Union[float, List[float], int],
+    volume: Union[float, Sequence[float], int],
     liquid_class: str,
-    tips: Union[List[Tip], List[int]],
-    max_volume: float,
+    tips: Union[Sequence[Tip], Sequence[int]],
+    max_volume: int,
 ) -> str:
     """Command for dispensing using the EvoWARE dispense command WITHOUT digital volume tracking.
 
@@ -310,20 +306,14 @@ def evo_dispense(
         Maximum allowed dilutor volume.
     """
     # perform consistency checks
-    kwargs = dict(
+    (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
         labware_position=labware_position,
         volume=volume,
         liquid_class=liquid_class,
         tips=tips,
+        max_volume=max_volume,
     )
-    (
-        wells,
-        labware_position,
-        volume,
-        liquid_class,
-        tips,
-    ) = prepare_evo_aspirate_dispense_parameters(**kwargs, max_volume=max_volume)
 
     # calculate tip_selection based on tips argument (tips are converted to evotools.Tip in _prepare_evo_aspirate_dispense_parameters)
     tip_selection = 0
@@ -332,8 +322,8 @@ def evo_dispense(
 
     # prepare volume section (volume is converted to list in _prepare_evo_aspirate_dispense_parameters)
     tip_volumes = ""
-    for tip in [1, 2, 4, 8, 16, 32, 64, 128]:
-        if tip in [tecantip.value for tecantip in tips]:
+    for tipv in [1, 2, 4, 8, 16, 32, 64, 128]:
+        if tipv in [tecantip.value for tecantip in tips]:
             tip_volumes += f'"{volume[0]}",'
             volume.pop(0)
         else:
@@ -361,7 +351,7 @@ def prepare_evo_wash_parameters(
     retract_speed: int = 30,
     fastwash: int = 1,
     low_volume: int = 0,
-) -> Tuple[list, tuple, tuple, int, float, int, float, int, int, int, int, int, int]:
+) -> Tuple[List[Tip], Tuple[int, int], Tuple[int, int], int, float, int, float, int, int, int, int, int, int]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -425,7 +415,7 @@ def prepare_evo_wash_parameters(
     if tips is None:
         raise ValueError("Missing required parameter: tips")
 
-    tecan_tips = []
+    tecan_tips: List[Tip] = []
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
             # User-specified integers from 1-8 need to be converted to Tecan logic
@@ -577,21 +567,6 @@ def evo_wash(
         Use pinch valves = 1, don't use them = 0
     """
     # perform consistency checks
-    kwargs = dict(
-        tips=tips,
-        waste_location=waste_location,
-        cleaner_location=cleaner_location,
-        arm=arm,
-        waste_vol=waste_vol,
-        waste_delay=waste_delay,
-        cleaner_vol=cleaner_vol,
-        cleaner_delay=cleaner_delay,
-        airgap=airgap,
-        airgap_speed=airgap_speed,
-        retract_speed=retract_speed,
-        fastwash=fastwash,
-        low_volume=low_volume,
-    )
     (
         tips,
         waste_location,
@@ -606,7 +581,21 @@ def evo_wash(
         retract_speed,
         fastwash,
         low_volume,
-    ) = prepare_evo_wash_parameters(**kwargs)
+    ) = prepare_evo_wash_parameters(
+        tips=tips,
+        waste_location=waste_location,
+        cleaner_location=cleaner_location,
+        arm=arm,
+        waste_vol=waste_vol,
+        waste_delay=waste_delay,
+        cleaner_vol=cleaner_vol,
+        cleaner_delay=cleaner_delay,
+        airgap=airgap,
+        airgap_speed=airgap_speed,
+        retract_speed=retract_speed,
+        fastwash=fastwash,
+        low_volume=low_volume,
+    )
     # calculate tip_selection based on tips argument
     tip_selection = 0
     for tip in tips:

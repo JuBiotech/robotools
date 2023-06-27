@@ -1,6 +1,7 @@
 """Module with robot-agnostic utilities."""
 import collections
 import typing
+from typing import Callable, Optional
 
 import numpy
 
@@ -80,10 +81,10 @@ class DilutionPlan:
             raise ValueError(f"Stock concentration ({stock}) must be >= xmax ({xmax})")
         N = R * C
 
-        vmax = numpy.atleast_1d(vmax)
-        if len(vmax) == 1:
-            vmax = numpy.repeat(vmax, C)
-        if not len(vmax) == C:
+        vmax_arr = numpy.atleast_1d(vmax)
+        if len(vmax_arr) == 1:
+            vmax_arr = numpy.repeat(vmax_arr, C)
+        if not len(vmax_arr) == C:
             raise ValueError("The `vmax` argument must be scalar or of length `C`.")
 
         # determine target concentrations
@@ -103,11 +104,11 @@ class DilutionPlan:
 
         # transfer from stock until the volume is too low
         for c in range(C):
-            vtransfer = numpy.round(vmax[c] * ideal_targets[:, c] / stock, 0)
+            vtransfer = numpy.round(vmax_arr[c] * ideal_targets[:, c] / stock, 0)
             if all(vtransfer >= min_transfer):
                 instructions.append((c, 0, "stock", vtransfer))
                 # compute the actually achieved target concentration
-                actual_targets.append(vtransfer / vmax[c] * stock)
+                actual_targets.append(vtransfer / vmax_arr[c] * stock)
             else:
                 break
 
@@ -116,7 +117,7 @@ class DilutionPlan:
             # find the first source column that can be used (with sufficient transfer volume)
             for src_c in range(0, len(instructions)):
                 _, src_df, _, _ = instructions[src_c]
-                vtransfer = numpy.ceil(vmax[c] * ideal_targets[:, c] / actual_targets[src_c])
+                vtransfer = numpy.ceil(vmax_arr[c] * ideal_targets[:, c] / actual_targets[src_c])
                 # take the leftmost column (least dilution steps) where the minimal transfer volume is exceeded
                 if all(vtransfer >= min_transfer):
                     instructions.append(
@@ -124,7 +125,7 @@ class DilutionPlan:
                         (c, src_df + 1, src_c, vtransfer)
                     )
                     # compute the actually achieved target concentration
-                    actual_targets.append(vtransfer * actual_targets[src_c] / vmax[c])
+                    actual_targets.append(vtransfer * actual_targets[src_c] / vmax_arr[c])
                     break
 
         if len(actual_targets) < C:
@@ -143,9 +144,9 @@ class DilutionPlan:
         self.xmin = numpy.min(actual_targets)
         self.xmax = numpy.max(actual_targets)
         self.instructions = instructions
-        self.vmax = vmax
+        self.vmax: numpy.ndarray = vmax_arr
         self.v_stock = numpy.sum([v for _, dsteps, src, v in instructions if dsteps == 0])
-        self.v_diluent = numpy.sum(R * vmax) - self.v_stock
+        self.v_diluent = numpy.sum(R * vmax_arr) - self.v_stock
         self.max_steps = max([dsteps for _, dsteps, _, _ in instructions])
 
     def __repr__(self) -> str:
@@ -173,10 +174,10 @@ class DilutionPlan:
         diluent: liquidhandling.Labware,
         diluent_column: int = 0,
         dilution_plate: liquidhandling.Labware,
-        destination_plate: liquidhandling.Labware = None,
-        v_destination: float = None,
-        pre_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]] = None,
-        post_mix_hook: typing.Callable[[int, evotools.Worklist], typing.Optional[evotools.Worklist]] = None,
+        destination_plate: Optional[liquidhandling.Labware] = None,
+        v_destination: Optional[float] = None,
+        pre_mix_hook: Optional[Callable[[int, evotools.Worklist], Optional[evotools.Worklist]]] = None,
+        post_mix_hook: Optional[Callable[[int, evotools.Worklist], Optional[evotools.Worklist]]] = None,
         mix_threshold: float = 0.05,
         mix_wash: int = 2,
         mix_repeat: int = 2,
