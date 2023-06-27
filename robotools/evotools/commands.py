@@ -138,7 +138,7 @@ def prepare_evo_aspirate_dispense_parameters(
         raise ValueError("Missing required parameter: wells")
     if not isinstance(wells, (str, list, tuple, np.ndarray)):
         raise ValueError(f"Invalid wells: {wells}")
-    wells_list = list(np.atleast_1d(wells))
+    wells_list = list(np.atleast_1d(wells).flatten("F"))
     if not len(wells_list) == len(tips):
         raise ValueError(f"Invalid wells: wells and tips need to have the same length.")
     if labware_position is None:

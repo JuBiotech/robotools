@@ -692,6 +692,8 @@ class Worklist(list):
     ) -> None:
         """Transfers from a Trough into many destination wells using multi-pipetting.
 
+        ⚠ This is the low-level version. Use ``.distribute()`` for a more user-friendly signature. ⚠
+
         Parameters
         ----------
         src_rack_label : str
