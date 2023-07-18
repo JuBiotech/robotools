@@ -276,7 +276,10 @@ class Worklist(list):
     """Context manager for the creation of Worklists."""
 
     def __init__(
-        self, filepath: Optional[str] = None, max_volume: typing.Union[int, float] = 950, auto_split: bool = True
+        self,
+        filepath: Optional[str] = None,
+        max_volume: typing.Union[int, float] = 950,
+        auto_split: bool = True,
     ) -> None:
         """Creates a worklist writer.
 
