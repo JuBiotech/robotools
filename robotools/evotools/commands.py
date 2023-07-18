@@ -408,7 +408,7 @@ def prepare_evo_wash_parameters(
         Tuple with grid position (1-67) and site number (0-127) of waste as integers
     cleaner_location : tuple
         Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
-    arm : int
+    arm : Union[Literal[0], Literal[1]]
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
         Volume in waste in mL (0-100)
@@ -459,8 +459,6 @@ def prepare_evo_wash_parameters(
 
     if arm is None:
         raise ValueError("Missing required paramter: arm")
-    if not isinstance(arm, int):
-        raise ValueError("Parameter arm is not int.")
     if not arm == 0 and not arm == 1:
         raise ValueError("Parameter arm has to be 0 (LiHa 1) or 1 (LiHa 2).")
 
