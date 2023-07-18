@@ -31,7 +31,7 @@ def _prepare_aspirate_dispense_parameters(
     tube_id: str = "",
     rack_type: str = "",
     forced_rack_type: str = "",
-    max_volume: typing.Optional[int] = None,
+    max_volume: typing.Optional[typing.Union[int, float]] = None,
 ) -> Tuple[str, int, str, str, Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
@@ -190,7 +190,7 @@ def _optimize_partition_by(
     return partition_by
 
 
-def _partition_volume(volume: float, *, max_volume: int) -> typing.List[float]:
+def _partition_volume(volume: float, *, max_volume: typing.Union[int, float]) -> typing.List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Parameters
@@ -276,7 +276,10 @@ class Worklist(list):
     """Context manager for the creation of Worklists."""
 
     def __init__(
-        self, filepath: Optional[str] = None, max_volume: int = 950, auto_split: bool = True
+        self,
+        filepath: Optional[str] = None,
+        max_volume: typing.Union[int, float] = 950,
+        auto_split: bool = True,
     ) -> None:
         """Creates a worklist writer.
 
@@ -476,35 +479,6 @@ class Worklist(list):
         )
         return
 
-    def evo_aspirate_well(
-        self,
-        *,
-        labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float], int],
-        liquid_class: str,
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-    ) -> None:
-        warnings.warn(
-            "The `evo_aspirate_well` method is deprecated because it's just a wrapper for the `evo_aspirate` function."
-            "Replace your `evo_aspirate_well(...)` call with `wl.append(robotools.evotools.evo_aspirate(...))`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cmd = commands.evo_aspirate(
-            n_rows=labware.n_rows,
-            n_columns=labware.n_columns,
-            wells=wells,
-            labware_position=labware_position,
-            volume=volume,
-            liquid_class=liquid_class,
-            tips=tips,
-            max_volume=self.max_volume,
-        )
-        self.append(cmd)
-        return
-
     def dispense_well(
         self,
         rack_label: str,
@@ -571,35 +545,6 @@ class Worklist(list):
         self.append(
             f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tipv};{forced_rack_type}"
         )
-        return
-
-    def evo_dispense_well(
-        self,
-        *,
-        labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float], int],
-        liquid_class: str,
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-    ) -> None:
-        warnings.warn(
-            "The `evo_dispense_well` method is deprecated because it's just a wrapper for the `evo_dispense` function."
-            "Replace your `evo_dispense_well(...)` call with `wl.append(robotools.evotools.evo_dispense(...))`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cmd = commands.evo_dispense(
-            n_rows=labware.n_rows,
-            n_columns=labware.n_columns,
-            wells=wells,
-            labware_position=labware_position,
-            volume=volume,
-            liquid_class=liquid_class,
-            tips=tips,
-            max_volume=self.max_volume,
-        )
-        self.append(cmd)
         return
 
     def evo_wash(
@@ -838,6 +783,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
+        arm: int = 0,
         label: typing.Optional[str] = None,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
@@ -857,6 +803,10 @@ class Worklist(list):
             Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
+        arm : int
+            Which LiHa to use, if more than one is available
+        label : str
+            Label of the operation to log into labware history
         """
         # diferentiate between what is needed for volume calculation and for pipetting commands
         wells_calc = numpy.array(wells).flatten("F")
@@ -873,6 +823,7 @@ class Worklist(list):
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            arm=arm,
             max_volume=self.max_volume,
         )
         self.append(cmd)
@@ -927,7 +878,9 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
+        arm: int = 0,
         label: typing.Optional[str] = None,
+        compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
     ) -> None:
         """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -946,13 +899,19 @@ class Worklist(list):
             Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
+        arm : int
+            Which LiHa to use, if more than one is available
+        label : str
+            Label of the operation to log into labware history
+        compositions : list
+            Iterable of liquid compositions
         """
         # diferentiate between what is needed for volume calculation and for pipetting commands
         wells_calc = numpy.array(wells).flatten("F")
         volumes_calc = numpy.array(volumes).flatten("F")
         if len(volumes_calc) == 1:
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
-        labware.remove(wells_calc, volumes_calc, label)
+        labware.add(wells_calc, volumes_calc, label, compositions=compositions)
         self.comment(label)
         cmd = commands.evo_dispense(
             n_rows=labware.n_rows,
@@ -962,6 +921,7 @@ class Worklist(list):
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            arm=arm,
             max_volume=self.max_volume,
         )
         self.append(cmd)
