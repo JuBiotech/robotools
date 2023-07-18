@@ -2,11 +2,11 @@
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+from typing import Literal
 
 from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip, int_to_tip
 from robotools.evotools.utils import to_hex
-from typing_extensions import Literal
 
 from .. import transform
 
@@ -19,6 +19,7 @@ __all__ = (
 
 # maximum dilutor volume in µL
 MAX_DILUTOR_VOLUME = 950
+
 
 def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
     """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
