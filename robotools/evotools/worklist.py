@@ -476,35 +476,6 @@ class Worklist(list):
         )
         return
 
-    def evo_aspirate_well(
-        self,
-        *,
-        labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float], int],
-        liquid_class: str,
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-    ) -> None:
-        warnings.warn(
-            "The `evo_aspirate_well` method is deprecated because it's just a wrapper for the `evo_aspirate` function."
-            "Replace your `evo_aspirate_well(...)` call with `wl.append(robotools.evotools.commands.evo_aspirate(...))`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cmd = commands.evo_aspirate(
-            n_rows=labware.n_rows,
-            n_columns=labware.n_columns,
-            wells=wells,
-            labware_position=labware_position,
-            volume=volume,
-            liquid_class=liquid_class,
-            tips=tips,
-            max_volume=self.max_volume,
-        )
-        self.append(cmd)
-        return
-
     def dispense_well(
         self,
         rack_label: str,
@@ -571,35 +542,6 @@ class Worklist(list):
         self.append(
             f"D;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tipv};{forced_rack_type}"
         )
-        return
-
-    def evo_dispense_well(
-        self,
-        *,
-        labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        volume: typing.Union[float, typing.List[float], int],
-        liquid_class: str,
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-    ) -> None:
-        warnings.warn(
-            "The `evo_dispense_well` method is deprecated because it's just a wrapper for the `evo_dispense` function."
-            "Replace your `evo_dispense_well(...)` call with `wl.append(robotools.evotools.commands.evo_dispense(...))`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        cmd = commands.evo_dispense(
-            n_rows=labware.n_rows,
-            n_columns=labware.n_columns,
-            wells=wells,
-            labware_position=labware_position,
-            volume=volume,
-            liquid_class=liquid_class,
-            tips=tips,
-            max_volume=self.max_volume,
-        )
-        self.append(cmd)
         return
 
     def evo_wash(
