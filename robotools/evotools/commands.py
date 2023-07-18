@@ -221,7 +221,7 @@ def evo_aspirate(
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
     arm: int = 0,
-    max_volume: float = np.nan,
+    max_volume: Optional[Union[int, float]] = np.nan,
 ) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
 
@@ -297,7 +297,7 @@ def evo_dispense(
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
     arm: int = 0,
-    max_volume: int = np.nan,
+    max_volume: Optional[Union[int, float]] = np.nan,
 ) -> str:
     """Command for dispensing using the EvoWARE dispense command WITHOUT digital volume tracking.
 

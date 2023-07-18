@@ -31,7 +31,7 @@ def _prepare_aspirate_dispense_parameters(
     tube_id: str = "",
     rack_type: str = "",
     forced_rack_type: str = "",
-    max_volume: typing.Optional[int] = None,
+    max_volume: typing.Optional[typing.Union[int, float]] = None,
 ) -> Tuple[str, int, str, str, Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
@@ -190,7 +190,7 @@ def _optimize_partition_by(
     return partition_by
 
 
-def _partition_volume(volume: float, *, max_volume: int) -> typing.List[float]:
+def _partition_volume(volume: float, *, max_volume: typing.Union[int, float]) -> typing.List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Parameters
@@ -276,7 +276,7 @@ class Worklist(list):
     """Context manager for the creation of Worklists."""
 
     def __init__(
-        self, filepath: Optional[str] = None, max_volume: int = 950, auto_split: bool = True
+        self, filepath: Optional[str] = None, max_volume: typing.Union[int, float] = 950, auto_split: bool = True
     ) -> None:
         """Creates a worklist writer.
 
