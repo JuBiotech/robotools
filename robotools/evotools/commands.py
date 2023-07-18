@@ -102,7 +102,8 @@ def prepare_evo_aspirate_dispense_parameters(
     volume: Union[float, Sequence[float], int],
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
-    max_volume: Optional[int] = None,
+    arm: int,
+    max_volume: Optional[Union[int, float]] = None,
 ) -> Tuple[List[str], Tuple[int, int], List[float], str, List[Tip]]:
     # wells, labware_position, volume, liquid_class, tecan_tips
     """Validates and prepares aspirate/dispense parameters.
@@ -120,6 +121,8 @@ def prepare_evo_aspirate_dispense_parameters(
         Overwrites the liquid class for this step (max 32 characters)
     tips : list of int
         Tip(s) that will be selected (out of tips 1-8)
+    arm : int
+        Which LiHa to use, if more than one is available
     max_volume : int, optional
         Maximum allowed volume
 
@@ -200,6 +203,11 @@ def prepare_evo_aspirate_dispense_parameters(
             tip = int_to_tip(tip)
         tecan_tips.append(tip)
 
+    if arm is None:
+        raise ValueError("Missing required paramter: arm")
+    if not arm == 0 and not arm == 1:
+        raise ValueError("Parameter arm has to be 0 (LiHa 1) or 1 (LiHa 2).")
+
     return wells_list, labware_position, volume_list, liquid_class, tecan_tips
 
 
@@ -254,6 +262,7 @@ def evo_aspirate(
         volume=volume,
         liquid_class=liquid_class,
         tips=tips,
+        arm=arm,
         max_volume=max_volume,
     )
 
@@ -329,6 +338,7 @@ def evo_dispense(
         volume=volume,
         liquid_class=liquid_class,
         tips=tips,
+        arm=arm,
         max_volume=max_volume,
     )
 
