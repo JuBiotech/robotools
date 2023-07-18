@@ -16,8 +16,8 @@ __all__ = (
     "evo_wash",
 )
 
-# maximum dilutor volume in µL
 MAX_DILUTOR_VOLUME = 950
+""""Maximum dilutor volume in µL"""
 
 
 def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
@@ -213,7 +213,7 @@ def evo_aspirate(
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
     arm: Union[Literal[0], Literal[1]] = 0,
-    max_volume: int = np.nan,
+    max_volume: float = np.nan,
 ) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
 
@@ -244,7 +244,7 @@ def evo_aspirate(
         Maximum allowed dilutor volume.
     """
     # update max_volume (if no value was given) according to the maximum dilutor volume stated at the top
-    if max_volume is np.nan:
+    if np.isnan(max_volume):
         max_volume = MAX_DILUTOR_VOLUME
 
     # perform consistency checks
@@ -319,7 +319,7 @@ def evo_dispense(
         Maximum allowed dilutor volume.
     """
     # update max_volume (if no value was given) according to the maximum dilutor volume stated at the top
-    if max_volume is np.nan:
+    if np.isnan(max_volume):
         max_volume = MAX_DILUTOR_VOLUME
 
     # perform consistency checks
