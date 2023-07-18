@@ -562,7 +562,7 @@ def evo_wash(
         Tuple with grid position (1-67) and site number (1-128) of waste as integers
     cleaner_location : tuple
         Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
-    arm : int
+    arm : Union[Literal[0], Literal[1]]
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
         Volume in waste in mL (0-100)

@@ -550,7 +550,7 @@ class Worklist(list):
         tips: typing.Union[typing.List[Tip], typing.List[int]],
         waste_location: typing.Tuple[int, int],
         cleaner_location: typing.Tuple[int, int],
-        arm: int = 0,
+        arm: Union[Literal[0], Literal[1]] = 0,
         waste_vol: float = 3.0,
         waste_delay: int = 500,
         cleaner_vol: float = 4.0,
