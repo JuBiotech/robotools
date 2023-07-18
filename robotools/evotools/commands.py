@@ -1,8 +1,7 @@
 """This module implements functions to create advanced worklist commands."""
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from typing import Literal
 
 from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip, int_to_tip
@@ -540,7 +539,7 @@ def evo_wash(
     tips: Union[List[Tip], List[int]],
     waste_location: Tuple[int, int],
     cleaner_location: Tuple[int, int],
-    arm: int = 0,
+    arm: Union[Literal[0], Literal[1]] = 0,
     waste_vol: float = 3.0,
     waste_delay: int = 500,
     cleaner_vol: float = 4.0,

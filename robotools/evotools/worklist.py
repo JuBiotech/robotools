@@ -6,7 +6,7 @@ import math
 import os
 import typing
 import warnings
-from typing import Dict, List, Optional, Tuple, Union, Literal
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import numpy
 
@@ -780,7 +780,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
-        arm: int = 0,
+        arm: Union[Literal[0], Literal[1]] = 0,
         label: typing.Optional[str] = None,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
@@ -875,7 +875,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
-        arm: int = 0,
+        arm: Union[Literal[0], Literal[1]] = 0,
         label: typing.Optional[str] = None,
         compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
     ) -> None:
