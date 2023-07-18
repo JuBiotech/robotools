@@ -245,7 +245,7 @@ def evo_aspirate(
         Maximum allowed dilutor volume.
     """
     # update max_volume (if no value was given) according to the maximum dilutor volume stated at the top
-    if max_volume is np.nan:
+    if np.isnan(max_volume):
         max_volume = MAX_DILUTOR_VOLUME
 
     # perform consistency checks
