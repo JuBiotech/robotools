@@ -928,6 +928,7 @@ class Worklist(list):
         liquid_class: str,
         *,
         label: typing.Optional[str] = None,
+        compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
     ) -> None:
         """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -946,13 +947,17 @@ class Worklist(list):
             Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
+        label : str
+            Label of the operation to log into labware history
+        compositions : list
+            Iterable of liquid compositions
         """
         # diferentiate between what is needed for volume calculation and for pipetting commands
         wells_calc = numpy.array(wells).flatten("F")
         volumes_calc = numpy.array(volumes).flatten("F")
         if len(volumes_calc) == 1:
             volumes_calc = numpy.repeat(volumes_calc, len(wells_calc))
-        labware.remove(wells_calc, volumes_calc, label)
+        labware.add(wells_calc, volumes_calc, label, compositions=compositions)
         self.comment(label)
         cmd = commands.evo_dispense(
             n_rows=labware.n_rows,
