@@ -48,6 +48,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         # test labware_position argument checks
         with pytest.raises(ValueError, match="second number in labware_position"):
@@ -57,6 +58,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         with pytest.raises(ValueError, match="first number in labware_position"):
             prepare_evo_aspirate_dispense_parameters(
@@ -65,6 +67,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         # test liquid_class argument checks
         with pytest.raises(ValueError, match="Invalid liquid_class:"):
@@ -74,6 +77,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class=["Water_DispZmax-1_AspZmax-1"],
                 tips=[1, 2],
+                arm=0,
             )
         with pytest.raises(ValueError, match="Invalid liquid_class:"):
             prepare_evo_aspirate_dispense_parameters(
@@ -82,6 +86,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class="Water;DispZmax-1;AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         # test tips argument checks
         with pytest.raises(ValueError, match="Invalid type of tips:"):
@@ -91,6 +96,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=15,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, "2"],
+                arm=0,
             )
         _, _, _, _, tips = prepare_evo_aspirate_dispense_parameters(
             wells=["A01", "B01"],
@@ -98,6 +104,7 @@ class TestPrepareEvoAspirateDispenseParameters:
             volume=15,
             liquid_class="Water_DispZmax-1_AspZmax-1",
             tips=[1, 2],
+            arm=0,
         )
         if not all(isinstance(n, Tip) for n in tips):
             raise TypeError(
@@ -111,6 +118,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume="volume",
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         with pytest.raises(ValueError, match="Invalid volume:"):
             prepare_evo_aspirate_dispense_parameters(
@@ -119,6 +127,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=-10,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
         with pytest.raises(ValueError, match="Invalid volume:"):
             prepare_evo_aspirate_dispense_parameters(
@@ -127,6 +136,7 @@ class TestPrepareEvoAspirateDispenseParameters:
                 volume=7158279,
                 liquid_class="Water_DispZmax-1_AspZmax-1",
                 tips=[1, 2],
+                arm=0,
             )
 
         # test complete prepare_evo_aspirate_dispense_parameters() command
@@ -136,6 +146,7 @@ class TestPrepareEvoAspirateDispenseParameters:
             volume=750,
             liquid_class="Water_DispZmax_AspZmax",
             tips=[5, 6, 7],
+            arm=0,
         )
         expected = (
             ["E01", "F01", "G01"],
