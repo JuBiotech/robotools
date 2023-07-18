@@ -780,6 +780,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
+        arm: int = 0,
         label: typing.Optional[str] = None,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
@@ -799,6 +800,10 @@ class Worklist(list):
             Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
+        arm : int
+            Which LiHa to use, if more than one is available
+        label : str
+            Label of the operation to log into labware history
         """
         # diferentiate between what is needed for volume calculation and for pipetting commands
         wells_calc = numpy.array(wells).flatten("F")
@@ -815,6 +820,7 @@ class Worklist(list):
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            arm=arm,
             max_volume=self.max_volume,
         )
         self.append(cmd)
@@ -869,6 +875,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
+        arm: int = 0,
         label: typing.Optional[str] = None,
         compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
     ) -> None:
@@ -889,6 +896,8 @@ class Worklist(list):
             Volume(s) in microliters (will be rounded to 2 decimal places); if several tips are used, these tips may aspirate individual volumes -> use list in these cases
         liquid_class : str, optional
             Overwrites the liquid class for this step (max 32 characters)
+        arm : int
+            Which LiHa to use, if more than one is available
         label : str
             Label of the operation to log into labware history
         compositions : list
@@ -909,6 +918,7 @@ class Worklist(list):
             volume=volumes,
             liquid_class=liquid_class,
             tips=tips,
+            arm=arm,
             max_volume=self.max_volume,
         )
         self.append(cmd)

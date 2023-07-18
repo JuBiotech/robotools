@@ -16,6 +16,8 @@ __all__ = (
     "evo_wash",
 )
 
+# maximum dilutor volume in µL
+MAX_DILUTOR_VOLUME = 950
 
 def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
     """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
@@ -209,7 +211,8 @@ def evo_aspirate(
     volume: Union[float, Sequence[float], int],
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
-    max_volume: int,
+    arm: int = 0,
+    max_volume: int = np.nan,
 ) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
 
@@ -234,9 +237,15 @@ def evo_aspirate(
         Overwrites the liquid class for this step (max 32 characters)
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+    arm : int
+        Which LiHa to use, if more than one is available
     max_volume
         Maximum allowed dilutor volume.
     """
+    # update max_volume (if no value was given) according to the maximum dilutor volume stated at the top
+    if max_volume is np.nan:
+        max_volume = MAX_DILUTOR_VOLUME
+
     # perform consistency checks
     (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
@@ -265,7 +274,7 @@ def evo_aspirate(
     selected = evo_make_selection_array(n_rows, n_columns, wells)
     # create code string containing information about target well(s)
     code_string = evo_get_selection(n_rows, n_columns, selected)
-    return f'B;Aspirate({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,0);'
+    return f'B;Aspirate({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,{arm});'
 
 
 def evo_dispense(
@@ -277,7 +286,8 @@ def evo_dispense(
     volume: Union[float, Sequence[float], int],
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
-    max_volume: int,
+    arm: int = 0,
+    max_volume: int = np.nan,
 ) -> str:
     """Command for dispensing using the EvoWARE dispense command WITHOUT digital volume tracking.
 
@@ -302,9 +312,15 @@ def evo_dispense(
         Overwrites the liquid class for this step (max 32 characters)
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
+    arm : int
+        Which LiHa to use, if more than one is available
     max_volume
         Maximum allowed dilutor volume.
     """
+    # update max_volume (if no value was given) according to the maximum dilutor volume stated at the top
+    if max_volume is np.nan:
+        max_volume = MAX_DILUTOR_VOLUME
+
     # perform consistency checks
     (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
@@ -333,7 +349,7 @@ def evo_dispense(
     selected = evo_make_selection_array(n_rows, n_columns, wells)
     # create code string containing information about target well(s)
     code_string = evo_get_selection(n_rows, n_columns, selected)
-    return f'B;Dispense({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,0);'
+    return f'B;Dispense({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,{arm});'
 
 
 def prepare_evo_wash_parameters(
