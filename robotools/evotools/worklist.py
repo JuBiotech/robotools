@@ -6,7 +6,7 @@ import math
 import os
 import typing
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Literal
 
 import numpy
 
