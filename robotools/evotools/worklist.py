@@ -3,9 +3,9 @@
 import collections
 import logging
 import math
-import os
 import typing
 import warnings
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy
@@ -276,13 +276,13 @@ class Worklist(list):
     """Context manager for the creation of Worklists."""
 
     def __init__(
-        self, filepath: Optional[str] = None, max_volume: int = 950, auto_split: bool = True
+        self, filepath: Optional[Union[str, Path]] = None, max_volume: int = 950, auto_split: bool = True
     ) -> None:
         """Creates a worklist writer.
 
         Parameters
         ----------
-        filepath : str
+        filepath
             Optional filename/filepath to write when the context is exited (must include a .gwl extension)
         max_volume : int
             Maximum aspiration volume in µL
@@ -290,7 +290,9 @@ class Worklist(list):
             If `True`, large volumes in transfer operations are automatically splitted.
             If set to `False`, `InvalidOperationError` is raised when a pipetting volume exceeds `max_volume`.
         """
-        self._filepath = filepath
+        self._filepath: Optional[Path] = None
+        if filepath is not None:
+            self._filepath = Path(filepath)
         if max_volume is None:
             raise ValueError("The `max_volume` parameter is required.")
         self.max_volume = max_volume
@@ -306,17 +308,17 @@ class Worklist(list):
             self.save(self._filepath)
         return
 
-    def save(self, filepath: str) -> None:
+    def save(self, filepath: Union[str, Path]) -> None:
         """Writes the worklist to the filepath.
 
         Parameters
         ----------
-        filepath : str
+        filepath
             File name or path to write (must include a .gwl extension)
         """
-        assert ".gwl" in filepath.lower(), "The filename did not contain the .gwl extension."
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        filepath = Path(filepath)
+        assert ".gwl" in filepath.name.lower(), "The filename did not contain the .gwl extension."
+        filepath.unlink(missing_ok=True)
         with open(filepath, "w", newline="\r\n", encoding="latin_1") as file:
             file.write("\n".join(self))
         return

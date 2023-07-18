@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -266,6 +267,17 @@ class TestWorklist:
         with Worklist() as wl:
             wl.aspirate_well(Labwares.SystemLiquid.value, 1, 200)
             assert wl[-1] == "A;Systemliquid;;;1;;200.00;;;;"
+        return
+
+    def test_accepts_path(self):
+        fp = Path(tempfile.gettempdir(), os.urandom(24).hex() + ".gwl")
+        try:
+            with Worklist(fp) as wl:
+                wl.comment("Test")
+            assert isinstance(wl._filepath, Path)
+            assert fp.exists()
+        finally:
+            fp.unlink(missing_ok=True)
         return
 
     def test_save(self) -> None:
