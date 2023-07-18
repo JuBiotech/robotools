@@ -1,5 +1,5 @@
 """This module implements functions to create advanced worklist commands."""
-from typing import Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -212,7 +212,7 @@ def evo_aspirate(
     volume: Union[float, Sequence[float], int],
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
-    arm: Union[Literal[0], Literal[1]] = 0,
+    arm: int = 0,
     max_volume: float = np.nan,
 ) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
@@ -238,7 +238,7 @@ def evo_aspirate(
         Overwrites the liquid class for this step (max 32 characters)
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
-    arm : Union[Literal[0], Literal[1]]
+    arm : int
         Which LiHa to use, if more than one is available
     max_volume
         Maximum allowed dilutor volume.
@@ -287,7 +287,7 @@ def evo_dispense(
     volume: Union[float, Sequence[float], int],
     liquid_class: str,
     tips: Union[Sequence[Tip], Sequence[int]],
-    arm: Union[Literal[0], Literal[1]] = 0,
+    arm: int = 0,
     max_volume: int = np.nan,
 ) -> str:
     """Command for dispensing using the EvoWARE dispense command WITHOUT digital volume tracking.
@@ -313,7 +313,7 @@ def evo_dispense(
         Overwrites the liquid class for this step (max 32 characters)
     tips : list
         Tip(s) that will be selected; use either a list with integers from 1 - 8 or with tip.T1 - tip.T8
-    arm : Union[Literal[0], Literal[1]]
+    arm : int
         Which LiHa to use, if more than one is available
     max_volume
         Maximum allowed dilutor volume.
@@ -358,7 +358,7 @@ def prepare_evo_wash_parameters(
     tips: Union[List[Tip], List[int]],
     waste_location: Tuple[int, int],
     cleaner_location: Tuple[int, int],
-    arm: Union[Literal[0], Literal[1]] = 0,
+    arm: int = 0,
     waste_vol: float = 3.0,
     waste_delay: int = 500,
     cleaner_vol: float = 4.0,
@@ -379,7 +379,7 @@ def prepare_evo_wash_parameters(
         Tuple with grid position (1-67) and site number (1-128) of waste as integers
     cleaner_location : tuple
         Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
-    arm : Union[Literal[0], Literal[1]]
+    arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
         Volume in waste in mL (0-100)
@@ -408,7 +408,7 @@ def prepare_evo_wash_parameters(
         Tuple with grid position (1-67) and site number (0-127) of waste as integers
     cleaner_location : tuple
         Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
-    arm : Union[Literal[0], Literal[1]]
+    arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
         Volume in waste in mL (0-100)
@@ -537,7 +537,7 @@ def evo_wash(
     tips: Union[List[Tip], List[int]],
     waste_location: Tuple[int, int],
     cleaner_location: Tuple[int, int],
-    arm: Union[Literal[0], Literal[1]] = 0,
+    arm: int = 0,
     waste_vol: float = 3.0,
     waste_delay: int = 500,
     cleaner_vol: float = 4.0,
@@ -560,7 +560,7 @@ def evo_wash(
         Tuple with grid position (1-67) and site number (1-128) of waste as integers
     cleaner_location : tuple
         Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
-    arm : Union[Literal[0], Literal[1]]
+    arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
     waste_vol: float
         Volume in waste in mL (0-100)

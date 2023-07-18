@@ -6,7 +6,7 @@ import math
 import os
 import typing
 import warnings
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy
 
@@ -550,7 +550,7 @@ class Worklist(list):
         tips: typing.Union[typing.List[Tip], typing.List[int]],
         waste_location: typing.Tuple[int, int],
         cleaner_location: typing.Tuple[int, int],
-        arm: Union[Literal[0], Literal[1]] = 0,
+        arm: int = 0,
         waste_vol: float = 3.0,
         waste_delay: int = 500,
         cleaner_vol: float = 4.0,
@@ -780,7 +780,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
-        arm: Union[Literal[0], Literal[1]] = 0,
+        arm: int = 0,
         label: typing.Optional[str] = None,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
@@ -875,7 +875,7 @@ class Worklist(list):
         volumes: typing.Union[float, typing.List[float]],
         liquid_class: str,
         *,
-        arm: Union[Literal[0], Literal[1]] = 0,
+        arm: int = 0,
         label: typing.Optional[str] = None,
         compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
     ) -> None:
