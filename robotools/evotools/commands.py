@@ -17,8 +17,8 @@ __all__ = (
     "evo_wash",
 )
 
-# maximum dilutor volume in µL
 MAX_DILUTOR_VOLUME = 950
+""""Maximum dilutor volume in µL"""
 
 
 def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
