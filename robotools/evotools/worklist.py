@@ -488,7 +488,7 @@ class Worklist(list):
     ) -> None:
         warnings.warn(
             "The `evo_aspirate_well` method is deprecated because it's just a wrapper for the `evo_aspirate` function."
-            "Replace your `evo_aspirate_well(...)` call with `wl.append(robotools.evotools.evo_aspirate(...))`.",
+            "Replace your `evo_aspirate_well(...)` call with `wl.append(robotools.evotools.commands.evo_aspirate(...))`.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -585,7 +585,7 @@ class Worklist(list):
     ) -> None:
         warnings.warn(
             "The `evo_dispense_well` method is deprecated because it's just a wrapper for the `evo_dispense` function."
-            "Replace your `evo_dispense_well(...)` call with `wl.append(robotools.evotools.evo_dispense(...))`.",
+            "Replace your `evo_dispense_well(...)` call with `wl.append(robotools.evotools.commands.evo_dispense(...))`.",
             DeprecationWarning,
             stacklevel=2,
         )
