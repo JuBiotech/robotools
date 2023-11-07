@@ -11,4 +11,4 @@ from .transform import (
 )
 from .utils import DilutionPlan, get_trough_wells
 
-__version__ = "1.7.2"
+__version__ = "1.7.3"

@@ -40,6 +40,27 @@ class TestDilutionPlan:
         assert isinstance(out, str)
         return
 
+    def test_issue_48(self):
+        """Columns are named 1-based, therefore the "from column" must be too."""
+        plan = DilutionPlan(xmin=0.3, xmax=30, stock=30, R=1, C=3, mode="log", vmax=100, min_transfer=10)
+        np.testing.assert_allclose(plan.x, [[30, 3, 0.3]])
+        # Reformat instructions for easier equals comparison
+        instructions = [(col, dsteps, pfrom, float(tvols)) for col, dsteps, pfrom, tvols in plan.instructions]
+        assert instructions == [
+            (0, 0, "stock", 100.0),
+            (1, 0, "stock", 10.0),  # The previous column is equal to the stock!
+            (2, 1, 1, 10.0),
+        ]
+        plan_s = str(plan)
+        lines = plan_s.split("\n")
+        assert "Prepare column 1" in lines[1]
+        assert "Prepare column 2" in lines[2]
+        assert "Prepare column 3" in lines[3]
+        assert "from stock" in lines[1]
+        assert "from stock" in lines[2]
+        assert "from column 2" in lines[3]
+        pass
+
     def test_linear_plan(self) -> None:
         plan = DilutionPlan(xmin=1, xmax=10, R=10, C=1, stock=20, mode="linear", vmax=1000, min_transfer=20)
 

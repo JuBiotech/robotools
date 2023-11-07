@@ -159,7 +159,8 @@ class DilutionPlan:
             if dsteps == 0:
                 output += "stock"
             else:
-                output += f"column {src}"
+                assert isinstance(src, int)
+                output += f"column {src + 1}"
             output += f" and fill up to {self.vmax[c]} µL"
             if dsteps > 0:
                 output += f" ({dsteps} serial dilutions)"
