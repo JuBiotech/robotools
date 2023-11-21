@@ -4,6 +4,7 @@ import enum
 __all__ = (
     "Labwares",
     "Tip",
+    "int_to_tip",
 )
 
 

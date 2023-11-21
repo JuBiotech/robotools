@@ -13,6 +13,7 @@ __all__ = (
     "evo_make_selection_array",
     "evo_get_selection",
     "evo_aspirate",
+    "evo_dispense",
     "evo_wash",
 )
 
