@@ -2,8 +2,7 @@
 import collections
 import logging
 import math
-import typing
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy
 
@@ -27,12 +26,12 @@ def prepare_aspirate_dispense_parameters(
     position: int,
     volume: float,
     liquid_class: str = "",
-    tip: typing.Union[Tip, int, collections.abc.Iterable] = Tip.Any,
+    tip: Union[Tip, int, collections.abc.Iterable] = Tip.Any,
     rack_id: str = "",
     tube_id: str = "",
     rack_type: str = "",
     forced_rack_type: str = "",
-    max_volume: typing.Optional[typing.Union[int, float]] = None,
+    max_volume: Optional[Union[int, float]] = None,
 ) -> Tuple[str, int, str, str, Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
@@ -148,7 +147,7 @@ def optimize_partition_by(
     source: liquidhandling.Labware,
     destination: liquidhandling.Labware,
     partition_by: str,
-    label: typing.Optional[str] = None,
+    label: Optional[str] = None,
 ) -> str:
     """Determines optimal partitioning settings.
 
@@ -191,7 +190,7 @@ def optimize_partition_by(
     return partition_by
 
 
-def partition_volume(volume: float, *, max_volume: typing.Union[int, float]) -> typing.List[float]:
+def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Parameters
@@ -212,15 +211,15 @@ def partition_volume(volume: float, *, max_volume: typing.Union[int, float]) -> 
         return [volume]
     isteps = math.ceil(volume / max_volume)
     step_volume = math.ceil(volume / isteps)
-    volumes: typing.List[float] = [step_volume] * (isteps - 1)
+    volumes: List[float] = [step_volume] * (isteps - 1)
     volumes.append(volume - numpy.sum(volumes))
     return volumes
 
 
 def partition_by_column(
-    sources: typing.Iterable[str],
-    destinations: typing.Iterable[str],
-    volumes: typing.Iterable[float],
+    sources: Iterable[str],
+    destinations: Iterable[str],
+    volumes: Iterable[float],
     partition_by: str,
 ) -> List[Tuple[List[str], List[str], List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.

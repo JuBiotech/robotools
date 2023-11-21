@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Literal, Tuple
 
 import numpy
 from numpy.typing import ArrayLike
@@ -187,16 +187,22 @@ class WellRotator:
 class WellRandomizer:
     """Helper object to randomize a set of well IDs within a MTP."""
 
-    def __init__(self, original_shape: tuple, random_seed: int, *, mode: str = "full") -> None:
+    def __init__(
+        self,
+        original_shape: Tuple[int, int],
+        random_seed: int,
+        *,
+        mode: Literal["full", "row", "column"] = "full",
+    ) -> None:
         """Create a helper object for randomizing wells.
 
         Parameters
         ----------
-        original_shape : typing.Tuple[int,int]
+        original_shape
             (n_rows, n_cols) of all wells in the source labware
-        random_seed : int
+        random_seed
             Integer for defined and reproduceable randomization
-        mode : str
+        mode
             To switch between `"full"` randomization,
             or randomization only within each `"row"`,
             or randomization only within each `"column"`.

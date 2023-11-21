@@ -1,14 +1,13 @@
 """Module with robot-agnostic utilities."""
 import collections
-import typing
-from typing import Callable, Optional
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import numpy
 
 from . import evotools, liquidhandling
 
 
-def get_trough_wells(n: int, trough_wells: typing.Sequence[str]) -> typing.Sequence[str]:
+def get_trough_wells(n: int, trough_wells: Sequence[str]) -> Sequence[str]:
     """Creates a list that re-uses trough wells if needed.
 
     When n > trough.virtual_rows, the available wells are repeated.
@@ -52,7 +51,7 @@ class DilutionPlan:
         C: int,
         stock: float,
         mode: str,
-        vmax: typing.Union[float, typing.Sequence[float]],
+        vmax: Union[float, Sequence[float]],
         min_transfer: float,
     ) -> None:
         """Plans a regularly-spaced dilution series with in very few steps.
@@ -99,7 +98,7 @@ class DilutionPlan:
 
         # collect preparation instructions for each columns
         # (column, dilution steps, prepared from, transfer volumes)
-        instructions: typing.List[typing.Tuple[int, int, typing.Union[int, str], numpy.ndarray]] = []
+        instructions: List[Tuple[int, int, Union[int, str], numpy.ndarray]] = []
         actual_targets = []
 
         # transfer from stock until the volume is too low

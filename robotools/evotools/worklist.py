@@ -2,9 +2,8 @@
 """
 import logging
 import math
-import typing
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy
 
@@ -31,7 +30,7 @@ class Worklist(list):
     def __init__(
         self,
         filepath: Optional[Union[str, Path]] = None,
-        max_volume: typing.Union[int, float] = 950,
+        max_volume: Union[int, float] = 950,
         auto_split: bool = True,
     ) -> None:
         """Creates a worklist writer.
@@ -79,7 +78,7 @@ class Worklist(list):
             file.write("\n".join(self))
         return
 
-    def comment(self, comment: typing.Optional[str]) -> None:
+    def comment(self, comment: Optional[str]) -> None:
         """Adds a comment.
 
         Parameters
@@ -174,7 +173,7 @@ class Worklist(list):
         volume: float,
         *,
         liquid_class: str = "",
-        tip: typing.Union[Tip, int, typing.Iterable] = Tip.Any,
+        tip: Union[Tip, int, Iterable] = Tip.Any,
         rack_id: str = "",
         tube_id: str = "",
         rack_type: str = "",
@@ -241,7 +240,7 @@ class Worklist(list):
         volume: float,
         *,
         liquid_class: str = "",
-        tip: typing.Union[Tip, int] = Tip.Any,
+        tip: Union[Tip, int] = Tip.Any,
         rack_id: str = "",
         tube_id: str = "",
         rack_type: str = "",
@@ -305,9 +304,9 @@ class Worklist(list):
     def evo_wash(
         self,
         *,
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-        waste_location: typing.Tuple[int, int],
-        cleaner_location: typing.Tuple[int, int],
+        tips: Union[List[Tip], List[int]],
+        waste_location: Tuple[int, int],
+        cleaner_location: Tuple[int, int],
         arm: int = 0,
         waste_vol: float = 3.0,
         waste_delay: int = 500,
@@ -382,7 +381,7 @@ class Worklist(list):
         volume: float,
         diti_reuse: int = 1,
         multi_disp: int = 1,
-        exclude_wells: typing.Optional[typing.Iterable[int]] = None,
+        exclude_wells: Optional[Iterable[int]] = None,
         liquid_class: str = "",
         direction: str = "left_to_right",
         src_rack_id: str = "",
@@ -495,10 +494,10 @@ class Worklist(list):
     def aspirate(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        wells: Union[str, Sequence[str], numpy.ndarray],
+        volumes: Union[float, Sequence[float], numpy.ndarray],
         *,
-        label: typing.Optional[str] = None,
+        label: Optional[str] = None,
         **kwargs,
     ) -> None:
         """Performs aspiration from the provided labware.
@@ -532,14 +531,14 @@ class Worklist(list):
     def evo_aspirate(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-        volumes: typing.Union[float, typing.List[float]],
+        wells: Union[str, List[str]],
+        labware_position: Tuple[int, int],
+        tips: Union[List[Tip], List[int]],
+        volumes: Union[float, List[float]],
         liquid_class: str,
         *,
         arm: int = 0,
-        label: typing.Optional[str] = None,
+        label: Optional[str] = None,
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -587,11 +586,11 @@ class Worklist(list):
     def dispense(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        wells: Union[str, Sequence[str], numpy.ndarray],
+        volumes: Union[float, Sequence[float], numpy.ndarray],
         *,
-        label: typing.Optional[str] = None,
-        compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
+        label: Optional[str] = None,
+        compositions: Optional[List[Optional[Dict[str, float]]]] = None,
         **kwargs,
     ) -> None:
         """Performs dispensing into the provided labware.
@@ -627,15 +626,15 @@ class Worklist(list):
     def evo_dispense(
         self,
         labware: liquidhandling.Labware,
-        wells: typing.Union[str, typing.List[str]],
-        labware_position: typing.Tuple[int, int],
-        tips: typing.Union[typing.List[Tip], typing.List[int]],
-        volumes: typing.Union[float, typing.List[float]],
+        wells: Union[str, List[str]],
+        labware_position: Tuple[int, int],
+        tips: Union[List[Tip], List[int]],
+        volumes: Union[float, List[float]],
         liquid_class: str,
         *,
         arm: int = 0,
-        label: typing.Optional[str] = None,
-        compositions: typing.Optional[typing.List[typing.Optional[typing.Dict[str, float]]]] = None,
+        label: Optional[str] = None,
+        compositions: Optional[List[Optional[Dict[str, float]]]] = None,
     ) -> None:
         """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -685,12 +684,12 @@ class Worklist(list):
     def transfer(
         self,
         source: liquidhandling.Labware,
-        source_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        source_wells: Union[str, Sequence[str], numpy.ndarray],
         destination: liquidhandling.Labware,
-        destination_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
-        volumes: typing.Union[float, typing.Sequence[float], numpy.ndarray],
+        destination_wells: Union[str, Sequence[str], numpy.ndarray],
+        volumes: Union[float, Sequence[float], numpy.ndarray],
         *,
-        label: typing.Optional[str] = None,
+        label: Optional[str] = None,
         wash_scheme: int = 1,
         partition_by: str = "auto",
         **kwargs,
@@ -806,7 +805,7 @@ class Worklist(list):
         source: liquidhandling.Labware,
         source_column: int,
         destination: liquidhandling.Labware,
-        destination_wells: typing.Union[str, typing.Sequence[str], numpy.ndarray],
+        destination_wells: Union[str, Sequence[str], numpy.ndarray],
         *,
         volume: float,
         diti_reuse: int = 1,
