@@ -21,7 +21,7 @@ from .. import liquidhandling
 
 __all__ = ("Worklist",)
 
-logger = logging.getLogger("evotools")
+logger = logging.getLogger(__name__)
 
 
 class Worklist(list):

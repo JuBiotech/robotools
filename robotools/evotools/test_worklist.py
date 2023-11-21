@@ -1439,7 +1439,7 @@ class TestReagentDistribution:
                 # one excluded well not in the destination range
                 wl.reagent_distribution("S1", 1, 8, "D1", 1, 20, volume=50, exclude_wells=[18, 19, 23])
         with pytest.raises(InvalidOperationError):
-            with caplog.at_level(logging.WARNING, logger="evotools"):
+            with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
                 with Worklist(max_volume=950) as wl:
                     # dispense more than diluter volume
                     wl.reagent_distribution("S1", 1, 8, "D1", 1, 20, volume=1200)
@@ -1627,7 +1627,7 @@ class TestFunctions:
         # fixed to source
         assert "source" == optimize_partition_by(S, D, "source", "No troughs at all")
         assert "source" == optimize_partition_by(S, DT, "source", "Trough destination")
-        with caplog.at_level(logging.WARNING, logger="evotools"):
+        with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
             assert "source" == optimize_partition_by(ST, D, "source", "Trough source")
         assert 'Consider using partition_by="destination"' in caplog.records[0].message
         optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
@@ -1635,7 +1635,7 @@ class TestFunctions:
         # fixed to destination
         optimize_partition_by(S, D, "destination", "No troughs at all") == "destination"
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="evotools"):
+        with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
             assert optimize_partition_by(S, DT, "destination", "Trough destination") == "destination"
         assert 'Consider using partition_by="source"' in caplog.records[0].message
         assert optimize_partition_by(ST, D, "destination", "Trough source") == "destination"
