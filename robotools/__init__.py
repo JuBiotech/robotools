@@ -1,6 +1,7 @@
 from . import evotools, liquidhandling
 from .evotools import InvalidOperationError, Labwares, Tip, Worklist
 from .evotools import commands as evo_cmd
+from .evotools import int_to_tip
 from .liquidhandling import Labware, Trough, VolumeOverflowError, VolumeUnderflowError
 from .transform import (
     WellRandomizer,

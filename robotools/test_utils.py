@@ -45,11 +45,11 @@ class TestDilutionPlan:
         plan = DilutionPlan(xmin=0.3, xmax=30, stock=30, R=1, C=3, mode="log", vmax=100, min_transfer=10)
         np.testing.assert_allclose(plan.x, [[30, 3, 0.3]])
         # Reformat instructions for easier equals comparison
-        instructions = [(col, dsteps, pfrom, float(tvols)) for col, dsteps, pfrom, tvols in plan.instructions]
+        instructions = [(col, dsteps, pfrom, list(tvols)) for col, dsteps, pfrom, tvols in plan.instructions]
         assert instructions == [
-            (0, 0, "stock", 100.0),
-            (1, 0, "stock", 10.0),  # The previous column is equal to the stock!
-            (2, 1, 1, 10.0),
+            (0, 0, "stock", [100.0]),
+            (1, 0, "stock", [10.0]),  # The previous column is equal to the stock!
+            (2, 1, 1, [10.0]),
         ]
         plan_s = str(plan)
         lines = plan_s.split("\n")

@@ -10,10 +10,10 @@ from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Labwares, Tip
 from robotools.evotools.worklist import (
     Worklist,
-    _optimize_partition_by,
-    _partition_by_column,
-    _partition_volume,
-    _prepare_aspirate_dispense_parameters,
+    optimize_partition_by,
+    partition_by_column,
+    partition_volume,
+    prepare_aspirate_dispense_parameters,
 )
 from robotools.liquidhandling.labware import Labware, Trough
 
@@ -26,139 +26,139 @@ class TestWorklist:
 
     def test_parameter_validation(self) -> None:
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
+            prepare_aspirate_dispense_parameters(rack_label=None, position=1, volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label=15, position=1, volume=15)
+            prepare_aspirate_dispense_parameters(rack_label=15, position=1, volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="thisisaveryverylongracklabelthatexceedsthemaximumlength", position=1, volume=15
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="rack label; with semicolon", position=1, volume=15
             )
-        _prepare_aspirate_dispense_parameters(rack_label="valid rack label", position=1, volume=15)
+        prepare_aspirate_dispense_parameters(rack_label="valid rack label", position=1, volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=None, volume=15)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=None, volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position="3", volume=15)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position="3", volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=-1, volume=15)
-        _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=-1, volume=15)
+        prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=None)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=None)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="nan")
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="nan")
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=float("nan"))
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=float("nan"))
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=-15.4)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=-15.4)
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="bla")
-        _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="15")
-        _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=20)
-        _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=23.78)
-        _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=np.array(23.4))
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="bla")
+        prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume="15")
+        prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=20)
+        prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=23.78)
+        prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=np.array(23.4))
 
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, liquid_class=None
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, liquid_class="liquid;class"
             )
-        _prepare_aspirate_dispense_parameters(
+        prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, liquid_class="valid liquid class"
         )
 
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=4
         )
         assert tip == 8
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=Tip.T5
         )
         assert tip == 16
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=(Tip.T4, 4)
         )
         assert tip == 8
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=[Tip.T1, 4]
         )
         assert tip == 9
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=[1, 4]
         )
         assert tip == 9
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=[1, Tip.T4]
         )
         assert tip == 9
-        _, _, _, _, tip, _, _, _, _ = _prepare_aspirate_dispense_parameters(
+        _, _, _, _, tip, _, _, _, _ = prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, tip=Tip.Any
         )
         assert tip == ""
 
         with pytest.raises(ValueError, match="no Tip.Any elements are allowed"):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, tip=(Tip.T1, Tip.Any)
             )
         with pytest.raises(ValueError, match="tip must be an int between 1 and 8, Tip or Iterable"):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15, tip=None)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15, tip=None)
         with pytest.raises(ValueError, match="it may only contain int or Tip values"):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, tip=[1, 2.6]
             )
         with pytest.raises(ValueError, match="should be an int between 1 and 8 for _int_to_tip"):
-            _prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15, tip=12)
+            prepare_aspirate_dispense_parameters(rack_label="WaterTrough", position=1, volume=15, tip=12)
 
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, rack_id=None
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, rack_id="invalid;rack"
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough",
                 position=1,
                 volume=15,
                 rack_id="thisisaveryverylongrackthatexceedsthemaximumlength",
             )
-        _prepare_aspirate_dispense_parameters(
+        prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, rack_id="1235464"
         )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, rack_type=None
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, rack_type="invalid;rack type"
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough",
                 position=1,
                 volume=15,
                 rack_type="thisisaveryverylongracktypethatexceedsthemaximumlength",
             )
-        _prepare_aspirate_dispense_parameters(
+        prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, rack_type="valid rack type"
         )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, forced_rack_type=None
             )
         with pytest.raises(ValueError):
-            _prepare_aspirate_dispense_parameters(
+            prepare_aspirate_dispense_parameters(
                 rack_label="WaterTrough", position=1, volume=15, forced_rack_type="invalid;forced rack type"
             )
-        _prepare_aspirate_dispense_parameters(
+        prepare_aspirate_dispense_parameters(
             rack_label="WaterTrough", position=1, volume=15, forced_rack_type="valid forced rack type"
         )
         return
@@ -1094,12 +1094,12 @@ class TestTroughLabwareWorklist:
 
 
 class TestLargeVolumeHandling:
-    def test_partition_volume_helper(self) -> None:
-        assert [] == _partition_volume(0, max_volume=950)
-        assert [550.3] == _partition_volume(550.3, max_volume=950)
-        assert [500 == 500], _partition_volume(1000, max_volume=950)
-        assert [500 == 499], _partition_volume(999, max_volume=950)
-        assert [667 == 667, 666], _partition_volume(2000, max_volume=950)
+    def testpartition_volume_helper(self) -> None:
+        assert [] == partition_volume(0, max_volume=950)
+        assert [550.3] == partition_volume(550.3, max_volume=950)
+        assert [500 == 500], partition_volume(1000, max_volume=950)
+        assert [500 == 499], partition_volume(999, max_volume=950)
+        assert [667 == 667, 666], partition_volume(2000, max_volume=950)
         return
 
     def test_worklist_constructor(self) -> None:
@@ -1167,8 +1167,8 @@ class TestLargeVolumeHandling:
             wl.transfer(source, ["A01", "B01"], destination, ["A01", "B01"], 1000)
         return
 
-    def test_partition_by_columns_source(self) -> None:
-        column_groups = _partition_by_column(
+    def testpartition_by_columns_source(self) -> None:
+        column_groups = partition_by_column(
             ["A01", "B01", "A03", "B03", "C02"],
             ["A01", "B01", "C01", "D01", "E01"],
             [2500, 3500, 1000, 500, 2000],
@@ -1192,8 +1192,8 @@ class TestLargeVolumeHandling:
         )
         return
 
-    def test_partition_by_columns_destination(self) -> None:
-        column_groups = _partition_by_column(
+    def testpartition_by_columns_destination(self) -> None:
+        column_groups = partition_by_column(
             ["A01", "B01", "A03", "B03", "C02"],
             ["A01", "B01", "C02", "D01", "E02"],
             [2500, 3500, 1000, 500, 2000],
@@ -1212,13 +1212,13 @@ class TestLargeVolumeHandling:
         )
         return
 
-    def test_partition_by_columns_sorting(self) -> None:
+    def testpartition_by_columns_sorting(self) -> None:
         # within every column, the wells are supposed to be sorted by row
         # The test source wells are partially sorted (col 1 is in the right order, col 3 in the reverse)
         # The result is expected to always be sorted by row, either in the source (first case) or destination:
 
         # by source
-        column_groups = _partition_by_column(
+        column_groups = partition_by_column(
             ["A01", "B01", "B03", "A03", "C02"],
             ["B01", "A01", "C01", "D01", "E01"],
             [2500, 3500, 1000, 500, 2000],
@@ -1243,7 +1243,7 @@ class TestLargeVolumeHandling:
 
         # by destination
         # (destination wells are across 3 columns; reverse order in col 1, forward order in col 3)
-        column_groups = _partition_by_column(
+        column_groups = partition_by_column(
             ["A01", "B01", "B03", "A03", "C02"],
             ["B01", "A01", "C03", "D03", "E02"],
             [2500, 3500, 1000, 500, 2000],
@@ -1439,7 +1439,7 @@ class TestReagentDistribution:
                 # one excluded well not in the destination range
                 wl.reagent_distribution("S1", 1, 8, "D1", 1, 20, volume=50, exclude_wells=[18, 19, 23])
         with pytest.raises(InvalidOperationError):
-            with caplog.at_level(logging.WARNING, logger="evotools"):
+            with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
                 with Worklist(max_volume=950) as wl:
                     # dispense more than diluter volume
                     wl.reagent_distribution("S1", 1, 8, "D1", 1, 20, volume=1200)
@@ -1619,25 +1619,25 @@ class TestFunctions:
         # + warn user about inefficient configuration (when user selects to partition by the trough)
 
         # automatic
-        assert "source" == _optimize_partition_by(S, D, "auto", "No troughs at all")
-        assert "source" == _optimize_partition_by(S, DT, "auto", "Trough destination")
-        assert "destination" == _optimize_partition_by(ST, D, "auto", "Trough source")
-        _optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
+        assert "source" == optimize_partition_by(S, D, "auto", "No troughs at all")
+        assert "source" == optimize_partition_by(S, DT, "auto", "Trough destination")
+        assert "destination" == optimize_partition_by(ST, D, "auto", "Trough source")
+        optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
 
         # fixed to source
-        assert "source" == _optimize_partition_by(S, D, "source", "No troughs at all")
-        assert "source" == _optimize_partition_by(S, DT, "source", "Trough destination")
-        with caplog.at_level(logging.WARNING, logger="evotools"):
-            assert "source" == _optimize_partition_by(ST, D, "source", "Trough source")
+        assert "source" == optimize_partition_by(S, D, "source", "No troughs at all")
+        assert "source" == optimize_partition_by(S, DT, "source", "Trough destination")
+        with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
+            assert "source" == optimize_partition_by(ST, D, "source", "Trough source")
         assert 'Consider using partition_by="destination"' in caplog.records[0].message
-        _optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
+        optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
 
         # fixed to destination
-        _optimize_partition_by(S, D, "destination", "No troughs at all") == "destination"
+        optimize_partition_by(S, D, "destination", "No troughs at all") == "destination"
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="evotools"):
-            assert _optimize_partition_by(S, DT, "destination", "Trough destination") == "destination"
+        with caplog.at_level(logging.WARNING, logger="robotools.evotools"):
+            assert optimize_partition_by(S, DT, "destination", "Trough destination") == "destination"
         assert 'Consider using partition_by="source"' in caplog.records[0].message
-        assert _optimize_partition_by(ST, D, "destination", "Trough source") == "destination"
-        assert _optimize_partition_by(ST, DT, "destination", "Trough source and destination") == "destination"
+        assert optimize_partition_by(ST, D, "destination", "Trough source") == "destination"
+        assert optimize_partition_by(ST, DT, "destination", "Trough source and destination") == "destination"
         return
