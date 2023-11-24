@@ -8,14 +8,14 @@ import pytest
 
 from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Labwares, Tip
-from robotools.evotools.worklist import (
-    Worklist,
+from robotools.evotools.worklist import Worklist
+from robotools.liquidhandling.labware import Labware, Trough
+from robotools.worklists.utils import (
     optimize_partition_by,
     partition_by_column,
     partition_volume,
     prepare_aspirate_dispense_parameters,
 )
-from robotools.liquidhandling.labware import Labware, Trough
 
 
 class TestWorklist:
