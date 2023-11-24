@@ -17,14 +17,14 @@ from robotools.worklists.utils import (
     prepare_aspirate_dispense_parameters,
 )
 
-from .. import liquidhandling
+from robotools import liquidhandling
 
-__all__ = ("Worklist",)
+__all__ = ("BaseWorklist",)
 
 logger = logging.getLogger(__name__)
 
 
-class Worklist(list):
+class BaseWorklist(list):
     """Context manager for the creation of Worklists."""
 
     def __init__(
@@ -54,7 +54,7 @@ class Worklist(list):
         self.auto_split = auto_split
         super().__init__()
 
-    def __enter__(self) -> "Worklist":
+    def __enter__(self) -> "BaseWorklist":
         self.clear()
         return self
 
