@@ -1,7 +1,8 @@
 from . import evotools, liquidhandling
-from .evotools import InvalidOperationError, Labwares, Tip, Worklist
+from .evotools import EvoWorklist, InvalidOperationError, Labwares, Tip, Worklist
 from .evotools import commands as evo_cmd
 from .evotools import int_to_tip
+from .fluenttools import FluentWorklist
 from .liquidhandling import Labware, Trough, VolumeOverflowError, VolumeUnderflowError
 from .transform import (
     WellRandomizer,
@@ -11,5 +12,6 @@ from .transform import (
     make_well_index_dict,
 )
 from .utils import DilutionPlan, get_trough_wells
+from .worklists import BaseWorklist, CompatibilityError
 
-__version__ = "1.7.3"
+__version__ = "1.8.0"
