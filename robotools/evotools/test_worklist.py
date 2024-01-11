@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Labwares, Tip
 from robotools.evotools.worklist import Worklist
 from robotools.liquidhandling.labware import Labware, Trough
+from robotools.worklists.exceptions import InvalidOperationError
 from robotools.worklists.utils import (
     optimize_partition_by,
     partition_by_column,
