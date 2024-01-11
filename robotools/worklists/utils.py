@@ -6,8 +6,8 @@ from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy
 
-from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip, int_to_tip
+from robotools.worklists.exceptions import InvalidOperationError
 
 from .. import liquidhandling
 

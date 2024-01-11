@@ -8,17 +8,13 @@ from typing import Dict, Iterable, List, Optional, Sequence, Union
 import numpy
 
 from robotools import liquidhandling
-from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip
+from robotools.worklists.exceptions import CompatibilityError, InvalidOperationError
 from robotools.worklists.utils import prepare_aspirate_dispense_parameters
 
-__all__ = ("BaseWorklist", "CompatibilityError")
+__all__ = ("BaseWorklist",)
 
 logger = logging.getLogger(__name__)
-
-
-class CompatibilityError(NotImplementedError):
-    """Exception that's thrown when device-specific implementations are required."""
 
 
 class BaseWorklist(list):

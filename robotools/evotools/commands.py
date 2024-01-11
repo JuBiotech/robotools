@@ -3,9 +3,9 @@ from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from robotools.evotools.exceptions import InvalidOperationError
 from robotools.evotools.types import Tip, int_to_tip
 from robotools.evotools.utils import to_hex
+from robotools.worklists.exceptions import InvalidOperationError
 
 from .. import transform
 
