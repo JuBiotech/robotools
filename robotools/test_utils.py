@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from robotools.evotools import Worklist
+from robotools.evotools import EvoWorklist
 from robotools.liquidhandling import Labware, Trough
 from robotools.utils import DilutionPlan, get_trough_wells
 
@@ -140,7 +140,7 @@ class TestDilutionPlan:
         diluent = Trough("Diluent", 4, 2, min_volume=0, max_volume=20_000, initial_volumes=[0, 20_000])
         dilution = Labware("Dilution", 6, 8, min_volume=0, max_volume=2000)
         destination = Labware("Destination", 7, 10, min_volume=0, max_volume=1000)
-        with Worklist() as wl:
+        with EvoWorklist() as wl:
             plan.to_worklist(
                 worklist=wl,
                 stock=stock,
@@ -183,8 +183,8 @@ class TestDilutionPlan:
         ]
 
         # Split the work across two worklists (also via the hook)
-        wl_one = Worklist()
-        wl_two = Worklist()
+        wl_one = EvoWorklist()
+        wl_two = EvoWorklist()
 
         def pre_mix(col, wl):
             wl.comment(f"Pre-mix on column {col}")
