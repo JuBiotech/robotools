@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from robotools.evotools import Worklist
+from robotools.evotools.worklist import EvoWorklist
 from robotools.liquidhandling.composition import (
     combine_composition,
     get_initial_composition,
@@ -261,7 +261,7 @@ class TestCompositionTracking:
         G = Trough("glucose", 4, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         D = Labware("dilutions", 4, 2, min_volume=0, max_volume=10000)
 
-        with Worklist() as wl:
+        with EvoWorklist() as wl:
             # 100 % in first column
             wl.transfer(G, G.wells, D, D.wells[:, 0], volumes=[1000, 800, 600, 550])
             wl.transfer(W, W.wells, D, D.wells[:, 0], volumes=[0, 200, 400, 450])
@@ -282,7 +282,7 @@ class TestCompositionTracking:
         G = Trough("glucose", 2, 1, min_volume=0, max_volume=10000, initial_volumes=10000)
         D = Labware("dilutions", 2, 4, min_volume=0, max_volume=10000)
 
-        with Worklist() as wl:
+        with EvoWorklist() as wl:
             # transfer some glucose
             wl.transfer(
                 G,
@@ -318,7 +318,7 @@ class TestCompositionTracking:
         A._composition["water"] = 0.25 * np.ones_like(A.volumes)
         A._composition["salt"] = 0.75 * np.ones_like(A.volumes)
         A._volumes = np.ones_like(A.volumes) * 500
-        with Worklist() as wl:
+        with EvoWorklist() as wl:
             wl.transfer(A, A.wells, A, A.wells, volumes=300)
         # make sure that the composition of the liquid is not changed
         np.testing.assert_array_equal(A.composition["water"], 0.25 * np.ones_like(A.volumes))
