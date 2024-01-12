@@ -1641,3 +1641,49 @@ class TestFunctions:
         assert optimize_partition_by(ST, D, "destination", "Trough source") == "destination"
         assert optimize_partition_by(ST, DT, "destination", "Trough source and destination") == "destination"
         return
+
+
+class TestEvoCommands:
+    def test_evo_aspirate(self) -> None:
+        lw = Labware("A", 4, 5, min_volume=10, max_volume=100)
+        lw.add("A01", 50)
+        with Worklist() as wl:
+            wl.evo_aspirate(
+                lw,
+                "A01",
+                labware_position=(30, 2),
+                tips=[Tip.T2],
+                volumes=20,
+                liquid_class="PowerSuck",
+            )
+        assert len(wl) == 1
+        assert "B;Aspirate" in wl[0]
+        assert lw.volumes[0, 0] == 30
+        pass
+
+    def test_evo_dispense(self) -> None:
+        lw = Labware("A", 4, 5, min_volume=10, max_volume=100)
+        with Worklist() as wl:
+            wl.evo_dispense(
+                lw,
+                "A01",
+                labware_position=(30, 2),
+                tips=[Tip.T2],
+                volumes=50,
+                liquid_class="PowerPee",
+            )
+        assert len(wl) == 1
+        assert "B;Dispense" in wl[0]
+        assert lw.volumes[0, 0] == 50
+        pass
+
+    def test_evo_wash(self) -> None:
+        with Worklist() as wl:
+            wl.evo_wash(
+                tips=[Tip.T1, Tip.T5],
+                waste_location=(40, 2),
+                cleaner_location=(40, 3),
+            )
+        assert len(wl) == 1
+        assert "B;Wash" in wl[0]
+        pass
