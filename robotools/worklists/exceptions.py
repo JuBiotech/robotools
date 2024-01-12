@@ -11,4 +11,4 @@ class CompatibilityError(NotImplementedError):
 
 
 class InvalidOperationError(Exception):
-    """When an operation can not be performed under the present circumstances."""
+    """When an operation cannot be performed under the present circumstances."""
