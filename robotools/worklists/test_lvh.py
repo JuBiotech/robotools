@@ -1,14 +1,17 @@
 import numpy as np
+import pytest
 
 from robotools.evotools.worklist import EvoWorklist
+from robotools.fluenttools.worklist import FluentWorklist
 from robotools.liquidhandling.labware import Labware
 
 
 class TestLargeVolumeHandling:
-    def test_single_split(self) -> None:
+    @pytest.mark.parametrize("cls", [EvoWorklist, FluentWorklist])
+    def test_single_split(self, cls) -> None:
         src = Labware("A", 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = Labware("B", 3, 2, min_volume=1000, max_volume=25000)
-        with EvoWorklist(auto_split=True) as wl:
+        with cls(auto_split=True) as wl:
             wl.transfer(src, "A01", dst, "A01", 2000, label="Transfer more than 2x the max")
             assert wl == [
                 "C;Transfer more than 2x the max",
@@ -46,10 +49,11 @@ class TestLargeVolumeHandling:
         )
         return
 
-    def test_column_split(self) -> None:
+    @pytest.mark.parametrize("cls", [EvoWorklist, FluentWorklist])
+    def test_column_split(self, cls) -> None:
         src = Labware("A", 4, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = Labware("B", 4, 2, min_volume=1000, max_volume=25000)
-        with EvoWorklist(auto_split=True) as wl:
+        with cls(auto_split=True) as wl:
             wl.transfer(
                 src, ["A01", "B01", "D01", "C01"], dst, ["A01", "B01", "D01", "C01"], [1500, 250, 0, 1200]
             )
@@ -93,10 +97,11 @@ class TestLargeVolumeHandling:
         )
         return
 
-    def test_block_split(self) -> None:
+    @pytest.mark.parametrize("cls", [EvoWorklist, FluentWorklist])
+    def test_block_split(self, cls) -> None:
         src = Labware("A", 3, 2, min_volume=1000, max_volume=25000, initial_volumes=12000)
         dst = Labware("B", 3, 2, min_volume=1000, max_volume=25000)
-        with EvoWorklist(auto_split=True) as wl:
+        with cls(auto_split=True) as wl:
             wl.transfer(
                 # A01, B01, A02, B02
                 src,

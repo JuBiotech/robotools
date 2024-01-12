@@ -30,7 +30,6 @@ def test_recommended_instantiation():
         warnings.simplefilter("error")
         BaseWorklist()
         EvoWorklist()
-    with pytest.raises(NotImplementedError):
         FluentWorklist()
     pass
 
