@@ -6,7 +6,7 @@
 
 # `robotools`
 
-This is a package for debugging and planning liquid handling operations, writing worklist files for the Tecan FreedomEVO platform on the fly.
+This is a package for debugging and planning liquid handling operations, writing worklist files for the Tecan FreedomEVO and Tecan Fluent platform on the fly.
 
 You can visit the documentation at https://robotools.readthedocs.io, where the [notebooks](https://github.com/jubiotech/robotools/tree/master/notebooks)
 are rendered next to auto-generated API documentation.
