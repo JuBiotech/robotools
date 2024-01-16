@@ -14,4 +14,4 @@ from .transform import (
 from .utils import DilutionPlan, get_trough_wells
 from .worklists import BaseWorklist, CompatibilityError
 
-__version__ = "1.8.0"
+__version__ = "1.9.0"
