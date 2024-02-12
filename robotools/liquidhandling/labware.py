@@ -65,6 +65,11 @@ class Labware:
         return len(self.column_ids)
 
     @property
+    def shape(self) -> Tuple[int, int]:
+        """Number of rows and columns."""
+        return self.wells.shape
+
+    @property
     def is_trough(self) -> bool:
         return self.virtual_rows != None
 
