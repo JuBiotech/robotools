@@ -47,6 +47,13 @@ class BaseWorklist(list):
         self.auto_split = auto_split
         super().__init__()
 
+    @property
+    def filepath(self) -> Optional[Path]:
+        """Path to which the worklist will write, if specified."""
+        if self._filepath is not None:
+            return Path(self._filepath)
+        return None
+
     def __enter__(self) -> "BaseWorklist":
         self.clear()
         return self
