@@ -4,7 +4,8 @@ from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy
 
-from . import evotools, liquidhandling
+from robotools.liquidhandling import Labware
+from robotools.worklists.base import BaseWorklist
 
 
 def get_trough_wells(n: int, trough_wells: Union[collections.abc.Iterable[str], numpy.ndarray]) -> List[str]:
@@ -166,16 +167,16 @@ class DilutionPlan:
     def to_worklist(
         self,
         *,
-        worklist: evotools.Worklist,
-        stock: liquidhandling.Labware,
+        worklist: BaseWorklist,
+        stock: Labware,
         stock_column: int = 0,
-        diluent: liquidhandling.Labware,
+        diluent: Labware,
         diluent_column: int = 0,
-        dilution_plate: liquidhandling.Labware,
-        destination_plate: Optional[liquidhandling.Labware] = None,
+        dilution_plate: Labware,
+        destination_plate: Optional[Labware] = None,
         v_destination: Optional[float] = None,
-        pre_mix_hook: Optional[Callable[[int, evotools.Worklist], Optional[evotools.Worklist]]] = None,
-        post_mix_hook: Optional[Callable[[int, evotools.Worklist], Optional[evotools.Worklist]]] = None,
+        pre_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
+        post_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
         mix_threshold: float = 0.05,
         mix_wash: int = 2,
         mix_repeat: int = 2,
