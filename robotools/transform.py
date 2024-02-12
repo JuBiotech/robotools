@@ -4,7 +4,7 @@ import numpy
 from numpy.typing import ArrayLike
 
 
-def make_well_index_dict(R: int, C: int) -> dict:
+def make_well_index_dict(R: int, C: int) -> Dict[str, Tuple[int, int]]:
     """Create a dictionary mapping well IDs to their numpy indices.
 
     Parameters
@@ -49,7 +49,7 @@ def make_well_array(R: int, C: int) -> numpy.ndarray:
 class WellShifter:
     """Helper object to shift a set of well IDs within a MTP."""
 
-    def __init__(self, shape_A: tuple, shape_B: tuple, shifted_A01: str) -> None:
+    def __init__(self, shape_A: Tuple[int, int], shape_B: Tuple[int, int], shifted_A01: str) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
@@ -123,7 +123,7 @@ class WellShifter:
 class WellRotator:
     """Helper object to rotate a set of well IDs within a MTP."""
 
-    def __init__(self, original_shape: tuple) -> None:
+    def __init__(self, original_shape: Tuple[int, int]) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
