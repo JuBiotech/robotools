@@ -14,4 +14,29 @@ from .transform import (
 from .utils import DilutionPlan, get_trough_wells
 from .worklists import BaseWorklist, CompatibilityError
 
-__version__ = "1.9.0"
+__version__ = "1.9.1"
+__all__ = (
+    "BaseWorklist",
+    "CompatibilityError",
+    "DilutionPlan",
+    "evo_cmd",
+    "evotools",
+    "EvoWorklist",
+    "FluentWorklist",
+    "get_trough_wells",
+    "int_to_tip",
+    "InvalidOperationError",
+    "Labware",
+    "Labwares",
+    "liquidhandling",
+    "make_well_array",
+    "make_well_index_dict",
+    "Tip",
+    "Trough",
+    "VolumeOverflowError",
+    "VolumeUnderflowError",
+    "WellRandomizer",
+    "WellRotator",
+    "WellShifter",
+    "Worklist",
+)
