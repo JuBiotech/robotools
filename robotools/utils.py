@@ -1,13 +1,13 @@
 """Module with robot-agnostic utilities."""
 import collections
-from typing import Callable, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy
 
 from . import evotools, liquidhandling
 
 
-def get_trough_wells(n: int, trough_wells: Sequence[str]) -> Sequence[str]:
+def get_trough_wells(n: int, trough_wells: Union[collections.abc.Iterable[str], numpy.ndarray]) -> List[str]:
     """Creates a list that re-uses trough wells if needed.
 
     When n > trough.virtual_rows, the available wells are repeated.
@@ -26,15 +26,13 @@ def get_trough_wells(n: int, trough_wells: Sequence[str]) -> Sequence[str]:
     """
     if not isinstance(n, int):
         raise TypeError("n must be int")
-    if not isinstance(trough_wells, (list, tuple, numpy.ndarray)):
-        raise TypeError("trough_wells must be a tuple, list or 1-D numpy array.")
     if n < 0:
         raise ValueError("n must be ≥ 0.")
-    if len(trough_wells) == 0:
+    trough_wells = list(numpy.asarray(trough_wells).flatten("F"))
+    n_available = len(trough_wells)
+    if n_available == 0:
         raise ValueError("trough_wells must contain at least 1 element.")
 
-    trough_wells = list(numpy.array(trough_wells).flatten("F"))
-    n_available = len(trough_wells)
     n_repeat = n // n_available + 1
     return (trough_wells * n_repeat)[:n]
 

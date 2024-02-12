@@ -249,8 +249,7 @@ class TestUtils:
             get_trough_wells(n=3, trough_wells=[])
         with pytest.raises(TypeError):
             get_trough_wells(n=0.5, trough_wells=list("ABC"))
-        with pytest.raises(TypeError):
-            get_trough_wells(n=2, trough_wells="ABC")
+        assert get_trough_wells(n=2, trough_wells="ABC") == ["ABC", "ABC"]
         np.testing.assert_array_equal(get_trough_wells(n=0, trough_wells=list("ABC")), list())
         np.testing.assert_array_equal(get_trough_wells(n=1, trough_wells=list("ABC")), list("A"))
         np.testing.assert_array_equal(get_trough_wells(n=3, trough_wells=list("ABC")), list("ABC"))
