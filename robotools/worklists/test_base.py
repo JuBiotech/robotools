@@ -284,6 +284,7 @@ class TestWorklist:
         error = None
         try:
             with BaseWorklist() as worklist:
+                assert worklist.filepath is None
                 worklist.flush()
                 worklist.save(tf)
                 assert os.path.exists(tf)
@@ -307,6 +308,7 @@ class TestWorklist:
         error = None
         try:
             with BaseWorklist(tf) as worklist:
+                assert isinstance(worklist.filepath, Path)
                 worklist.flush()
             assert os.path.exists(tf)
             with open(tf) as file:
