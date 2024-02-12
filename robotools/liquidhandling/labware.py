@@ -2,7 +2,7 @@
 
 
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -91,7 +91,7 @@ class Labware:
         max_volume: float,
         initial_volumes: Optional[Union[float, np.ndarray]] = None,
         virtual_rows: Optional[int] = None,
-        component_names: Optional[Dict[str, Optional[str]]] = None,
+        component_names: Optional[Mapping[str, Optional[str]]] = None,
     ) -> None:
         """Creates a `Labware` object.
 
@@ -221,10 +221,10 @@ class Labware:
 
     def add(
         self,
-        wells: Sequence[str],
+        wells: Union[str, Sequence[str], np.ndarray],
         volumes: Union[float, Sequence[float], np.ndarray],
         label: Optional[str] = None,
-        compositions: Optional[List[Optional[Dict[str, float]]]] = None,
+        compositions: Optional[Sequence[Optional[Mapping[str, float]]]] = None,
     ) -> None:
         """Adds volumes to wells.
 
@@ -280,7 +280,7 @@ class Labware:
 
     def remove(
         self,
-        wells: Sequence[str],
+        wells: Union[str, Sequence[str], np.ndarray],
         volumes: Union[float, Sequence[float], np.ndarray],
         label: Optional[str] = None,
     ) -> None:
@@ -366,8 +366,8 @@ class Trough(Labware):
         *,
         min_volume: float,
         max_volume: float,
-        initial_volumes: Union[float, np.ndarray] = 0,
-        column_names: Optional[Sequence[Union[str, None]]] = None,
+        initial_volumes: Union[float, Sequence[float], np.ndarray] = 0,
+        column_names: Optional[Sequence[Optional[str]]] = None,
     ) -> None:
         """Creates a `Labware` object.
 
