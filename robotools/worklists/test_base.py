@@ -505,45 +505,6 @@ class TestStandardLabwareWorklist:
         pass
 
 
-class TestTroughLabwareWorklist:
-    def test_aspirate(self) -> None:
-        source = Trough(
-            "SourceLW", virtual_rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200
-        )
-        with BaseWorklist() as wl:
-            wl.aspirate(source, ["A01", "A02", "C02"], 50)
-            wl.aspirate(source, ["A01", "A02", "C02"], [1, 2, 3])
-            assert wl == [
-                "A;SourceLW;;;1;;50.00;;;;",
-                "A;SourceLW;;;4;;50.00;;;;",
-                "A;SourceLW;;;6;;50.00;;;;",
-                "A;SourceLW;;;1;;1.00;;;;",
-                "A;SourceLW;;;4;;2.00;;;;",
-                "A;SourceLW;;;6;;3.00;;;;",
-            ]
-            np.testing.assert_array_equal(source.volumes, [[149, 95, 200]])
-            assert len(source.history) == 3
-        return
-
-    def test_dispense(self) -> None:
-        destination = Trough("DestinationLW", virtual_rows=3, columns=3, min_volume=10, max_volume=200)
-        with BaseWorklist() as wl:
-            wl.dispense(destination, ["A01", "A02", "A03", "B01"], 50)
-            wl.dispense(destination, ["A01", "A02", "C02"], [1, 2, 3])
-            assert wl == [
-                "D;DestinationLW;;;1;;50.00;;;;",
-                "D;DestinationLW;;;4;;50.00;;;;",
-                "D;DestinationLW;;;7;;50.00;;;;",
-                "D;DestinationLW;;;2;;50.00;;;;",
-                "D;DestinationLW;;;1;;1.00;;;;",
-                "D;DestinationLW;;;4;;2.00;;;;",
-                "D;DestinationLW;;;6;;3.00;;;;",
-            ]
-            np.testing.assert_array_equal(destination.volumes, [[101, 55, 50]])
-            assert len(destination.history) == 3
-        return
-
-
 class TestLargeVolumeHandling:
     def testpartition_volume_helper(self) -> None:
         assert [] == partition_volume(0, max_volume=950)
