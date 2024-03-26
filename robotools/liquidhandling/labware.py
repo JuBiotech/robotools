@@ -54,6 +54,12 @@ class Labware:
     @property
     def positions(self) -> Dict[str, int]:
         """Mapping of well-ids to EVOware-compatible position numbers."""
+        warnings.warn(
+            "`Labware.positions` is deprecated in favor of model-specific implementations."
+            "Use `robotools.evotools.get_well_positions()` or `robotools.fluenttools.get_well_positions()`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._positions
 
     @property

@@ -9,6 +9,7 @@ import numpy
 
 from robotools import liquidhandling
 from robotools.evotools.types import Tip
+from robotools.liquidhandling import Labware
 from robotools.worklists.exceptions import CompatibilityError, InvalidOperationError
 from robotools.worklists.utils import prepare_aspirate_dispense_parameters
 
@@ -62,6 +63,12 @@ class BaseWorklist(list):
         if self._filepath:
             self.save(self._filepath)
         return
+
+    def _get_well_position(self, labware: Labware, well: str) -> int:
+        """Internal method to resolve the well number for a given labware well."""
+        raise TypeError(
+            "The use of a specific worklist type (typically EvoWorklist or FluentWorklist) is required for this operation."
+        )
 
     def save(self, filepath: Union[str, Path]) -> None:
         """Writes the worklist to the filepath.
@@ -457,7 +464,7 @@ class BaseWorklist(list):
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
-                self.aspirate_well(labware.name, labware.positions[well], volume, **kwargs)
+                self.aspirate_well(labware.name, self._get_well_position(labware, well), volume, **kwargs)
         return
 
     def dispense(
@@ -497,7 +504,7 @@ class BaseWorklist(list):
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
-                self.dispense_well(labware.name, labware.positions[well], volume, **kwargs)
+                self.dispense_well(labware.name, self._get_well_position(labware, well), volume, **kwargs)
         return
 
     def transfer(
@@ -587,7 +594,7 @@ class BaseWorklist(list):
 
         # transform destination wells into range + mask
         destination_wells = numpy.array(destination_wells).flatten("F")
-        dst_wells = list(sorted([destination.positions[w] for w in destination_wells]))
+        dst_wells = list(sorted([self._get_well_position(destination, w) for w in destination_wells]))
         dst_start, dst_end = dst_wells[0], dst_wells[-1]
         excluded_dst_wells = set(range(dst_start, dst_end + 1)).difference(dst_wells)
 
