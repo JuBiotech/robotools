@@ -4,6 +4,7 @@ from typing import Optional, Union
 
 import numpy as np
 
+from robotools.fluenttools.utils import get_well_position
 from robotools.liquidhandling.labware import Labware
 from robotools.worklists.base import BaseWorklist
 from robotools.worklists.utils import (
@@ -25,6 +26,9 @@ class FluentWorklist(BaseWorklist):
         auto_split: bool = True,
     ) -> None:
         super().__init__(filepath, max_volume, auto_split)
+
+    def _get_well_position(self, labware: Labware, well: str) -> int:
+        return get_well_position(labware, well)
 
     def transfer(
         self,
