@@ -574,14 +574,6 @@ class TestLargeVolumeHandling:
             max_volume=100 * 1000,
             initial_volumes=50 * 1000,
         )
-        destination = Trough(
-            "WaterTrough",
-            virtual_rows=3,
-            columns=3,
-            min_volume=1000,
-            max_volume=100 * 1000,
-            initial_volumes=50 * 1000,
-        )
         with BaseWorklist(max_volume=900, auto_split=False) as wl:
             with pytest.raises(InvalidOperationError):
                 wl.aspirate_well("WaterTrough", 1, 1000)
@@ -593,14 +585,6 @@ class TestLargeVolumeHandling:
                 wl.dispense(source, ["A01", "A02", "C02"], 1000)
 
         source = Trough(
-            "WaterTrough",
-            virtual_rows=3,
-            columns=3,
-            min_volume=1000,
-            max_volume=100 * 1000,
-            initial_volumes=50 * 1000,
-        )
-        destination = Trough(
             "WaterTrough",
             virtual_rows=3,
             columns=3,
