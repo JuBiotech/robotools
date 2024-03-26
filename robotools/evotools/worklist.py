@@ -10,6 +10,7 @@ import numpy as np
 from robotools import liquidhandling
 from robotools.evotools import commands
 from robotools.evotools.types import Tip
+from robotools.evotools.utils import get_well_position
 from robotools.worklists.base import BaseWorklist
 from robotools.worklists.utils import (
     optimize_partition_by,
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 
 class EvoWorklist(BaseWorklist):
     """Context manager for the creation of Tecan EVO worklists."""
+
+    def _get_well_position(self, labware: liquidhandling.Labware, well: str) -> int:
+        return get_well_position(labware, well)
 
     def evo_aspirate(
         self,

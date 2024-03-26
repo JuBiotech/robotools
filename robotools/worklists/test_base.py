@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from robotools import EvoWorklist, FluentWorklist
 from robotools.evotools.types import Tip
 from robotools.liquidhandling.labware import Labware, Trough
 from robotools.worklists import BaseWorklist
@@ -323,11 +324,24 @@ class TestWorklist:
             raise error
         return
 
-
-class TestStandardLabwareWorklist:
-    def test_aspirate(self) -> None:
-        source = Labware("SourceLW", rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
+    def test_aspirate_dispense_distribute_require_specific_type(self):
+        lw = Labware("A", 2, 3, min_volume=0, max_volume=1000, initial_volumes=500)
+        tr = Trough("A", 1, 1, min_volume=0, max_volume=1000, initial_volumes=500)
         with BaseWorklist() as wl:
+            with pytest.raises(TypeError, match="specific worklist type"):
+                wl.aspirate(lw, "A01", 50)
+            with pytest.raises(TypeError, match="specific worklist type"):
+                wl.dispense(lw, "A01", 50)
+            with pytest.raises(TypeError, match="specific worklist type"):
+                wl.distribute(tr, 0, lw, ["A01"], volume=10)
+        pass
+
+
+@pytest.mark.parametrize("wl_cls", [EvoWorklist, FluentWorklist])
+class TestStandardLabwareWorklist:
+    def test_aspirate(self, wl_cls) -> None:
+        source = Labware("SourceLW", rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
+        with wl_cls() as wl:
             wl.aspirate(source, ["A01", "A02", "C02"], 50, label=None)
             wl.aspirate(source, ["A03", "B03", "C03"], [10, 20, 30.5], label="second aspirate")
             assert wl == [
@@ -350,9 +364,9 @@ class TestStandardLabwareWorklist:
             assert len(source.history) == 3
         return
 
-    def test_aspirate_2d_volumes(self) -> None:
+    def test_aspirate_2d_volumes(self, wl_cls) -> None:
         source = Labware("SourceLW", rows=2, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.aspirate(
                 source,
                 source.wells[:, :2],
@@ -373,9 +387,9 @@ class TestStandardLabwareWorklist:
             assert len(source.history) == 2
         return
 
-    def test_dispense(self) -> None:
+    def test_dispense(self, wl_cls) -> None:
         destination = Labware("DestinationLW", rows=2, columns=3, min_volume=10, max_volume=200)
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.dispense(destination, ["A01", "A02", "A03"], 150, label=None)
             wl.dispense(destination, ["B01", "B02", "B03"], [10, 20, 30.5], label="second dispense")
             assert wl == [
@@ -397,9 +411,9 @@ class TestStandardLabwareWorklist:
             assert len(destination.history) == 3
         return
 
-    def test_dispense_2d_volumes(self) -> None:
+    def test_dispense_2d_volumes(self, wl_cls) -> None:
         destination = Labware("DestinationLW", rows=2, columns=3, min_volume=10, max_volume=200)
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.dispense(
                 destination,
                 destination.wells[:, :2],
@@ -420,10 +434,10 @@ class TestStandardLabwareWorklist:
             assert len(destination.history) == 2
         return
 
-    def test_skip_zero_volumes(self) -> None:
+    def test_skip_zero_volumes(self, wl_cls) -> None:
         source = Labware("SourceLW", rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         destination = Labware("DestinationLW", rows=2, columns=3, min_volume=10, max_volume=200)
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.aspirate(source, ["A03", "B03", "C03"], [10, 0, 30.5])
             wl.dispense(destination, ["B01", "B02", "B03"], [10, 0, 30.5])
             assert wl == [
@@ -450,9 +464,9 @@ class TestStandardLabwareWorklist:
             assert len(destination.history) == 2
         return
 
-    def test_tip_selection(self) -> None:
+    def test_tip_selection(self, wl_cls) -> None:
         A = Labware("A", 3, 4, min_volume=10, max_volume=250, initial_volumes=100)
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.aspirate(A, "A01", 10, tip=1)
             wl.aspirate(A, "A01", 10, tip=2)
             wl.aspirate(A, "A01", 10, tip=3)
@@ -489,7 +503,7 @@ class TestStandardLabwareWorklist:
             ]
         return
 
-    def test_tip_mask(self) -> None:
+    def test_tip_mask(self, wl_cls) -> None:
         A = Labware("A", 3, 4, min_volume=10, max_volume=250)
 
         # Only allow three specific tips to be used...
@@ -499,7 +513,7 @@ class TestStandardLabwareWorklist:
             Tip.T7,  # 64
             # The sum of tips is = 73
         ]
-        with BaseWorklist() as wl:
+        with wl_cls() as wl:
             wl.dispense(A, "A01", 10, tip=tips)
         assert wl[-1] == "D;A;;;1;;10.00;;;73;"
         pass
@@ -535,7 +549,7 @@ class TestLargeVolumeHandling:
             max_volume=100 * 1000,
             initial_volumes=50 * 1000,
         )
-        with BaseWorklist(max_volume=900, auto_split=False) as wl:
+        with EvoWorklist(max_volume=900, auto_split=False) as wl:
             with pytest.raises(InvalidOperationError):
                 wl.aspirate_well("WaterTrough", 1, 1000)
             with pytest.raises(InvalidOperationError):
@@ -553,7 +567,7 @@ class TestLargeVolumeHandling:
             max_volume=100 * 1000,
             initial_volumes=50 * 1000,
         )
-        with BaseWorklist(max_volume=1200) as wl:
+        with EvoWorklist(max_volume=1200) as wl:
             wl.aspirate_well("WaterTrough", 1, 1000)
             wl.dispense_well("WaterTrough", 1, 1000)
             wl.aspirate(source, ["A01", "A02", "C02"], 1000)
@@ -722,12 +736,12 @@ class TestReagentDistribution:
         return
 
     def test_oo_parameter_validation(self) -> None:
-        with BaseWorklist() as wl:
+        with EvoWorklist() as wl:
             src = Labware("NotATrough", 6, 2, min_volume=20, max_volume=1000)
             dst = Labware("48deep", 6, 8, min_volume=50, max_volume=4000)
             with pytest.raises(ValueError):
                 wl.distribute(src, 0, dst, dst.wells[:, :3], volume=50)
-        with BaseWorklist(max_volume=950) as wl:
+        with FluentWorklist(max_volume=950) as wl:
             src = Trough("Water", 8, 2, min_volume=20, max_volume=1000)
             dst = Labware("48deep", 6, 8, min_volume=50, max_volume=4000)
             with pytest.raises(InvalidOperationError):
@@ -744,7 +758,7 @@ class TestReagentDistribution:
             initial_volumes=100 * 1000,
         )
         dst = Labware("MTP-96-3", 8, 12, min_volume=20, max_volume=300)
-        with BaseWorklist() as wl:
+        with FluentWorklist() as wl:
             all_dst_wells = set(dst.wells.flatten("F"))
             skip_wells = set("C04,C07,E09,F06,B11".split(","))
             dst_wells = list(all_dst_wells.difference(skip_wells))
@@ -786,7 +800,7 @@ class TestReagentDistribution:
             initial_volumes=100 * 1000,
         )
         dst = Labware("MTP-96-2", 8, 12, min_volume=20, max_volume=300)
-        with BaseWorklist() as wl:
+        with EvoWorklist() as wl:
             wl.distribute(
                 src,
                 0,
@@ -817,7 +831,7 @@ class TestReagentDistribution:
             initial_volumes=100 * 1000,
         )
         dst = Labware("96mtp", 8, 12, min_volume=20, max_volume=300)
-        with BaseWorklist() as wl:
+        with EvoWorklist() as wl:
             wl.distribute(
                 src,
                 0,
