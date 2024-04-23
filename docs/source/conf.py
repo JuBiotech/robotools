@@ -37,6 +37,7 @@ extensions = [
     "numpydoc",
     "myst_nb",
     "sphinx_book_theme",
+    "sphinxcontrib.mermaid",
 ]
 nb_execution_mode = "off"
 
