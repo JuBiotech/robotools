@@ -36,7 +36,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "numpydoc",
     "nbsphinx",
-    "nbsphinx_link",
     "pydata_sphinx_theme",
 ]
 
