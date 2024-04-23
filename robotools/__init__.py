@@ -3,7 +3,13 @@ from .evotools import EvoWorklist, InvalidOperationError, Labwares, Tip, Worklis
 from .evotools import commands as evo_cmd
 from .evotools import int_to_tip
 from .fluenttools import FluentWorklist
-from .liquidhandling import Labware, Trough, VolumeOverflowError, VolumeUnderflowError
+from .liquidhandling import (
+    Labware,
+    Trough,
+    VolumeOverflowError,
+    VolumeUnderflowError,
+    VolumeViolationException,
+)
 from .transform import (
     WellRandomizer,
     WellRotator,
@@ -14,7 +20,7 @@ from .transform import (
 from .utils import DilutionPlan, get_trough_wells
 from .worklists import BaseWorklist, CompatibilityError
 
-__version__ = "1.10.0"
+__version__ = "1.10.1"
 __all__ = (
     "BaseWorklist",
     "CompatibilityError",
@@ -35,6 +41,7 @@ __all__ = (
     "Trough",
     "VolumeOverflowError",
     "VolumeUnderflowError",
+    "VolumeViolationException",
     "WellRandomizer",
     "WellRotator",
     "WellShifter",
