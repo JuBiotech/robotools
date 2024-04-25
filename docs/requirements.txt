@@ -1,5 +1,5 @@
 sphinx
-sphinx_rtd_theme
+myst-nb
 numpydoc
 nbsphinx
-nbsphinx_link
+sphinx-book-theme
