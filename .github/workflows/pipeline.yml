@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e .
-        pip install flake8 pytest pytest-cov codecov wheel
+        pip install -r requirements-dev.txt
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -42,5 +42,4 @@ jobs:
         python -c "import robotools; print(robotools.__version__)"
     - name: Test Wheel with twine
       run: |
-        pip install twine
         twine check dist/*
