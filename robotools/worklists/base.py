@@ -113,9 +113,12 @@ class BaseWorklist(list):
         scheme : int
             Number indicating the wash scheme (default: 1)
         """
-        if not scheme in {1, 2, 3, 4}:
-            raise ValueError("scheme must be either 1, 2, 3 or 4")
-        self.append(f"W{scheme};")
+        if not scheme in {0, 1, 2, 3, 4}:
+            raise ValueError("scheme must be either 0, 1, 2, 3 or 4")
+        if scheme == 0:
+            self.append("W;")
+        else:
+            self.append(f"W{scheme};")
         return
 
     def decontaminate(self) -> None:
