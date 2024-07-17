@@ -1,6 +1,6 @@
 """Module with robot-agnostic utilities."""
 import collections
-from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy
 
@@ -178,7 +178,7 @@ class DilutionPlan:
         pre_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
         post_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
         mix_threshold: float = 0.05,
-        mix_wash: int = 2,
+        mix_wash: Literal[1, 2, 3, 4, "flush", "reuse"] = 2,
         mix_repeat: int = 2,
         mix_volume: float = 0.8,
         lc_stock_trough: str = "Trough_Water_FD_AspLLT",
@@ -235,9 +235,9 @@ class DilutionPlan:
             to multiple destinations.
         mix_threshold : float
             Maximum fraction of total dilution volume (self.vmax) that may be diluted without subsequent mixing (defaults to 0.05 or 5%)
-        mix_wash : int
-            Number of the wash scheme inbetween mixing steps
-            The recommended wash scheme is 0 mL + 1 mL with fast wash.
+        mix_wash
+            Transfer wash scheme inbetween mixing steps.
+            The recommended wash scheme is 0 mL + 1 mL with fast wash, or ``"flush"``.
         mix_repeat : int
             How often to mix after diluting.
             May be set to 0, particularly when combined with a `pre_mix_hook`.

@@ -3,7 +3,7 @@
 import logging
 import textwrap
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -219,7 +219,7 @@ class EvoWorklist(BaseWorklist):
         volumes: Union[float, Sequence[float], np.ndarray],
         *,
         label: Optional[str] = None,
-        wash_scheme: int = 1,
+        wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
         **kwargs,
     ) -> None:
@@ -239,8 +239,13 @@ class EvoWorklist(BaseWorklist):
             Volume(s) to transfer
         label : str
             Label of the operation to log into labware history
-        wash_scheme : int
-            Wash scheme to apply after every tip use
+        wash_scheme
+            - One of ``{1, 2, 3, 4}`` to select a wash scheme for fixed tips,
+            or drop tips when using DiTis.
+            - ``"flush"`` blows out tips, but does not drop DiTis, and only does a short wash with fixed tips.
+            - ``"reuse"`` continues pipetting without flushing, dropping or washing.
+            Passing ``None`` is deprecated, results in ``"reuse"`` behavior and emits a warning.
+
         partition_by : str
             one of 'auto' (default), 'source' or 'destination'
                 'auto': partitioning by source unless the source is a Trough
@@ -256,6 +261,15 @@ class EvoWorklist(BaseWorklist):
         destination_wells = np.array(destination_wells).flatten("F")
         volumes = np.array(volumes).flatten("F")
         nmax = max((len(source_wells), len(destination_wells), len(volumes)))
+
+        # Deal with deprecated behavior
+        if wash_scheme is None:
+            warnings.warn(
+                "wash_scheme=None is deprecated. For tip reuse pass 'reuse'.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            wash_scheme = "reuse"
 
         if len(source_wells) == 1:
             source_wells = np.repeat(source_wells, nmax)
@@ -304,7 +318,11 @@ class EvoWorklist(BaseWorklist):
                                 **kwargs,
                             )
                             nsteps += 1
-                            if wash_scheme is not None:
+                            if wash_scheme == "flush":
+                                self.flush()
+                            elif wash_scheme == "reuse":
+                                pass
+                            else:
                                 self.wash(scheme=wash_scheme)
                             naccessed += 1
                 # LVH: if multiple wells are accessed, don't group across partitions
