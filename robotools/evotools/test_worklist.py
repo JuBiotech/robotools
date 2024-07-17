@@ -104,7 +104,7 @@ class TestEvoWorklist:
                         [15.3, 17.53],
                     ]
                 ),
-                wash_scheme=None,
+                wash_scheme="reuse",
             )
             assert wl == [
                 "A;A;;;1;;20.00;;;;",

@@ -3,7 +3,7 @@
 import logging
 import math
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Union
+from typing import Dict, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy
 
@@ -516,7 +516,7 @@ class BaseWorklist(list):
         volumes: Union[float, Sequence[float], numpy.ndarray],
         *,
         label: Optional[str] = None,
-        wash_scheme: int = 1,
+        wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
         **kwargs,
     ):

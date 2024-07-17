@@ -38,7 +38,7 @@ class TestFluentWorklist:
     def test_transfer_flush(self):
         A = Labware("A", 3, 4, min_volume=10, max_volume=200, initial_volumes=150)
         with FluentWorklist() as wl:
-            wl.transfer(A, "A01", A, "B01", 20, wash_scheme=None)
+            wl.transfer(A, "A01", A, "B01", 20, wash_scheme="flush")
         assert len(wl) == 3
         assert wl[-1] == "F;"
         pass

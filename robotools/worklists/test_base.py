@@ -203,6 +203,38 @@ class TestWorklist:
             assert wl == exp
         return
 
+    @pytest.mark.parametrize("cls", [EvoWorklist, FluentWorklist])
+    @pytest.mark.parametrize(
+        "scheme,exp",
+        [
+            (1, "W1;"),
+            (2, "W2;"),
+            (3, "W3;"),
+            (4, "W4;"),
+            ("flush", "F;"),
+            ("reuse", None),
+        ],
+    )
+    def test_wash_schemes(self, cls, scheme, exp):
+        A = Labware("A", 2, 4, min_volume=50, max_volume=250, initial_volumes=200)
+        with cls() as wl:
+            wl.transfer(A, "A01", A, "A01", 100, wash_scheme=scheme)
+            if exp is None:
+                assert wl[-1].startswith("D;")
+            else:
+                assert wl[-1] == exp
+
+            # Test deprecated None setting that had different behavior on EVO/Fluent
+            with pytest.warns(DeprecationWarning, match="wash_scheme=None is deprecated"):
+                wl.transfer(A, "B01", A, "B01", 50, wash_scheme=None)
+                if cls is EvoWorklist:
+                    assert wl[-1].startswith("D;")
+                elif cls is FluentWorklist:
+                    assert wl[-1] == "F;"
+                else:
+                    raise NotImplementedError()
+        pass
+
     def test_decontaminate(self) -> None:
         with BaseWorklist() as wl:
             wl.decontaminate()
