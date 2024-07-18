@@ -26,6 +26,7 @@ class BaseWorklist(list):
         filepath: Optional[Union[str, Path]] = None,
         max_volume: Union[int, float] = 950,
         auto_split: bool = True,
+        diti_mode: bool = False,
     ) -> None:
         """Creates a worklist writer.
 
@@ -38,6 +39,9 @@ class BaseWorklist(list):
         auto_split : bool
             If `True`, large volumes in transfer operations are automatically splitted.
             If set to `False`, `InvalidOperationError` is raised when a pipetting volume exceeds `max_volume`.
+        diti_mode
+            Activate this when using DiTis.
+            Uses ``W;`` for all wash schemes and raises errors when using commands that are only for fixed tips.
         """
         self._filepath: Optional[Path] = None
         if filepath is not None:
@@ -46,6 +50,7 @@ class BaseWorklist(list):
             raise ValueError("The `max_volume` parameter is required.")
         self.max_volume = max_volume
         self.auto_split = auto_split
+        self.diti_mode = diti_mode
         super().__init__()
 
     @property
@@ -113,6 +118,10 @@ class BaseWorklist(list):
         scheme : int
             Number indicating the wash scheme (default: 1)
         """
+        if self.diti_mode:
+            self.append("W;")
+            return
+
         if not scheme in {1, 2, 3, 4}:
             raise ValueError("scheme must be either 1, 2, 3 or 4")
         self.append(f"W{scheme};")
@@ -120,6 +129,8 @@ class BaseWorklist(list):
 
     def decontaminate(self) -> None:
         """Decontamination wash consists of a decontamination wash followed by a normal wash."""
+        if self.diti_mode:
+            raise InvalidOperationError("Decontamination wash is not available with DiTis.")
         self.append("WD;")
         return
 

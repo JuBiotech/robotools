@@ -201,6 +201,14 @@ class TestWorklist:
                 "W4;",
             ]
             assert wl == exp
+
+        with BaseWorklist(diti_mode=True) as wl:
+            wl.wash()
+            wl.wash(3)
+            assert wl == [
+                "W;",
+                "W;",
+            ]
         return
 
     @pytest.mark.parametrize("cls", [EvoWorklist, FluentWorklist])
@@ -233,12 +241,21 @@ class TestWorklist:
                     assert wl[-1] == "F;"
                 else:
                     raise NotImplementedError()
+
+        # In DiTi mode, any numeric wash scheme results in "W;"
+        with cls(diti_mode=True) as wl:
+            wl.transfer(A, "A01", A, "A01", 25, wash_scheme=2)
+            assert wl[-1] == "W;"
         pass
 
     def test_decontaminate(self) -> None:
         with BaseWorklist() as wl:
             wl.decontaminate()
             assert wl == ["WD;"]
+
+        with BaseWorklist(diti_mode=True) as wl:
+            with pytest.raises(InvalidOperationError, match="not available"):
+                wl.decontaminate()
         return
 
     def test_flush(self) -> None:

@@ -25,8 +25,9 @@ class FluentWorklist(BaseWorklist):
         filepath: Optional[Union[str, Path]] = None,
         max_volume: Union[int, float] = 950,
         auto_split: bool = True,
+        diti_mode: bool = False,
     ) -> None:
-        super().__init__(filepath, max_volume, auto_split)
+        super().__init__(filepath, max_volume, auto_split, diti_mode)
 
     def _get_well_position(self, labware: Labware, well: str) -> int:
         return get_well_position(labware, well)
