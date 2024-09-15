@@ -68,7 +68,7 @@ def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
         Code string for well selection of pipetting actions in EvoWare scripts (.esc)
     """
     # apply bit mask with 7 bits, adapted from function detailed in EvoWare manual
-    selection = f"0{to_hex(cols)}{rows:02d}"
+    selection = f"{to_hex(cols):0>2}{to_hex(rows):0>2}"
     bit_counter = 0
     bit_mask = 0
     for x in range(cols):
@@ -82,16 +82,6 @@ def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
                 bit_mask = 0
     if bit_counter > 0:
         selection += chr(bit_mask + 48)
-
-    # check if wells from more than one column are selected and raise Exception if so
-    check = 0
-    for column in selected.transpose():
-        if sum(column) >= 1:
-            check += 1
-    if check >= 2:
-        raise ValueError(
-            "Wells from more than one column are selected.\nSelect only wells from one column per pipetting action."
-        )
 
     return selection
 
@@ -212,6 +202,16 @@ def prepare_evo_aspirate_dispense_parameters(
     return wells_list, labware_position, volume_list, liquid_class, tecan_tips
 
 
+def require_single_column_selection(selection: np.ndarray):
+    """Raises an error if wells from more than one column are selected."""
+    ncols = np.any(selection > 0, axis=0).sum()
+    if ncols >= 2:
+        raise ValueError(
+            "Wells from more than one column are selected.\nSelect only wells from one column per pipetting action."
+        )
+    return
+
+
 def evo_aspirate(
     *,
     n_rows: int,
@@ -283,6 +283,7 @@ def evo_aspirate(
 
     # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
     selected = evo_make_selection_array(n_rows, n_columns, wells)
+    require_single_column_selection(selected)
     # create code string containing information about target well(s)
     code_string = evo_get_selection(n_rows, n_columns, selected)
     return f'B;Aspirate({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,{arm});'
@@ -359,6 +360,7 @@ def evo_dispense(
 
     # convert selection from list of well ids to numpy array with same dimensions as target labware (1: well is selected, 0: well is not selected)
     selected = evo_make_selection_array(n_rows, n_columns, wells)
+    require_single_column_selection(selected)
     # create code string containing information about target well(s)
     code_string = evo_get_selection(n_rows, n_columns, selected)
     return f'B;Dispense({tip_selection},"{liquid_class}",{tip_volumes}0,0,0,0,{labware_position[0]},{labware_position[1]},1,"{code_string}",0,{arm});'
