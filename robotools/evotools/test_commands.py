@@ -8,22 +8,12 @@ from robotools.evotools.commands import (
     evo_wash,
     prepare_evo_aspirate_dispense_parameters,
     prepare_evo_wash_parameters,
+    require_single_column_selection,
 )
 from robotools.evotools.types import Tip
 
 
 def test_evo_get_selection():
-    with pytest.raises(ValueError, match="from more than one column"):
-        evo_get_selection(
-            rows=2,
-            cols=3,
-            selected=np.array(
-                [
-                    [True, False, False],
-                    [False, True, False],
-                ]
-            ),
-        )
     selection = evo_get_selection(
         rows=2,
         cols=3,
@@ -35,6 +25,9 @@ def test_evo_get_selection():
         ),
     )
     assert selection == "03023"
+
+    sel384 = evo_get_selection(16, 24, selected=np.full((16, 24), 1, dtype=bool))
+    assert sel384.startswith("1810")
     pass
 
 
@@ -156,6 +149,13 @@ class TestPrepareEvoAspirateDispenseParameters:
             [Tip.T5, Tip.T6, Tip.T7],
         )
         assert actual == expected
+
+
+def test_require_single_column():
+    require_single_column_selection(np.eye(1))
+    with pytest.raises(ValueError, match="more than one"):
+        require_single_column_selection(np.eye(2))
+    pass
 
 
 class TestEvoAspirate:
