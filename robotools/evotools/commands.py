@@ -394,11 +394,11 @@ def prepare_evo_wash_parameters(
         Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
     arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
-    waste_vol: float
+    waste_vol: float, int
         Volume in waste in mL (0-100)
     waste_delay : int
         Delay before closing valves in waste in ms (0-1000)
-    cleaner_vol: float
+    cleaner_vol: float, int
         Volume in cleaner in mL (0-100)
     cleaner_delay : int
         Delay before closing valves in cleaner in ms (0-1000)
@@ -423,11 +423,11 @@ def prepare_evo_wash_parameters(
         Tuple with grid position (1-67) and site number (0-127) of cleaner as integers
     arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
-    waste_vol: float
+    waste_vol: float, int
         Volume in waste in mL (0-100)
     waste_delay : int
         Delay before closing valves in waste in ms (0-1000)
-    cleaner_vol: float
+    cleaner_vol: float, int
         Volume in cleaner in mL (0-100)
     cleaner_delay : int
         Delay before closing valves in cleaner in ms (0-1000)
@@ -477,8 +477,8 @@ def prepare_evo_wash_parameters(
 
     if waste_vol is None:
         raise ValueError("Missing required parameter: waste_vol")
-    if not isinstance(waste_vol, float) or not 0 <= waste_vol <= 100:
-        raise ValueError("waste_vol has to be a float from 0 - 100.")
+    if not isinstance(waste_vol, (float, int)) or not 0 <= waste_vol <= 100:
+        raise ValueError("waste_vol has to be a float or int from 0 - 100.")
     # round waste_vol to the first decimal (pre-requisite for Tecan's wash command)
     waste_vol = np.round(waste_vol, 1)
 
@@ -489,8 +489,8 @@ def prepare_evo_wash_parameters(
 
     if cleaner_vol is None:
         raise ValueError("Missing required parameter: cleaner_vol")
-    if not isinstance(cleaner_vol, float) or not 0 <= cleaner_vol <= 100:
-        raise ValueError("cleaner_vol has to be a float from 0 - 100.")
+    if not isinstance(cleaner_vol, (float, int)) or not 0 <= cleaner_vol <= 100:
+        raise ValueError("cleaner_vol has to be a float or int from 0 - 100.")
     # round cleaner_vol to the first decimal (pre-requisite for Tecan's wash command)
     cleaner_vol = np.round(cleaner_vol, 1)
 
@@ -575,11 +575,11 @@ def evo_wash(
         Tuple with grid position (1-67) and site number (1-128) of cleaner as integers
     arm : int
         number of the LiHa performing the action: 0 = LiHa 1, 1 = LiHa 2
-    waste_vol: float
+    waste_vol: float, int
         Volume in waste in mL (0-100)
     waste_delay : int
         Delay before closing valves in waste in ms (0-1000)
-    cleaner_vol: float
+    cleaner_vol: float, int
         Volume in cleaner in mL (0-100)
     cleaner_delay : int
         Delay before closing valves in cleaner in ms (0-1000)

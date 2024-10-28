@@ -321,27 +321,26 @@ class TestEvoWash:
             )
 
         # test waste_vol argument check
-        with pytest.raises(ValueError, match="waste_vol has to be a float"):
+        with pytest.raises(ValueError, match="waste_vol .*? float or int from 0 - 100."):
             prepare_evo_wash_parameters(
                 tips=[1, 2],
                 waste_location=(52, 2),
                 cleaner_location=(52, 1),
                 waste_vol=-1.0,
             )
-        with pytest.raises(ValueError, match="waste_vol has to be a float"):
+        with pytest.raises(ValueError, match="waste_vol .*? float or int from 0 - 100."):
             prepare_evo_wash_parameters(
                 tips=[1, 2],
                 waste_location=(52, 2),
                 cleaner_location=(52, 1),
                 waste_vol=101.0,
             )
-        with pytest.raises(ValueError, match="waste_vol has to be a float"):
-            prepare_evo_wash_parameters(
-                tips=[1, 2],
-                waste_location=(52, 2),
-                cleaner_location=(52, 1),
-                waste_vol=1,
-            )
+        prepare_evo_wash_parameters(
+            tips=[1, 2],
+            waste_location=(52, 2),
+            cleaner_location=(52, 1),
+            waste_vol=1,
+        )
 
         # test waste_delay argument check
         with pytest.raises(ValueError, match="waste_delay has to be an int"):
@@ -367,27 +366,26 @@ class TestEvoWash:
             )
 
         # test cleaner_vol argument check
-        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
+        with pytest.raises(ValueError, match="cleaner_vol .*? float or int from 0 - 100."):
             prepare_evo_wash_parameters(
                 tips=[1, 2],
                 waste_location=(52, 2),
                 cleaner_location=(52, 1),
                 cleaner_vol=-1.0,
             )
-        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
+        with pytest.raises(ValueError, match="cleaner_vol .*? float or int from 0 - 100."):
             prepare_evo_wash_parameters(
                 tips=[1, 2],
                 waste_location=(52, 2),
                 cleaner_location=(52, 1),
                 cleaner_vol=101.0,
             )
-        with pytest.raises(ValueError, match="cleaner_vol has to be a float"):
-            prepare_evo_wash_parameters(
-                tips=[1, 2],
-                waste_location=(52, 2),
-                cleaner_location=(52, 1),
-                cleaner_vol=1,
-            )
+        prepare_evo_wash_parameters(
+            tips=[1, 2],
+            waste_location=(52, 2),
+            cleaner_location=(52, 1),
+            cleaner_vol=1,
+        )
 
         # test cleaner_delay argument check
         with pytest.raises(ValueError, match="cleaner_delay has to be an int"):
