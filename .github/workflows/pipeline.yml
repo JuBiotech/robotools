@@ -31,7 +31,7 @@ jobs:
       run: |
         pytest --cov=./robotools --cov-report xml --cov-report term-missing robotools
     - name: Upload coverage
-      uses: codecov/codecov-action@v5.0.7
+      uses: codecov/codecov-action@v5.1.1
       with:
         file: ./coverage.xml
     - name: Test Wheel install and import
