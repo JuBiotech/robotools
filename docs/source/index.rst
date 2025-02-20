@@ -48,7 +48,7 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
-   robotools_liquidhandling
    robotools_evotools
-   robotools_transform
-   robotools_utils
+   robotools_fluenttools
+   robotools_liquidhandling
+   robotools_worklists
