@@ -1,7 +1,7 @@
 robotools.evotools
 ------------------
 
-.. automodule:: robotools.evotools.worklist
+.. automodule:: robotools.evotools.commands
 	:members:
 	:undoc-members:
 	:show-inheritance:
@@ -11,7 +11,12 @@ robotools.evotools
 	:undoc-members:
 	:show-inheritance:
 
-.. automodule:: robotools.evotools.exceptions
+.. automodule:: robotools.evotools.utils
+	:members:
+	:undoc-members:
+	:show-inheritance:
+
+.. automodule:: robotools.evotools.worklist
 	:members:
 	:undoc-members:
 	:show-inheritance:

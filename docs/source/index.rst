@@ -52,3 +52,5 @@ API Reference
    robotools_fluenttools
    robotools_liquidhandling
    robotools_worklists
+   robotools_transform
+   robotools_utils
