@@ -1,3 +1,5 @@
+import importlib.metadata
+
 from . import evotools, liquidhandling
 from .evotools import EvoWorklist, InvalidOperationError, Labwares, Tip, Worklist
 from .evotools import commands as evo_cmd
@@ -19,8 +21,6 @@ from .transform import (
 )
 from .utils import DilutionPlan, get_trough_wells
 from .worklists import BaseWorklist, CompatibilityError
-
-import importlib.metadata
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 __all__ = (
