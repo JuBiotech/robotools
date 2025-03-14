@@ -36,7 +36,7 @@ jobs:
         file: ./coverage.xml
     - name: Test Wheel install and import
       run: |
-        python setup.py bdist_wheel
+        python -m build
         cd dist
         pip install robotools*.whl
         python -c "import robotools; print(robotools.__version__)"
