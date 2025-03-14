@@ -36,3 +36,15 @@ Download = "https://pypi.org/project/robotools/"
 
 [tool.setuptools]
 package-dir = {"" = "robotools"}
+
+[tool.black]
+line-length = 110
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+exclude = [
+    'test_.*?\.py$',
+]
