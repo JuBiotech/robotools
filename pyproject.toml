@@ -1,11 +1,38 @@
-[tool.black]
-line-length = 110
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.isort]
-profile = "black"
-
-[tool.mypy]
-ignore_missing_imports = true
-exclude = [
-    'test_.*?\.py$',
+[project]
+name = "robotools"
+version = "1.11.3"
+description = "Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "GNU Affero General Public License v3"}
+authors = [
+    {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
 ]
+classifiers = [
+    "Programming Language :: Python",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy",
+    "pandas",
+]
+
+[project.urls]
+Homepage = "https://github.com/jubiotech/robotools"
+Documentation = "https://robotools.readthedocs.io/en/latest/"
+Download = "https://pypi.org/project/robotools/"
+
+[tool.setuptools]
+package-dir = {"" = "robotools"}
