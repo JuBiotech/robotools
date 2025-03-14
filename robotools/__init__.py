@@ -20,7 +20,9 @@ from .transform import (
 from .utils import DilutionPlan, get_trough_wells
 from .worklists import BaseWorklist, CompatibilityError
 
-__version__ = "1.11.2"
+import importlib.metadata
+
+__version__ = importlib.metadata.version(__package__ or __name__)
 __all__ = (
     "BaseWorklist",
     "CompatibilityError",
