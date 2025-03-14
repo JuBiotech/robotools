@@ -35,7 +35,7 @@ Documentation = "https://robotools.readthedocs.io/en/latest/"
 Download = "https://pypi.org/project/robotools/"
 
 [tool.setuptools]
-package-dir = {"" = "robotools"}
+package-dir = {"robotools" = "robotools"}
 
 [tool.black]
 line-length = 110
