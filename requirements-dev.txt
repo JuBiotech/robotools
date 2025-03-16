@@ -4,3 +4,4 @@ pytest
 pytest-cov
 twine
 wheel
+build
