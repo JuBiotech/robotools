@@ -1,12 +1,12 @@
 robotools.fluenttools
 ---------------------
 
-.. automodule:: robotools.evotools.worklist
+.. automodule:: robotools.fluenttools.worklist
 	:members:
 	:undoc-members:
 	:show-inheritance:
 
-.. automodule:: robotools.evotools.utils
+.. automodule:: robotools.fluenttools.utils
 	:members:
 	:undoc-members:
 	:show-inheritance:
