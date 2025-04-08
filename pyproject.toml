@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robotools"
-version = "1.11.3"
+version = "1.11.4"
 description = "Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,6 +35,9 @@ Download = "https://pypi.org/project/robotools/"
 
 [tool.setuptools]
 package-dir = {"robotools" = "robotools"}
+
+[tool.setuptools.package-data]
+"robotools" = ["py.typed"]
 
 [tool.black]
 line-length = 110
