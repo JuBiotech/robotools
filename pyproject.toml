@@ -37,6 +37,9 @@ Download = "https://pypi.org/project/robotools/"
 [tool.setuptools]
 package-dir = {"robotools" = "robotools"}
 
+[tool.setuptools.package-data]
+"robotools" = ["py.typed"]
+
 [tool.black]
 line-length = 110
 
