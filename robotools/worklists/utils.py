@@ -2,7 +2,7 @@
 import collections
 import logging
 import math
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy
 
@@ -148,7 +148,7 @@ def optimize_partition_by(
     destination: liquidhandling.Labware,
     partition_by: str,
     label: Optional[str] = None,
-) -> str:
+) -> Literal["source", "destination"]:
     """Determines optimal partitioning settings.
 
     Parameters
@@ -162,29 +162,32 @@ def optimize_partition_by(
 
     Returns
     -------
-    partition_by : str
+    partition_by
         Either 'source' or 'destination'
     """
-    if not partition_by in {"auto", "source", "destination"}:
-        raise ValueError(f"Invalid partition_by argument: {partition_by}")
     # automatic partitioning decision
     if partition_by == "auto":
-        partition_by = "source"
-    else:
-        # log warnings about potentially inefficient partitioning settings
-        if partition_by == "source" and source.is_trough and not destination.is_trough:
+        return "source"
+
+    assert partition_by in {"source", "destination"}
+    # log warnings about potentially inefficient partitioning settings
+    if partition_by == "source":
+        if source.is_trough and not destination.is_trough:
             logger.warning(
                 f'Partitioning by "source" ({source.name}), which is a Trough while destination ({destination.name}) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="destination".'
                 f" (label={label})"
             )
-        elif partition_by == "destination" and destination.is_trough and not source.is_trough:
+        return "source"
+    elif partition_by == "destination":
+        if destination.is_trough and not source.is_trough:
             logger.warning(
                 f'Partitioning by "destination" ({destination.name}), which is a Trough while source ({source.name}) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="source"'
                 f" (label={label})"
             )
-    return partition_by
+        return "destination"
+    raise ValueError(f"Invalid partition_by argument: {partition_by}")
 
 
 def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[float]:
@@ -217,7 +220,7 @@ def partition_by_column(
     sources: Iterable[str],
     destinations: Iterable[str],
     volumes: Iterable[float],
-    partition_by: str,
+    partition_by: Literal["source", "destination"],
 ) -> List[Tuple[List[str], List[str], List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
