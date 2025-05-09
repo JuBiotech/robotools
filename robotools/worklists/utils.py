@@ -2,7 +2,7 @@
 import collections
 import logging
 import math
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy
 
@@ -216,6 +216,27 @@ def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[fl
     return volumes
 
 
+def non_repetitive_argsort(wells: Sequence[str]) -> list[int]:
+    """Argsort without repeating items with the same first letter."""
+    # Group wells by row
+    by_row = collections.defaultdict(list)
+    for iw, w in enumerate(wells):
+        by_row[w[0]].append((iw, w))
+    by_row_sorted = {r: by_row[r] for r in sorted(by_row)}
+
+    # Collect the original index of the first entry
+    # from each row, until all rows are empty.
+    results = []
+    while by_row_sorted:
+        for r in list(by_row_sorted):
+            row = by_row_sorted[r]
+            iw, w = row.pop(0)
+            results.append(iw)
+            if not row:
+                by_row_sorted.pop(r)
+    return results
+
+
 def partition_by_column(
     sources: Iterable[str],
     destinations: Iterable[str],
@@ -259,9 +280,9 @@ def partition_by_column(
     # sort the rows within the column
     for c, (srcs, dsts, vols) in enumerate(column_groups):
         if partition_by == "source":
-            order = numpy.argsort(srcs)
+            order = non_repetitive_argsort(srcs)
         elif partition_by == "destination":
-            order = numpy.argsort(dsts)
+            order = non_repetitive_argsort(dsts)
         else:
             raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
         column_groups[c] = (
