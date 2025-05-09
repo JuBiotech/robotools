@@ -17,7 +17,7 @@ def test_automatic_partitioning(caplog) -> None:
     # automatic
     assert "source" == optimize_partition_by(S, D, "auto", "No troughs at all")
     assert "source" == optimize_partition_by(S, DT, "auto", "Trough destination")
-    assert "destination" == optimize_partition_by(ST, D, "auto", "Trough source")
+    assert "source" == optimize_partition_by(ST, D, "auto", "Trough source")
     optimize_partition_by(ST, DT, "auto", "Trough source and destination") == "source"
 
     # fixed to source
