@@ -174,17 +174,23 @@ def optimize_partition_by(
     if partition_by == "source":
         if source.is_trough and not destination.is_trough:
             logger.warning(
-                f'Partitioning by "source" ({source.name}), which is a Trough while destination ({destination.name}) is not a Trough.'
+                'Partitioning by "source" (%s), which is a Trough while destination (%s) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="destination".'
-                f" (label={label})"
+                " (label=%s)",
+                source.name,
+                destination.name,
+                label,
             )
         return "source"
     elif partition_by == "destination":
         if destination.is_trough and not source.is_trough:
             logger.warning(
-                f'Partitioning by "destination" ({destination.name}), which is a Trough while source ({source.name}) is not a Trough.'
+                'Partitioning by "destination" (%s), which is a Trough while source (%s) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="source"'
-                f" (label={label})"
+                " (label=%s)",
+                destination.name,
+                source.name,
+                label,
             )
         return "destination"
     raise ValueError(f"Invalid partition_by argument: {partition_by}")
