@@ -2,7 +2,7 @@
 import collections
 import logging
 import math
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy
 
@@ -148,7 +148,7 @@ def optimize_partition_by(
     destination: liquidhandling.Labware,
     partition_by: str,
     label: Optional[str] = None,
-) -> str:
+) -> Literal["source", "destination"]:
     """Determines optimal partitioning settings.
 
     Parameters
@@ -162,32 +162,38 @@ def optimize_partition_by(
 
     Returns
     -------
-    partition_by : str
+    partition_by
         Either 'source' or 'destination'
     """
-    if not partition_by in {"auto", "source", "destination"}:
-        raise ValueError(f"Invalid partition_by argument: {partition_by}")
     # automatic partitioning decision
     if partition_by == "auto":
+        return "source"
+
+    assert partition_by in {"source", "destination"}
+    # log warnings about potentially inefficient partitioning settings
+    if partition_by == "source":
         if source.is_trough and not destination.is_trough:
-            partition_by = "destination"
-        else:
-            partition_by = "source"
-    else:
-        # log warnings about potentially inefficient partitioning settings
-        if partition_by == "source" and source.is_trough and not destination.is_trough:
             logger.warning(
-                f'Partitioning by "source" ({source.name}), which is a Trough while destination ({destination.name}) is not a Trough.'
+                'Partitioning by "source" (%s), which is a Trough while destination (%s) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="destination".'
-                f" (label={label})"
+                " (label=%s)",
+                source.name,
+                destination.name,
+                label,
             )
-        elif partition_by == "destination" and destination.is_trough and not source.is_trough:
+        return "source"
+    elif partition_by == "destination":
+        if destination.is_trough and not source.is_trough:
             logger.warning(
-                f'Partitioning by "destination" ({destination.name}), which is a Trough while source ({source.name}) is not a Trough.'
+                'Partitioning by "destination" (%s), which is a Trough while source (%s) is not a Trough.'
                 ' This is potentially inefficient. Consider using partition_by="source"'
-                f" (label={label})"
+                " (label=%s)",
+                destination.name,
+                source.name,
+                label,
             )
-    return partition_by
+        return "destination"
+    raise ValueError(f"Invalid partition_by argument: {partition_by}")
 
 
 def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[float]:
@@ -216,11 +222,32 @@ def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[fl
     return volumes
 
 
+def non_repetitive_argsort(wells: Sequence[str]) -> list[int]:
+    """Argsort without repeating items with the same first letter."""
+    # Group wells by row
+    by_row = collections.defaultdict(list)
+    for iw, w in enumerate(wells):
+        by_row[w[0]].append((iw, w))
+    by_row_sorted = {r: by_row[r] for r in sorted(by_row)}
+
+    # Collect the original index of the first entry
+    # from each row, until all rows are empty.
+    results = []
+    while by_row_sorted:
+        for r in list(by_row_sorted):
+            row = by_row_sorted[r]
+            iw, w = row.pop(0)
+            results.append(iw)
+            if not row:
+                by_row_sorted.pop(r)
+    return results
+
+
 def partition_by_column(
     sources: Iterable[str],
     destinations: Iterable[str],
     volumes: Iterable[float],
-    partition_by: str,
+    partition_by: Literal["source", "destination"],
 ) -> List[Tuple[List[str], List[str], List[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
@@ -259,9 +286,9 @@ def partition_by_column(
     # sort the rows within the column
     for c, (srcs, dsts, vols) in enumerate(column_groups):
         if partition_by == "source":
-            order = numpy.argsort(srcs)
+            order = non_repetitive_argsort(srcs)
         elif partition_by == "destination":
-            order = numpy.argsort(dsts)
+            order = non_repetitive_argsort(dsts)
         else:
             raise ValueError(f'Invalid `partition_by` parameter "{partition_by}""')
         column_groups[c] = (
