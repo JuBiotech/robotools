@@ -169,10 +169,7 @@ def optimize_partition_by(
         raise ValueError(f"Invalid partition_by argument: {partition_by}")
     # automatic partitioning decision
     if partition_by == "auto":
-        if source.is_trough and not destination.is_trough:
-            partition_by = "destination"
-        else:
-            partition_by = "source"
+        partition_by = "source"
     else:
         # log warnings about potentially inefficient partitioning settings
         if partition_by == "source" and source.is_trough and not destination.is_trough:
