@@ -151,7 +151,18 @@ def optimize_partition_by(
 ) -> Literal["source", "destination"]:
     """Determines optimal partitioning settings.
 
+
     Parameters
+    ----------
+    source
+        Source labware object.
+    destination
+        Destination labware object.
+    partition_by
+        User-provided partitioning settings.
+    label
+        Label of the operation (optional).
+
     ----------
     source (Labware): source labware object
     destination (Labware): destination labware object
