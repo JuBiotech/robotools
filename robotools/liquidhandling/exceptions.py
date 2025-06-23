@@ -5,12 +5,18 @@ from typing import Optional
 __all__ = (
     "VolumeOverflowError",
     "VolumeUnderflowError",
+    "VolumeUnderflowWarning",
     "VolumeViolationException",
+    "VolumeViolationWarning",
 )
 
 
 class VolumeViolationException(Exception):
     """Error indicating a violation of volume constraints."""
+
+
+class VolumeViolationWarning(UserWarning):
+    """Warning indicating the possible violation of volume constratins."""
 
 
 class VolumeOverflowError(VolumeViolationException):
@@ -31,6 +37,10 @@ class VolumeOverflowError(VolumeViolationException):
             )
         else:
             super().__init__(f'Too much volume for "{labware}".{well}: {current} + {change} > {threshold}')
+
+
+class VolumeUnderflowWarning(VolumeViolationWarning):
+    """Warning indicating the possible underflow of a well."""
 
 
 class VolumeUnderflowError(VolumeViolationException):
