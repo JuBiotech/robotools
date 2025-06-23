@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "typing_extensions",
 ]
 
 [project.urls]
