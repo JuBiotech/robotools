@@ -3,6 +3,10 @@ import pytest
 
 from robotools.evotools import EvoWorklist, Labwares
 from robotools.evotools.types import Tip
+from robotools.liquidhandling.exceptions import (
+    VolumeUnderflowError,
+    VolumeUnderflowWarning,
+)
 from robotools.liquidhandling.labware import Labware, Trough
 from robotools.worklists.exceptions import InvalidOperationError
 
@@ -588,6 +592,19 @@ class TestEvoWorklist:
             ],
         )
         return
+
+    def test_transfer_on_underflow(self):
+        A = Labware("A", 3, 2, min_volume=100, max_volume=2000, initial_volumes=500)
+        with EvoWorklist() as wl:
+            wl.transfer(A, "A01", A, "A02", 600, on_underflow="debug")
+            assert A.volumes[0, 0] == 100
+            assert A.volumes[0, 1] == 1100
+            with pytest.warns(VolumeUnderflowWarning, match="500.0 - 600.0 < 100"):
+                wl.transfer(A, "B01", A, "B02", 600, on_underflow="warn")
+                assert A.volumes[1, 0] == 100
+                assert A.volumes[1, 1] == 1100
+            with pytest.raises(VolumeUnderflowError, match="500.0 - 600.0 < 100"):
+                wl.transfer(A, "C01", A, "C02", 600, on_underflow="raise")
 
 
 class TestTroughLabwareWorklist:

@@ -230,6 +230,7 @@ class EvoWorklist(BaseWorklist):
         label: Optional[str] = None,
         wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
+        on_underflow: Literal["debug", "warn", "raise"] = "raise",
         **kwargs,
     ) -> None:
         """Transfer operation between two labwares.
@@ -260,6 +261,14 @@ class EvoWorklist(BaseWorklist):
                 'auto': partitioning by source unless the source is a Trough
                 'source': partitioning by source columns
                 'destination': partitioning by destination columns
+        on_underflow
+            What to do about volume underflows (going below ``vmin``) in non-empty wells.
+
+            Options:
+
+            - ``"debug"`` mentions the underflowing wells in a log message at DEBUG level.
+            - ``"warn"`` emits an :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowWarning`. This `can be captured in unit tests <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests>`_.
+            - ``"raise"`` raises a :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowError` about underflowing wells.
         kwargs
             Additional keyword arguments to pass to aspirate and dispense.
             Most prominent example: `liquid_class`.
@@ -317,7 +326,7 @@ class EvoWorklist(BaseWorklist):
                     if len(vs) > p:
                         v = vs[p]
                         if v > 0:
-                            self.aspirate(source, s, v, label=None, **kwargs)
+                            self.aspirate(source, s, v, label=None, on_underflow=on_underflow, **kwargs)
                             self.dispense(
                                 destination,
                                 d,
