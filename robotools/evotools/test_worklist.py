@@ -639,12 +639,14 @@ class TestEvoCommands:
                 "A01",
                 labware_position=(30, 2),
                 tips=[Tip.T2],
-                volumes=20,
+                volumes=200,
                 liquid_class="PowerSuck",
+                on_underflow="debug",
             )
         assert len(wl) == 1
         assert "B;Aspirate" in wl[0]
-        assert lw.volumes[0, 0] == 30
+        # Underflow ignored, minimum volume remains
+        assert lw.volumes[0, 0] == 10
         pass
 
     def test_evo_dispense(self) -> None:
