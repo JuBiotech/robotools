@@ -40,6 +40,7 @@ class EvoWorklist(BaseWorklist):
         *,
         arm: int = 0,
         label: Optional[str] = None,
+        on_underflow: Literal["debug", "warn", "raise"] = "raise",
     ) -> None:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -62,13 +63,21 @@ class EvoWorklist(BaseWorklist):
             Which LiHa to use, if more than one is available
         label : str
             Label of the operation to log into labware history
+        on_underflow
+            What to do about volume underflows (going below ``vmin``) in non-empty wells.
+
+            Options:
+
+            - ``"debug"`` mentions the underflowing wells in a log message at DEBUG level.
+            - ``"warn"`` emits an :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowWarning`. This `can be captured in unit tests <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests>`_.
+            - ``"raise"`` raises a :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowError` about underflowing wells.
         """
         # diferentiate between what is needed for volume calculation and for pipetting commands
         wells_calc = np.array(wells).flatten("F")
         volumes_calc = np.array(volumes).flatten("F")
         if len(volumes_calc) == 1:
             volumes_calc = np.repeat(volumes_calc, len(wells_calc))
-        labware.remove(wells_calc, volumes_calc, label)
+        labware.remove(wells_calc, volumes_calc, label, on_underflow=on_underflow)
         self.comment(label)
         cmd = commands.evo_aspirate(
             n_rows=labware.n_rows,
