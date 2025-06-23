@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Literal, Optional, Sequence, Union
 
 import numpy
+from typing_extensions import Self
 
 from robotools import liquidhandling
 from robotools.evotools.types import Tip
@@ -18,7 +19,7 @@ __all__ = ("BaseWorklist",)
 logger = logging.getLogger(__name__)
 
 
-class BaseWorklist(list):
+class BaseWorklist(list[str]):
     """Context manager for the creation of Worklists."""
 
     def __init__(
@@ -60,7 +61,7 @@ class BaseWorklist(list):
             return Path(self._filepath)
         return None
 
-    def __enter__(self) -> "BaseWorklist":
+    def __enter__(self) -> Self:
         self.clear()
         return self
 
@@ -448,6 +449,7 @@ class BaseWorklist(list):
         volumes: Union[float, Sequence[float], numpy.ndarray],
         *,
         label: Optional[str] = None,
+        on_underflow: Literal["debug", "warn", "raise"] = "raise",
         **kwargs,
     ) -> None:
         """Performs aspiration from the provided labware.
@@ -462,6 +464,14 @@ class BaseWorklist(list):
             Volume(s) to aspirate
         label : str
             Label of the operation to log into labware history
+        on_underflow
+            What to do about volume underflows (going below ``vmin``) in non-empty wells.
+
+            Options:
+
+            - ``"debug"`` mentions the underflowing wells in a log message at DEBUG level.
+            - ``"warn"`` emits an :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowWarning`. This `can be captured in unit tests <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests>`_.
+            - ``"raise"`` raises a :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowError` about underflowing wells.
         kwargs
             Additional keyword arguments to pass to `aspirate_well`.
             Most prominent example: `liquid_class`.
@@ -471,7 +481,7 @@ class BaseWorklist(list):
         volumes = numpy.array(volumes).flatten("F")
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
-        labware.remove(wells, volumes, label)
+        labware.remove(wells, volumes, label, on_underflow=on_underflow)
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
