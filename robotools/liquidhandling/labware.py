@@ -1,8 +1,9 @@
 """Object-oriented, stateful labware representations."""
 
 
+import logging
 import warnings
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Literal, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -14,7 +15,10 @@ from robotools.liquidhandling.composition import (
 from robotools.liquidhandling.exceptions import (
     VolumeOverflowError,
     VolumeUnderflowError,
+    VolumeUnderflowWarning,
 )
+
+_log = logging.getLogger(__name__)
 
 
 class Labware:
@@ -289,6 +293,8 @@ class Labware:
         wells: Union[str, Sequence[str], np.ndarray],
         volumes: Union[float, Sequence[float], np.ndarray],
         label: Optional[str] = None,
+        *,
+        on_underflow: Literal["debug", "warn", "raise"] = "raise",
     ) -> None:
         """Removes volumes from wells.
 
@@ -300,6 +306,14 @@ class Labware:
             Scalar or iterable of volumes
         label : str
             Description of the operation
+        on_underflow
+            What to do about volume underflows (going below ``vmin``) in non-empty wells.
+
+            Options:
+
+            - ``"debug"`` mentions the underflowing wells in a log message at DEBUG level.
+            - ``"warn"`` emits an :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowWarning`. This `can be captured in unit tests <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests>`_.
+            - ``"raise"`` raises a :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowError` about underflowing wells.
         """
         wells = np.array(wells).flatten("F")
         volumes = np.array(volumes).flatten("F")
@@ -313,9 +327,19 @@ class Labware:
             v_new = v_original - volume
 
             if v_new < self.min_volume:
-                raise VolumeUnderflowError(self.name, well, v_original, volume, self.min_volume, label)
-
-            self._volumes[idx] -= volume
+                msg = f'Too little volume in "{self.name}".{well}: {v_original} - {volume} < {self.min_volume} in step {label}'
+                match on_underflow:
+                    case "debug":
+                        _log.debug(msg)
+                    case "warn":
+                        warnings.warn(msg, VolumeUnderflowWarning, stacklevel=2)
+                    case "raise" | _:
+                        raise VolumeUnderflowError(
+                            self.name, well, v_original, volume, self.min_volume, label
+                        )
+                self._volumes[idx] = self.min_volume
+            else:
+                self._volumes[idx] -= volume
         self.log(label)
         return
 
