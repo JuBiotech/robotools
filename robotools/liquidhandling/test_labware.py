@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 import numpy as np
@@ -6,6 +7,7 @@ import pytest
 from robotools.liquidhandling.exceptions import (
     VolumeOverflowError,
     VolumeUnderflowError,
+    VolumeUnderflowWarning,
 )
 from robotools.liquidhandling.labware import Labware, Trough
 
@@ -163,13 +165,39 @@ class TestStandardLabware:
         np.testing.assert_array_equal(plate.volumes, np.array([[150, 150, 200], [200, 200, 150]]))
         return
 
-    def test_remove_too_much(self) -> None:
+    def test_raise_on_underflow_by_default(self) -> None:
         plate = Labware("TestPlate", 4, 6, min_volume=100, max_volume=250)
         wells = ["A01", "A02", "B04"]
-        with pytest.raises(VolumeUnderflowError):
+        with pytest.raises(VolumeUnderflowError, match="Too little volume"):
             plate.remove(wells, 500)
         assert len(plate.history) == 1
+
+        # Also raise when invalid on_underflow settings are passed
+        with pytest.raises(VolumeUnderflowError, match="Too little volume"):
+            plate.remove(wells, 500, on_underflow="party")
         return
+
+    def test_warn_on_underflow(self) -> None:
+        plate = Labware("TestPlate", 4, 6, min_volume=100, max_volume=250, initial_volumes=150)
+        wells = ["A01", "A02", "B04"]
+        with pytest.warns(VolumeUnderflowWarning, match="150.0 - 500 < 100"):
+            plate.remove(wells, 500, on_underflow="warn")
+        assert plate.volumes[0, 0] == 100
+        assert len(plate.history) == 2
+        return
+
+    def test_remove_debug_underflows(self, caplog) -> None:
+        plate = Labware("Pladde", 4, 6, min_volume=100, max_volume=250, initial_volumes=150)
+        wells = ["A01", "A02", "B04"]
+        caplog.clear()
+        with caplog.at_level(logging.DEBUG):
+            plate.remove(wells, 500, on_underflow="debug")
+        assert len(caplog.records) == 3
+        assert 'volume in "Pladde".A01' in caplog.records[0].message
+        assert "150.0 - 500 < 100" in caplog.records[0].message
+        assert plate.volumes[0, 0] == 100
+        assert plate.volumes[0, 1] == 100
+        assert plate.volumes[1, 3] == 100
 
 
 class TestTroughLabware:
