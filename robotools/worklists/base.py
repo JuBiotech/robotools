@@ -501,6 +501,7 @@ class BaseWorklist(list[str]):
         *,
         label: Optional[str] = None,
         compositions: Optional[List[Optional[Dict[str, float]]]] = None,
+        vtrack: Union[float, Sequence[float], numpy.ndarray] | None = None,
         **kwargs,
     ) -> None:
         """Performs dispensing into the provided labware.
@@ -512,11 +513,16 @@ class BaseWorklist(list[str]):
         wells : str or iterable
             List of well ids
         volumes : float or iterable
-            Volume(s) to dispense
+            Volume(s) to dispense in the command
         label : str
             Label of the operation to log into labware history
         compositions : list
             Iterable of liquid compositions
+        vtrack
+            Volume to add to the destination in digital volume tracking.
+            Defaults to ``volume``.
+            Used by ``transfer`` commands to account for ``on_underflow`` situations
+            where more volume was aspirated than considered aspiratable based on volume tracking.
         kwargs
             Additional keyword arguments to pass to `dispense_well`.
             Most prominent example: `liquid_class`.
@@ -526,7 +532,16 @@ class BaseWorklist(list[str]):
         volumes = numpy.array(volumes).flatten("F")
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
-        labware.add(wells, volumes, label, compositions=compositions)
+
+        # Digital volume transfer overrides may be provided
+        if vtrack is None:
+            vtrack = volumes
+        else:
+            vtrack = numpy.array(vtrack).flatten("F")
+            if len(vtrack) == 1:
+                vtrack = numpy.repeat(vtrack, len(wells))
+
+        labware.add(wells, vtrack, label, compositions=compositions)
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
