@@ -651,7 +651,7 @@ class TestEvoCommands:
         lw = Labware("A", 4, 5, min_volume=10, max_volume=100)
         lw.add("A01", 50)
         with EvoWorklist() as wl:
-            wl.evo_aspirate(
+            vasp = wl.evo_aspirate(
                 lw,
                 "A01",
                 labware_position=(30, 2),
@@ -660,6 +660,8 @@ class TestEvoCommands:
                 liquid_class="PowerSuck",
                 on_underflow="debug",
             )
+            # only (50 - 10) = 40 µL are considered aspiratable
+            assert vasp == [40]
         assert len(wl) == 1
         assert "B;Aspirate" in wl[0]
         # Underflow ignored, minimum volume remains

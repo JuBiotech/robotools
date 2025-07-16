@@ -451,7 +451,7 @@ class BaseWorklist(list[str]):
         label: Optional[str] = None,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
         **kwargs,
-    ) -> None:
+    ) -> list[float]:
         """Performs aspiration from the provided labware.
 
         Parameters
@@ -476,17 +476,22 @@ class BaseWorklist(list[str]):
             Additional keyword arguments to pass to `aspirate_well`.
             Most prominent example: `liquid_class`.
             Take a look at `Worklist.aspirate_well` for the full list of options.
+
+        Returns
+        -------
+        vaspirated
+            List of aspirated volumes according to previous filling volume and minima.
         """
         wells = numpy.array(wells).flatten("F")
         volumes = numpy.array(volumes).flatten("F")
         if len(volumes) == 1:
             volumes = numpy.repeat(volumes, len(wells))
-        labware.remove(wells, volumes, label, on_underflow=on_underflow)
+        vaspirated = labware.remove(wells, volumes, label, on_underflow=on_underflow)
         self.comment(label)
         for well, volume in zip(wells, volumes):
             if volume > 0:
                 self.aspirate_well(labware.name, self._get_well_position(labware, well), volume, **kwargs)
-        return
+        return vaspirated
 
     def dispense(
         self,
@@ -643,6 +648,7 @@ class BaseWorklist(list[str]):
         # update volume tracking
         n_dst = len(dst_wells)
         source.remove(source.wells[0, source_column], volume * n_dst, label=label)
+        # ℹ No need to capture vasp volumes because underflows are verboten in this operation.
         src_composition = source.get_well_composition(source.wells[0, source_column])
         destination.add(destination_wells, volume, label=label, compositions=[src_composition] * n_dst)
         return
