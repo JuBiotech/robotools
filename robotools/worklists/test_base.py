@@ -391,7 +391,9 @@ class TestStandardLabwareWorklist:
     def test_aspirate(self, wl_cls) -> None:
         source = Labware("SourceLW", rows=3, columns=3, min_volume=10, max_volume=200, initial_volumes=200)
         with wl_cls() as wl:
-            wl.aspirate(source, ["A01", "A02", "C02"], 50, label=None)
+            vasp = wl.aspirate(source, ["A01", "A02", "C02"], 50, label=None)
+            assert isinstance(vasp, list)
+            assert vasp == [50, 50, 50]
             wl.aspirate(source, ["A03", "B03", "C03"], [10, 20, 30.5], label="second aspirate")
             assert wl == [
                 "A;SourceLW;;;1;;50.00;;;;",
