@@ -295,7 +295,7 @@ class Labware:
         label: Optional[str] = None,
         *,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
-    ) -> None:
+    ) -> list[float]:
         """Removes volumes from wells.
 
         Parameters
@@ -314,6 +314,11 @@ class Labware:
             - ``"debug"`` mentions the underflowing wells in a log message at DEBUG level.
             - ``"warn"`` emits an :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowWarning`. This `can be captured in unit tests <https://docs.pytest.org/en/stable/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests>`_.
             - ``"raise"`` raises a :class:`~robotools.liquidhandling.exceptions.VolumeUnderflowError` about underflowing wells.
+
+        Returns
+        -------
+        vaspirated
+            List of aspirated volumes according to previous filling volume and minima.
         """
         wells = np.array(wells).flatten("F")
         volumes = np.array(volumes).flatten("F")
@@ -321,6 +326,7 @@ class Labware:
             volumes = np.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), "Number of volumes must number of wells"
         assert np.all(volumes >= 0), "Volumes must be positive or zero."
+        vaspirated = []
         for well, volume in zip(wells, volumes):
             idx = self.indices[well]
             v_original = self._volumes[idx]
@@ -337,11 +343,11 @@ class Labware:
                         raise VolumeUnderflowError(
                             self.name, well, v_original, volume, self.min_volume, label
                         )
-                self._volumes[idx] = self.min_volume
-            else:
-                self._volumes[idx] -= volume
+                volume = v_original - self.min_volume
+            self._volumes[idx] -= volume
+            vaspirated.append(volume)
         self.log(label)
-        return
+        return vaspirated
 
     def log(self, label: Optional[str]) -> None:
         """Logs the current volumes to the history.
