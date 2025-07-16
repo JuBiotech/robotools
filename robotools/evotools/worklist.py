@@ -331,13 +331,16 @@ class EvoWorklist(BaseWorklist):
                     if len(vs) > p:
                         v = vs[p]
                         if v > 0:
-                            self.aspirate(source, s, v, label=None, on_underflow=on_underflow, **kwargs)
+                            vasp = self.aspirate(
+                                source, s, v, label=None, on_underflow=on_underflow, **kwargs
+                            )
                             self.dispense(
                                 destination,
                                 d,
                                 v,
                                 label=None,
                                 compositions=[source.get_well_composition(s)],
+                                vtrack=vasp,
                                 **kwargs,
                             )
                             nsteps += 1

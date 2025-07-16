@@ -598,11 +598,11 @@ class TestEvoWorklist:
         with EvoWorklist() as wl:
             wl.transfer(A, "A01", A, "A02", 600, on_underflow="debug")
             assert A.volumes[0, 0] == 100
-            assert A.volumes[0, 1] == 1100
+            assert A.volumes[0, 1] == 900  # only the aspiratable volume is transferred
             with pytest.warns(VolumeUnderflowWarning, match="500.0 - 600.0 < 100"):
                 wl.transfer(A, "B01", A, "B02", 600, on_underflow="warn")
                 assert A.volumes[1, 0] == 100
-                assert A.volumes[1, 1] == 1100
+                assert A.volumes[1, 1] == 900
             with pytest.raises(VolumeUnderflowError, match="500.0 - 600.0 < 100"):
                 wl.transfer(A, "C01", A, "C02", 600, on_underflow="raise")
 
