@@ -181,9 +181,15 @@ class TestStandardLabware:
         plate = Labware("TestPlate", 4, 6, min_volume=100, max_volume=250, initial_volumes=150)
         wells = ["A01", "A02", "B04"]
         with pytest.warns(VolumeUnderflowWarning, match="150.0 - 500 < 100"):
-            plate.remove(wells, 500, on_underflow="warn")
+            vaspirated = plate.remove(wells, [500, 500, 30], on_underflow="warn")
+        # At least the min volume always remains
         assert plate.volumes[0, 0] == 100
+        assert plate.volumes[0, 1] == 100
+        assert plate.volumes[1, 3] == 120
         assert len(plate.history) == 2
+        # No more than the difference from current to min volume is aspirated
+        assert isinstance(vaspirated, list)
+        assert vaspirated == [50.0, 50.0, 30.0]
         return
 
     def test_remove_debug_underflows(self, caplog) -> None:
@@ -308,8 +314,9 @@ class TestTroughLabware:
 
     def test_trough_remove_valid(self) -> None:
         trough = Trough("TestTrough", 3, 4, min_volume=1000, max_volume=30000, initial_volumes=3000)
-        # adding into the first column (which is actually one well)
-        trough.remove(["A01", "B01"], 50)
+        # removing from the first column (which is actually one well)
+        vasp = trough.remove(["A01", "B01"], 50)
+        assert vasp == [50, 50]
         np.testing.assert_array_equal(trough.volumes, np.array([[2900, 3000, 3000, 3000]]))
         # adding to the last row (separate wells)
         trough.remove(["C01", "C02", "C03"], 50)
