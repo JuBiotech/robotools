@@ -2,26 +2,13 @@ import warnings
 
 import pytest
 
-from robotools import (
-    BaseWorklist,
-    CompatibilityError,
-    EvoWorklist,
-    FluentWorklist,
-    Worklist,
-)
+from robotools import BaseWorklist, CompatibilityError, EvoWorklist, FluentWorklist
 
 
 def test_worklist_inheritance():
     assert issubclass(BaseWorklist, list)
     assert issubclass(EvoWorklist, BaseWorklist)
     assert issubclass(FluentWorklist, BaseWorklist)
-    assert issubclass(Worklist, EvoWorklist)
-    pass
-
-
-def test_worklist_deprecation():
-    with pytest.warns(DeprecationWarning, match="please switch to"):
-        Worklist()
     pass
 
 

@@ -1,7 +1,7 @@
 import importlib.metadata
 
 from . import evotools, liquidhandling
-from .evotools import EvoWorklist, InvalidOperationError, Labwares, Tip, Worklist
+from .evotools import EvoWorklist, InvalidOperationError, Labwares, Tip
 from .evotools import commands as evo_cmd
 from .evotools import int_to_tip
 from .fluenttools import FluentWorklist
@@ -49,5 +49,4 @@ __all__ = (
     "WellRandomizer",
     "WellRotator",
     "WellShifter",
-    "Worklist",
 )

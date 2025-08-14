@@ -18,7 +18,7 @@ from robotools.worklists.utils import (
     partition_volume,
 )
 
-__all__ = ("EvoWorklist", "Worklist")
+__all__ = ("EvoWorklist",)
 
 logger = logging.getLogger(__name__)
 
@@ -372,19 +372,3 @@ class EvoWorklist(BaseWorklist):
             source.condense_log(nsteps, label=label)
             destination.condense_log(nsteps, label=label)
         return
-
-
-class Worklist(EvoWorklist):
-    def __init__(self, *args, **kwargs) -> None:
-        msg = textwrap.dedent(
-            """
-            Robotools now distunguishes between EVO- and Fluent-compatible worklists.
-            You created a 'Worklist', which will stop working in a future release.
-            Instead please switch to one of the following options:
-            1.) `robotools.EvoWorklist(...)` for EVO-compatible worklists.
-            2.) `robotools.FluentWorklist(...)` for Fluent-compatible worklists.
-            3.) `robotools.BaseWorklist(...)` for cross-compatible worklists with fewer features.
-            """
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        super().__init__(*args, **kwargs)
