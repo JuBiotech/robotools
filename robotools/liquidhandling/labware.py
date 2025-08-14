@@ -56,17 +56,6 @@ class Labware:
         return self._indices
 
     @property
-    def positions(self) -> Dict[str, int]:
-        """Mapping of well-ids to EVOware-compatible position numbers."""
-        warnings.warn(
-            "`Labware.positions` is deprecated in favor of model-specific implementations."
-            " Use `robotools.evotools.get_well_positions()` or `robotools.fluenttools.get_well_positions()`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self._positions
-
-    @property
     def n_rows(self) -> int:
         return len(self.row_ids)
 
@@ -180,19 +169,9 @@ class Labware:
                 for r, row in enumerate(self.row_ids)
                 for c, column in enumerate(self.column_ids)
             }
-            self._positions = {
-                f"{row}{column:02d}": 1 + c * rows + r
-                for r, row in enumerate(self.row_ids)
-                for c, column in enumerate(self.column_ids)
-            }
         else:
             self._indices = {
                 f"{vrow}{column:02d}": (0, c)
-                for vr, vrow in enumerate(self.row_ids)
-                for c, column in enumerate(self.column_ids)
-            }
-            self._positions = {
-                f"{vrow}{column:02d}": 1 + c * virtual_rows + vr
                 for vr, vrow in enumerate(self.row_ids)
                 for c, column in enumerate(self.column_ids)
             }

@@ -34,15 +34,6 @@ class TestStandardLabware:
             "B03": (1, 2),
         }
         assert plate.indices == exp
-        with pytest.warns(DeprecationWarning, match="in favor of model-specific"):
-            assert plate.positions == {
-                "A01": 1,
-                "A02": 3,
-                "A03": 5,
-                "B01": 2,
-                "B02": 4,
-                "B03": 6,
-            }
         return
 
     def test_invalid_init(self) -> None:
@@ -250,29 +241,6 @@ class TestTroughLabware:
             "E03": (0, 2),
             "E04": (0, 3),
         }
-        with pytest.warns(DeprecationWarning, match="in favor of model-specific"):
-            assert trough.positions == {
-                "A01": 1,
-                "A02": 6,
-                "A03": 11,
-                "A04": 16,
-                "B01": 2,
-                "B02": 7,
-                "B03": 12,
-                "B04": 17,
-                "C01": 3,
-                "C02": 8,
-                "C03": 13,
-                "C04": 18,
-                "D01": 4,
-                "D02": 9,
-                "D03": 14,
-                "D04": 19,
-                "E01": 5,
-                "E02": 10,
-                "E03": 15,
-                "E04": 20,
-            }
         return
 
     def test_initial_volumes(self) -> None:
