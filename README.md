@@ -42,14 +42,20 @@ When using `robotools` in your work, please cite the [corresponding software ver
 ```bibtex
 @software{robotools,
   author       = {Michael Osthege and
-                  Laura Helleckes},
-  title        = {JuBiotech/robotools: v1.3.0},
-  month        = nov,
-  year         = 2021,
+                  Laura Helleckes and
+                  Jochen Nießer and
+                  Lisa Prigolovkin and
+                  Tobias Latour and
+                  Lars Halle and
+                  Luisa Wachtendonk and
+                  Clay Kosonocky},
+  title        = {JuBiotech/robotools: v1.14.0},
+  month        = aug,
+  year         = 2025,
   publisher    = {Zenodo},
-  version      = {v1.3.0},
-  doi          = {10.5281/zenodo.5745938},
-  url          = {https://doi.org/10.5281/zenodo.5745938}
+  version      = {v1.14.0},
+  doi          = {10.5281/zenodo.4697605},
+  url          = {https://doi.org/10.5281/zenodo.4697605}
 }
 ```
 
