@@ -330,48 +330,30 @@ class TestWorklist:
         return
 
     def test_save(self) -> None:
-        tf = tempfile.mktemp() + ".gwl"
-        error = None
-        try:
+        with tempfile.TemporaryDirectory() as tdir:
+            tf = Path(tdir, "worklist.gwl")
             with BaseWorklist() as worklist:
                 assert worklist.filepath is None
                 worklist.flush()
                 worklist.save(tf)
-                assert os.path.exists(tf)
+                assert tf.exists()
                 # also check that the file can be overwritten if it exists already
                 worklist.save(tf)
-            assert os.path.exists(tf)
+            assert tf.exists()
             with open(tf) as file:
                 lines = file.readlines()
                 assert lines == ["F;"]
-        except Exception as ex:
-            error = ex
-        finally:
-            os.remove(tf)
-        assert os.path.exists(tf == False)
-        if error:
-            raise error
-        return
 
     def test_autosave(self) -> None:
-        tf = tempfile.mktemp() + ".gwl"
-        error = None
-        try:
+        with tempfile.TemporaryDirectory() as tdir:
+            tf = Path(tdir, "worklist.gwl")
             with BaseWorklist(tf) as worklist:
                 assert isinstance(worklist.filepath, Path)
                 worklist.flush()
-            assert os.path.exists(tf)
+            assert tf.exists()
             with open(tf) as file:
                 lines = file.readlines()
                 assert lines == ["F;"]
-        except Exception as ex:
-            error = ex
-        finally:
-            os.remove(tf)
-        assert os.path.exists(tf == False)
-        if error:
-            raise error
-        return
 
     def test_aspirate_dispense_distribute_require_specific_type(self):
         lw = Labware("A", 2, 3, min_volume=0, max_volume=1000, initial_volumes=500)
