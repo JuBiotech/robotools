@@ -3,7 +3,7 @@
 
 import logging
 import warnings
-from typing import Dict, List, Literal, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -369,6 +369,105 @@ class Labware:
     def __str__(self) -> str:
         return self.__repr__()
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to a dict of only atomic data types.
+
+        Use :meth:`Labware.from_dict()` to recreate a labware from the dict produced by this method.
+        """
+        return {
+            "name": self.name,
+            "rows": self.n_rows,
+            "columns": self.n_columns,
+            "min_volume": self.min_volume,
+            "max_volume": self.max_volume,
+            "volumes": self.volumes.tolist(),
+            "history": [h.tolist() for h in self._history],
+            "labels": self._labels,
+            "composition": {k: v.tolist() for k, v in self.composition.items()},
+            "is_trough": self.is_trough,
+            "virtual_rows": self.virtual_rows,
+        }
+
+    @classmethod
+    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> Dict[str, Any]:
+        """Extract initializer parameters from a dict created by :meth:`Labware.to_dict()`."""
+        return {
+            "name": data["name"],
+            "rows": data["rows"],
+            "columns": data["columns"],
+            "min_volume": data["min_volume"],
+            "max_volume": data["max_volume"],
+        }
+
+    @classmethod
+    def _from_dict_attributes(cls, data: Mapping[str, Any], vshape: tuple[int, int]) -> Dict[str, Any]:
+        """Extracts state attributes from a dict created by :meth:`Labware.to_dict()`.
+
+        Parameters
+        ----------
+        data
+            Dict created by :meth:`Labware.to_dict()`.
+        vshape
+            Shape of the volumes array.
+
+        Returns
+        -------
+        Dict of attribute names and values to be assigned to the labware after initialization.
+        """
+
+        def as_2d(arr):
+            return np.asarray(arr, dtype=float).reshape(vshape)
+
+        return {
+            "_volumes": as_2d(data["volumes"]),
+            "_history": [as_2d(h) for h in data["history"]],
+            "_labels": data["labels"],
+            "_composition": {k: as_2d(v) for k, v in data["composition"].items()},
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any], cls_trough: type | None = None) -> "Labware | Trough":
+        """Creates a labware from a dict produced by :meth:`Labware.to_dict()`.
+
+        Parameters
+        ----------
+        data
+            Dict created by :meth:`Labware.to_dict()`.
+        cls_trough
+            Optional trough type to use in case the data dict corresponds to a trough labware.
+            Defaults to :class:`Trough` with a warning if the main class is not a `Trough` itself.
+        """
+        # First we must determine the type to be instantiated.
+        # If the data corresponds to a trough, we want to create a trough object, which is OK with the return type hint,
+        # because Trough is a subclass of Labware. Therefore Labware.from_dict can be used to restore Troughs as well.
+        # We allow the caller to specify a derived trough class, or default to the Trough class in this module.
+        # This is useful when the actual type used by the caller is a custom subclass of Labware/Trough.
+        _cls: type[Labware] | type[Trough]
+        if data.get("is_trough", False) and not issubclass(cls, Trough):
+            if cls_trough is None:
+                if cls is not Labware:
+                    warnings.warn(
+                        "Data corresponds to a trough, but no trough type was given."
+                        " Defaulting to `robotools.Trough`."
+                        f" Specify a trough type to avoid downcasting {cls} to {Trough}.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                _cls = Trough
+            else:
+                _cls = cls_trough
+        else:
+            _cls = cls
+
+        # Now that we have the type we can proceed with extraction of initializer parameters and state attributes from the dict.
+        init_kwargs = _cls._from_dict_init_kwargs(data)
+        lware = _cls(**init_kwargs)
+        attributes = _cls._from_dict_attributes(data, lware.volumes.shape)
+        # assign state attributes
+        for aname, avalue in attributes.items():
+            setattr(lware, aname, avalue)
+        return lware
+
 
 class Trough(Labware):
     """Special type of labware that can be accessed by many pipette tips in parallel."""
@@ -428,3 +527,14 @@ class Trough(Labware):
             virtual_rows=virtual_rows,
             component_names=component_names,
         )
+
+    @classmethod
+    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> Dict[str, Any]:
+        """Extract initializer parameters from a dict created by :meth:`Labware.to_dict()`.
+
+        Overrides the superclass method to account for the different initializer signature of troughs.
+        """
+        lware_kwargs = Labware._from_dict_init_kwargs(data)
+        lware_kwargs.pop("rows")
+        lware_kwargs["virtual_rows"] = data["virtual_rows"]
+        return lware_kwargs
