@@ -3,9 +3,10 @@
 import logging
 import math
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Optional, Sequence, Union
+from typing import Iterable, Literal, Mapping, Sequence
 
 import numpy
+import numpy.typing as npt
 from typing_extensions import Self
 
 from robotools import liquidhandling
@@ -24,8 +25,8 @@ class BaseWorklist(list[str]):
 
     def __init__(
         self,
-        filepath: Optional[Union[str, Path]] = None,
-        max_volume: Union[int, float] = 950,
+        filepath: str | Path | None = None,
+        max_volume: int | float = 950,
         auto_split: bool = True,
         diti_mode: bool = False,
     ) -> None:
@@ -44,7 +45,7 @@ class BaseWorklist(list[str]):
             Activate this when using DiTis.
             Uses ``W;`` for all wash schemes and raises errors when using commands that are only for fixed tips.
         """
-        self._filepath: Optional[Path] = None
+        self._filepath: Path | None = None
         if filepath is not None:
             self._filepath = Path(filepath)
         if max_volume is None:
@@ -55,7 +56,7 @@ class BaseWorklist(list[str]):
         super().__init__()
 
     @property
-    def filepath(self) -> Optional[Path]:
+    def filepath(self) -> Path | None:
         """Path to which the worklist will write, if specified."""
         if self._filepath is not None:
             return Path(self._filepath)
@@ -76,7 +77,7 @@ class BaseWorklist(list[str]):
             "The use of a specific worklist type (typically EvoWorklist or FluentWorklist) is required for this operation."
         )
 
-    def save(self, filepath: Union[str, Path]) -> None:
+    def save(self, filepath: str | Path) -> None:
         """Writes the worklist to the filepath.
 
         Parameters
@@ -91,7 +92,7 @@ class BaseWorklist(list[str]):
             file.write("\n".join(self))
         return
 
-    def comment(self, comment: Optional[str]) -> None:
+    def comment(self, comment: str | None) -> None:
         """Adds a comment.
 
         Parameters
@@ -192,7 +193,7 @@ class BaseWorklist(list[str]):
         volume: float,
         *,
         liquid_class: str = "",
-        tip: Union[Tip, int, Iterable] = Tip.Any,
+        tip: Tip | int | Iterable[Tip | int] = Tip.Any,
         rack_id: str = "",
         tube_id: str = "",
         rack_type: str = "",
@@ -259,7 +260,7 @@ class BaseWorklist(list[str]):
         volume: float,
         *,
         liquid_class: str = "",
-        tip: Union[Tip, int] = Tip.Any,
+        tip: Tip | int = Tip.Any,
         rack_id: str = "",
         tube_id: str = "",
         rack_type: str = "",
@@ -332,9 +333,9 @@ class BaseWorklist(list[str]):
         volume: float,
         diti_reuse: int = 1,
         multi_disp: int = 1,
-        exclude_wells: Optional[Iterable[int]] = None,
+        exclude_wells: Iterable[int] | None = None,
         liquid_class: str = "",
-        direction: str = "left_to_right",
+        direction: Literal["left_to_right", "right_to_left"] = "left_to_right",
         src_rack_id: str = "",
         src_rack_type: str = "",
         dst_rack_id: str = "",
@@ -445,10 +446,10 @@ class BaseWorklist(list[str]):
     def aspirate(
         self,
         labware: liquidhandling.Labware,
-        wells: Union[str, Sequence[str], numpy.ndarray],
-        volumes: Union[float, Sequence[float], numpy.ndarray],
+        wells: str | Sequence[str] | npt.NDArray[numpy.str_],
+        volumes: float | Sequence[float] | npt.NDArray[numpy.float64],
         *,
-        label: Optional[str] = None,
+        label: str | None = None,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
         **kwargs,
     ) -> list[float]:
@@ -496,12 +497,12 @@ class BaseWorklist(list[str]):
     def dispense(
         self,
         labware: liquidhandling.Labware,
-        wells: Union[str, Sequence[str], numpy.ndarray],
-        volumes: Union[float, Sequence[float], numpy.ndarray],
+        wells: str | Sequence[str] | npt.NDArray[numpy.str_],
+        volumes: float | Sequence[float] | npt.NDArray[numpy.float64],
         *,
-        label: Optional[str] = None,
-        compositions: Optional[List[Optional[Dict[str, float]]]] = None,
-        vtrack: Union[float, Sequence[float], numpy.ndarray] | None = None,
+        label: str | None = None,
+        compositions: Sequence[Mapping[str, float] | None] | None = None,
+        vtrack: float | Sequence[float] | npt.NDArray[numpy.float64] | None = None,
         **kwargs,
     ) -> None:
         """Performs dispensing into the provided labware.
@@ -551,12 +552,12 @@ class BaseWorklist(list[str]):
     def transfer(
         self,
         source: liquidhandling.Labware,
-        source_wells: Union[str, Sequence[str], numpy.ndarray],
+        source_wells: str | Sequence[str] | npt.NDArray[numpy.str_],
         destination: liquidhandling.Labware,
-        destination_wells: Union[str, Sequence[str], numpy.ndarray],
-        volumes: Union[float, Sequence[float], numpy.ndarray],
+        destination_wells: str | Sequence[str] | npt.NDArray[numpy.str_],
+        volumes: float | Sequence[float] | npt.NDArray[numpy.float64],
         *,
-        label: Optional[str] = None,
+        label: str | None = None,
         wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
         **kwargs,
@@ -571,14 +572,14 @@ class BaseWorklist(list[str]):
         source: liquidhandling.Labware,
         source_column: int,
         destination: liquidhandling.Labware,
-        destination_wells: Union[str, Sequence[str], numpy.ndarray],
+        destination_wells: str | Sequence[str] | npt.NDArray[numpy.str_],
         *,
         volume: float,
         diti_reuse: int = 1,
         multi_disp: int = 1,
         liquid_class: str = "",
         label: str = "",
-        direction: str = "left_to_right",
+        direction: Literal["left_to_right", "right_to_left"] = "left_to_right",
         src_rack_id: str = "",
         src_rack_type: str = "",
         dst_rack_id: str = "",

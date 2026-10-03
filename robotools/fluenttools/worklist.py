@@ -1,9 +1,10 @@
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
+import numpy.typing as npt
 
 from robotools.fluenttools.utils import get_well_position
 from robotools.liquidhandling.labware import Labware
@@ -22,8 +23,8 @@ class FluentWorklist(BaseWorklist):
 
     def __init__(
         self,
-        filepath: Optional[Union[str, Path]] = None,
-        max_volume: Union[int, float] = 950,
+        filepath: str | Path | None = None,
+        max_volume: int | float = 950,
         auto_split: bool = True,
         diti_mode: bool = False,
     ) -> None:
@@ -35,12 +36,12 @@ class FluentWorklist(BaseWorklist):
     def transfer(
         self,
         source: Labware,
-        source_wells: Union[str, Sequence[str], np.ndarray],
+        source_wells: str | Sequence[str] | np.ndarray[np.str_],
         destination: Labware,
-        destination_wells: Union[str, Sequence[str], np.ndarray],
-        volumes: Union[float, Sequence[float], np.ndarray],
+        destination_wells: str | Sequence[str] | npt.NDArray[np.str_],
+        volumes: float | Sequence[float] | npt.NDArray[np.float64],
         *,
-        label: Optional[str] = None,
+        label: str | None = None,
         wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
         on_underflow: Literal["debug", "warn", "raise"] = "raise",

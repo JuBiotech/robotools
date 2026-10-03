@@ -1,7 +1,5 @@
 """Exceptions that indicate problems in liquid handling."""
 
-from typing import Optional
-
 __all__ = (
     "VolumeOverflowError",
     "VolumeUnderflowError",
@@ -29,7 +27,7 @@ class VolumeOverflowError(VolumeViolationException):
         current: float,
         change: float,
         threshold: float,
-        label: Optional[str] = None,
+        label: str | None = None,
     ) -> None:
         if label:
             super().__init__(
@@ -53,7 +51,7 @@ class VolumeUnderflowError(VolumeViolationException):
         current: float,
         change: float,
         threshold: float,
-        label: Optional[str] = None,
+        label: str | None = None,
     ) -> None:
         if label:
             super().__init__(

@@ -1,10 +1,13 @@
 """This module implements functions to create advanced worklist commands."""
 
+from typing import Iterable, Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from robotools.evotools.types import Tip, int_to_tip
 from robotools.evotools.utils import to_hex
+from robotools.typing import Strings2D
 from robotools.worklists.exceptions import InvalidOperationError
 
 from .. import transform
@@ -21,7 +24,7 @@ MAX_DILUTOR_VOLUME = 950
 """"Maximum dilutor volume in µL"""
 
 
-def evo_make_selection_array(rows: int, columns: int, wells: Union[Iterable[str], np.ndarray]) -> np.ndarray:
+def evo_make_selection_array(rows: int, columns: int, wells: Iterable[str] | npt.NDArray[np.str_]) -> np.ndarray:
     """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
 
     Parameters
@@ -87,15 +90,15 @@ def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
 
 
 def prepare_evo_aspirate_dispense_parameters(
-    wells: Union[str, Sequence[str], np.ndarray],
+    wells: str | Sequence[str] | Strings2D,
     *,
-    labware_position: Tuple[int, int],
-    volume: Union[float, Sequence[float], int],
+    labware_position: tuple[int, int],
+    volume: float | Sequence[float] | int,
     liquid_class: str,
-    tips: Union[Sequence[Tip], Sequence[int]],
+    tips: Sequence[Tip] | Sequence[int],
     arm: int,
-    max_volume: Optional[Union[int, float]] = None,
-) -> Tuple[List[str], Tuple[int, int], List[float], str, List[Tip]]:
+    max_volume: int | float | None = None,
+) -> tuple[list[str], tuple[int, int], list[float], str, list[Tip]]:
     # wells, labware_position, volume, liquid_class, tecan_tips
     """Validates and prepares aspirate/dispense parameters.
 
@@ -175,7 +178,7 @@ def prepare_evo_aspirate_dispense_parameters(
         raise ValueError(f"Invalid volume: {volume}")
 
     # apply rounding and corrections for the right string formatting
-    volume_list: List[float] = np.round(volume, decimals=2).tolist()
+    volume_list: list[float] = np.round(volume, decimals=2).tolist()
 
     if liquid_class is None:
         raise ValueError(f"Missing required parameter: liquid_class")
@@ -216,13 +219,13 @@ def evo_aspirate(
     *,
     n_rows: int,
     n_columns: int,
-    wells: Union[str, Sequence[str]],
-    labware_position: Tuple[int, int],
-    volume: Union[float, Sequence[float], int],
+    wells: str | Sequence[str],
+    labware_position: tuple[int, int],
+    volume: float | Sequence[float] | int,
     liquid_class: str,
-    tips: Union[Sequence[Tip], Sequence[int]],
+    tips: Sequence[Tip] | Sequence[int],
     arm: int = 0,
-    max_volume: Optional[Union[int, float]] = np.nan,
+    max_volume: int | float | None = np.nan,
 ) -> str:
     """Command for aspirating with the EvoWARE aspirate command WITHOUT digital volume tracking.
 
@@ -299,13 +302,13 @@ def evo_dispense(
     *,
     n_rows: int,
     n_columns: int,
-    wells: Union[str, Sequence[str]],
-    labware_position: Tuple[int, int],
-    volume: Union[float, Sequence[float], int],
+    wells: str | Sequence[str],
+    labware_position: tuple[int, int],
+    volume: float | Sequence[float] | int,
     liquid_class: str,
-    tips: Union[Sequence[Tip], Sequence[int]],
+    tips: Sequence[Tip] | Sequence[int],
     arm: int = 0,
-    max_volume: Optional[Union[int, float]] = np.nan,
+    max_volume: int | float | None = np.nan,
 ) -> str:
     """Command for dispensing using the EvoWARE dispense command WITHOUT digital volume tracking.
 
@@ -380,9 +383,9 @@ def evo_dispense(
 
 def prepare_evo_wash_parameters(
     *,
-    tips: Union[List[Tip], List[int]],
-    waste_location: Tuple[int, int],
-    cleaner_location: Tuple[int, int],
+    tips: Sequence[Tip] | Sequence[int],
+    waste_location: tuple[int, int],
+    cleaner_location: tuple[int, int],
     arm: int = 0,
     waste_vol: float = 3.0,
     waste_delay: int = 500,
@@ -393,7 +396,7 @@ def prepare_evo_wash_parameters(
     retract_speed: int = 30,
     fastwash: int = 1,
     low_volume: int = 0,
-) -> Tuple[List[Tip], Tuple[int, int], Tuple[int, int], int, float, int, float, int, int, int, int, int, int]:
+) -> tuple[list[Tip], tuple[int, int], tuple[int, int], int, float, int, float, int, int, int, int, int, int]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -457,7 +460,7 @@ def prepare_evo_wash_parameters(
     if tips is None:
         raise ValueError("Missing required parameter: tips")
 
-    tecan_tips: List[Tip] = []
+    tecan_tips: list[Tip] = []
     for tip in tips:
         if isinstance(tip, int) and not isinstance(tip, Tip):
             # User-specified integers from 1-8 need to be converted to Tecan logic
@@ -559,9 +562,9 @@ def prepare_evo_wash_parameters(
 
 def evo_wash(
     *,
-    tips: Union[List[Tip], List[int]],
-    waste_location: Tuple[int, int],
-    cleaner_location: Tuple[int, int],
+    tips: Sequence[Tip] | Sequence[int],
+    waste_location: tuple[int, int],
+    cleaner_location: tuple[int, int],
     arm: int = 0,
     waste_vol: float = 3.0,
     waste_delay: int = 500,

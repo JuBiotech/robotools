@@ -1,10 +1,12 @@
-from typing import Dict, Literal, Tuple
+from typing import Literal
 
 import numpy
 from numpy.typing import ArrayLike
 
+from robotools.typing import Strings2D
 
-def make_well_index_dict(R: int, C: int) -> Dict[str, Tuple[int, int]]:
+
+def make_well_index_dict(R: int, C: int) -> dict[str, tuple[int, int]]:
     """Create a dictionary mapping well IDs to their numpy indices.
 
     Parameters
@@ -26,7 +28,7 @@ def make_well_index_dict(R: int, C: int) -> Dict[str, Tuple[int, int]]:
     }
 
 
-def make_well_array(R: int, C: int) -> numpy.ndarray:
+def make_well_array(R: int, C: int) -> Strings2D:
     """Create a numpy array of well IDs.
 
     Parameters
@@ -49,7 +51,7 @@ def make_well_array(R: int, C: int) -> numpy.ndarray:
 class WellShifter:
     """Helper object to shift a set of well IDs within a MTP."""
 
-    def __init__(self, shape_A: Tuple[int, int], shape_B: Tuple[int, int], shifted_A01: str) -> None:
+    def __init__(self, shape_A: tuple[int, int], shape_B: tuple[int, int], shifted_A01: str) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
@@ -123,7 +125,7 @@ class WellShifter:
 class WellRotator:
     """Helper object to rotate a set of well IDs within a MTP."""
 
-    def __init__(self, original_shape: Tuple[int, int]) -> None:
+    def __init__(self, original_shape: tuple[int, int]) -> None:
         """Create a helper object for shifting wells around.
 
         Parameters
@@ -189,7 +191,7 @@ class WellRandomizer:
 
     def __init__(
         self,
-        original_shape: Tuple[int, int],
+        original_shape: tuple[int, int],
         random_seed: int,
         *,
         mode: Literal["full", "row", "column"] = "full",
@@ -210,7 +212,7 @@ class WellRandomizer:
         self.original_shape = original_shape
         self.random_seed = random_seed
         self.rng = numpy.random.RandomState(self.random_seed)
-        self.lookup: Dict[str, str] = {}
+        self.lookup: dict[str, str] = {}
         full = make_well_array(*self.original_shape)
         if mode == "full":
             self.original_wells = full.flatten()

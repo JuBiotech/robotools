@@ -2,9 +2,10 @@
 
 import logging
 import warnings
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Literal, Mapping, Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from robotools import liquidhandling
 from robotools.evotools import commands
@@ -31,14 +32,14 @@ class EvoWorklist(BaseWorklist):
     def evo_aspirate(
         self,
         labware: liquidhandling.Labware,
-        wells: Union[str, List[str]],
-        labware_position: Tuple[int, int],
-        tips: Union[List[Tip], List[int]],
-        volumes: Union[float, List[float]],
+        wells: str | Sequence[str],
+        labware_position: tuple[int, int],
+        tips: Sequence[Tip] | Sequence[int],
+        volumes: float | list[float],
         liquid_class: str,
         *,
         arm: int = 0,
-        label: Optional[str] = None,
+        label: str | None = None,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
     ) -> list[float]:
         """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
@@ -100,15 +101,15 @@ class EvoWorklist(BaseWorklist):
     def evo_dispense(
         self,
         labware: liquidhandling.Labware,
-        wells: Union[str, List[str]],
-        labware_position: Tuple[int, int],
-        tips: Union[List[Tip], List[int]],
-        volumes: Union[float, List[float]],
+        wells: str | Sequence[str],
+        labware_position: tuple[int, int],
+        tips: Sequence[Tip] | Sequence[int],
+        volumes: float | Sequence[float],
         liquid_class: str,
         *,
         arm: int = 0,
-        label: Optional[str] = None,
-        compositions: Optional[List[Optional[Dict[str, float]]]] = None,
+        label: str | None = None,
+        compositions: Sequence[Mapping[str, float] | None] | None = None,
     ) -> None:
         """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
@@ -158,9 +159,9 @@ class EvoWorklist(BaseWorklist):
     def evo_wash(
         self,
         *,
-        tips: Union[List[Tip], List[int]],
-        waste_location: Tuple[int, int],
-        cleaner_location: Tuple[int, int],
+        tips: Sequence[Tip] | Sequence[int],
+        waste_location: tuple[int, int],
+        cleaner_location: tuple[int, int],
         arm: int = 0,
         waste_vol: float = 3.0,
         waste_delay: int = 500,
@@ -226,12 +227,12 @@ class EvoWorklist(BaseWorklist):
     def transfer(
         self,
         source: liquidhandling.Labware,
-        source_wells: Union[str, Sequence[str], np.ndarray],
+        source_wells: str | Sequence[str] | npt.NDArray[np.str_],
         destination: liquidhandling.Labware,
-        destination_wells: Union[str, Sequence[str], np.ndarray],
-        volumes: Union[float, Sequence[float], np.ndarray],
+        destination_wells: str | Sequence[str] | npt.NDArray[np.str_],
+        volumes: float | Sequence[float] | npt.NDArray[np.float64],
         *,
-        label: Optional[str] = None,
+        label: str | None = None,
         wash_scheme: Literal[1, 2, 3, 4, "flush", "reuse"] = 1,
         partition_by: str = "auto",
         on_underflow: Literal["debug", "warn", "raise"] = "raise",

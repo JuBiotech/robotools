@@ -3,7 +3,7 @@
 import collections
 import logging
 import math
-from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Iterable, Literal, Sequence
 
 import numpy
 
@@ -27,13 +27,13 @@ def prepare_aspirate_dispense_parameters(
     position: int,
     volume: float,
     liquid_class: str = "",
-    tip: Union[Tip, int, collections.abc.Iterable] = Tip.Any,
+    tip: Tip | int | Iterable[int | Tip] = Tip.Any,
     rack_id: str = "",
     tube_id: str = "",
     rack_type: str = "",
     forced_rack_type: str = "",
-    max_volume: Optional[Union[int, float]] = None,
-) -> Tuple[str, int, str, str, Union[Tip, int, collections.abc.Iterable], str, str, str, str]:
+    max_volume: int | float | None = None,
+) -> tuple[str, int, str, str, int | Literal[""], str, str, str, str]:
     """Validates and prepares aspirate/dispense parameters.
 
     Parameters
@@ -158,7 +158,7 @@ def optimize_partition_by(
     source: liquidhandling.Labware,
     destination: liquidhandling.Labware,
     partition_by: str,
-    label: Optional[str] = None,
+    label: str | None = None,
 ) -> Literal["source", "destination"]:
     """Determines optimal partitioning settings.
 
@@ -218,7 +218,7 @@ def optimize_partition_by(
     raise ValueError(f"Invalid partition_by argument: {partition_by}")
 
 
-def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[float]:
+def partition_volume(volume: float, *, max_volume: int | float) -> list[float]:
     """Partitions a pipetting volume into zero or more integer-valued volumes that are <= max_volume.
 
     Parameters
@@ -239,7 +239,7 @@ def partition_volume(volume: float, *, max_volume: Union[int, float]) -> List[fl
         return [volume]
     isteps = math.ceil(volume / max_volume)
     step_volume = math.ceil(volume / isteps)
-    volumes: List[float] = [step_volume] * (isteps - 1)
+    volumes: list[float] = [step_volume] * (isteps - 1)
     volumes.append(volume - numpy.sum(volumes))
     return volumes
 
@@ -270,7 +270,7 @@ def partition_by_column(
     destinations: Iterable[str],
     volumes: Iterable[float],
     partition_by: Literal["source", "destination"],
-) -> List[Tuple[List[str], List[str], List[float]]]:
+) -> list[tuple[list[str], list[str], list[float]]]:
     """Partitions sources/destinations/volumes by the source column and sorts within those columns.
 
     Parameters
@@ -290,7 +290,7 @@ def partition_by_column(
         A list of (sources, destinations, volumes)
     """
     # first partition the wells into columns
-    column_groups_dd: Dict[str, Tuple[List[str], List[str], List[float]]] = collections.defaultdict(
+    column_groups_dd: dict[str, tuple[list[str], list[str], list[float]]] = collections.defaultdict(
         lambda: ([], [], [])
     )
     for s, d, v in zip(sources, destinations, volumes):
