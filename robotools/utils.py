@@ -1,15 +1,19 @@
 """Module with robot-agnostic utilities."""
 
 import collections
-from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, Literal, Sequence
 
 import numpy
+import numpy.typing as npt
 
 from robotools.liquidhandling import Labware
 from robotools.worklists.base import BaseWorklist
 
 
-def get_trough_wells(n: int, trough_wells: Union[collections.abc.Iterable[str], numpy.ndarray]) -> List[str]:
+def get_trough_wells(
+    n: int,
+    trough_wells: collections.abc.Iterable[str] | npt.NDArray[numpy.str_],
+) -> list[str]:
     """Creates a list that re-uses trough wells if needed.
 
     When n > trough.virtual_rows, the available wells are repeated.
@@ -50,8 +54,8 @@ class DilutionPlan:
         R: int,
         C: int,
         stock: float,
-        mode: str,
-        vmax: Union[float, Sequence[float]],
+        mode: Literal["log", "linear"],
+        vmax: float | Sequence[float],
         min_transfer: float,
     ) -> None:
         """Plans a regularly-spaced dilution series with in very few steps.
@@ -98,7 +102,7 @@ class DilutionPlan:
 
         # collect preparation instructions for each columns
         # (column, dilution steps, prepared from, transfer volumes)
-        instructions: List[Tuple[int, int, Union[int, str], numpy.ndarray]] = []
+        instructions: list[tuple[int, int, int | str, numpy.ndarray]] = []
         actual_targets = []
 
         # transfer from stock until the volume is too low
@@ -174,10 +178,10 @@ class DilutionPlan:
         diluent: Labware,
         diluent_column: int = 0,
         dilution_plate: Labware,
-        destination_plate: Optional[Labware] = None,
-        v_destination: Optional[float] = None,
-        pre_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
-        post_mix_hook: Optional[Callable[[int, BaseWorklist], Optional[BaseWorklist]]] = None,
+        destination_plate: Labware | None = None,
+        v_destination: float | None = None,
+        pre_mix_hook: Callable[[int, BaseWorklist], BaseWorklist | None] | None = None,
+        post_mix_hook: Callable[[int, BaseWorklist], BaseWorklist | None] | None = None,
         mix_threshold: float = 0.05,
         mix_wash: Literal[1, 2, 3, 4, "flush", "reuse"] = 2,
         mix_repeat: int = 2,

@@ -2,9 +2,10 @@
 
 import logging
 import warnings
-from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Literal, Mapping, Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 from robotools.liquidhandling.composition import (
     combine_composition,
@@ -16,6 +17,7 @@ from robotools.liquidhandling.exceptions import (
     VolumeUnderflowError,
     VolumeUnderflowWarning,
 )
+from robotools.typing import Floats2D, Strings2D
 
 _log = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ class Labware:
     """Represents an array of liquid cavities."""
 
     @property
-    def history(self) -> List[Tuple[Optional[str], np.ndarray]]:
+    def history(self) -> list[tuple[str | None, Floats2D]]:
         """List of label/volumes history."""
         return list(zip(self._labels, self._history))
 
@@ -40,17 +42,17 @@ class Labware:
         return report
 
     @property
-    def volumes(self) -> np.ndarray:
+    def volumes(self) -> Floats2D:
         """Current volumes in the labware."""
         return self._volumes.copy()
 
     @property
-    def wells(self) -> np.ndarray:
+    def wells(self) -> Strings2D:
         """Array of well ids."""
         return self._wells
 
     @property
-    def indices(self) -> Dict[str, Tuple[int, int]]:
+    def indices(self) -> dict[str, tuple[int, int]]:
         """Mapping of well-ids to numpy indices."""
         return self._indices
 
@@ -63,7 +65,7 @@ class Labware:
         return len(self.column_ids)
 
     @property
-    def shape(self) -> Tuple[int, int]:
+    def shape(self) -> tuple[int, int]:
         """Number of rows and columns."""
         return self.wells.shape
 
@@ -72,7 +74,7 @@ class Labware:
         return self.virtual_rows != None
 
     @property
-    def composition(self) -> Dict[str, np.ndarray]:
+    def composition(self) -> dict[str, Floats2D]:
         """Relative composition of the liquids.
 
         This dictionary maps liquid names (keys) to arrays of relative amounts in each well.
@@ -87,9 +89,9 @@ class Labware:
         *,
         min_volume: float,
         max_volume: float,
-        initial_volumes: Optional[Union[float, np.ndarray]] = None,
-        virtual_rows: Optional[int] = None,
-        component_names: Optional[Mapping[str, Optional[str]]] = None,
+        initial_volumes: float | Floats2D | None = None,
+        virtual_rows: int | None = None,
+        component_names: Mapping[str, str | None] | None = None,
     ) -> None:
         """Creates a `Labware` object.
 
@@ -177,8 +179,8 @@ class Labware:
 
         # initialize state variables
         self._volumes = ivols.copy().astype(float)
-        self._history: List[np.ndarray] = [self.volumes]
-        self._labels: List[Optional[str]] = ["initial"]
+        self._history: list[np.ndarray] = [self.volumes]
+        self._labels: list[str | None] = ["initial"]
         self._composition = get_initial_composition(
             name,
             real_wells=self.wells[[0], :] if virtual_rows else self.wells,
@@ -187,7 +189,7 @@ class Labware:
         )
         super().__init__()
 
-    def get_well_composition(self, well: str) -> Dict[str, float]:
+    def get_well_composition(self, well: str) -> dict[str, float]:
         """Retrieves the relative composition of a well.
 
         Parameters
@@ -209,10 +211,10 @@ class Labware:
 
     def add(
         self,
-        wells: Union[str, Sequence[str], np.ndarray],
-        volumes: Union[float, Sequence[float], np.ndarray],
-        label: Optional[str] = None,
-        compositions: Optional[Sequence[Optional[Mapping[str, float]]]] = None,
+        wells: str | Sequence[str] | npt.NDArray[np.str_],
+        volumes: float | Sequence[float] | npt.NDArray[np.float64],
+        label: str | None = None,
+        compositions: Sequence[Mapping[str, float] | None] | None = None,
     ) -> None:
         """Adds volumes to wells.
 
@@ -268,9 +270,9 @@ class Labware:
 
     def remove(
         self,
-        wells: Union[str, Sequence[str], np.ndarray],
-        volumes: Union[float, Sequence[float], np.ndarray],
-        label: Optional[str] = None,
+        wells: str | Sequence[str] | npt.NDArray[np.str_],
+        volumes: float | Sequence[float] | npt.NDArray[np.float64],
+        label: str | None = None,
         *,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
     ) -> list[float]:
@@ -304,7 +306,7 @@ class Labware:
             volumes = np.repeat(volumes, len(wells))
         assert len(volumes) == len(wells), "Number of volumes must number of wells"
         assert np.all(volumes >= 0), "Volumes must be positive or zero."
-        vaspirated = []
+        vaspirated: list[float] = []
         for well, volume in zip(wells, volumes):
             idx = self.indices[well]
             v_original = self._volumes[idx]
@@ -327,7 +329,7 @@ class Labware:
         self.log(label)
         return vaspirated
 
-    def log(self, label: Optional[str]) -> None:
+    def log(self, label: str | None) -> None:
         """Logs the current volumes to the history.
 
         Parameters
@@ -339,7 +341,7 @@ class Labware:
         self._labels.append(label)
         return
 
-    def condense_log(self, n: int, label: Optional[str] = "last") -> None:
+    def condense_log(self, n: int, label: Literal["first", "last"] | str | None = "last") -> None:
         """Condense the last n log entries.
 
         Parameters
@@ -388,7 +390,7 @@ class Labware:
         }
 
     @classmethod
-    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> Dict[str, Any]:
+    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> dict[str, Any]:
         """Extract initializer parameters from a dict created by :meth:`Labware.to_dict()`."""
         return {
             "name": data["name"],
@@ -399,7 +401,7 @@ class Labware:
         }
 
     @classmethod
-    def _from_dict_attributes(cls, data: Mapping[str, Any], vshape: tuple[int, int]) -> Dict[str, Any]:
+    def _from_dict_attributes(cls, data: Mapping[str, Any], vshape: tuple[int, int]) -> dict[str, Any]:
         """Extracts state attributes from a dict created by :meth:`Labware.to_dict()`.
 
         Parameters
@@ -479,8 +481,8 @@ class Trough(Labware):
         *,
         min_volume: float,
         max_volume: float,
-        initial_volumes: Union[float, Sequence[float], np.ndarray] = 0,
-        column_names: Optional[Sequence[Optional[str]]] = None,
+        initial_volumes: float | Sequence[float] | Floats2D = 0,
+        column_names: Sequence[str | None] | None = None,
     ) -> None:
         """Creates a `Labware` object.
 
@@ -528,7 +530,7 @@ class Trough(Labware):
         )
 
     @classmethod
-    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> Dict[str, Any]:
+    def _from_dict_init_kwargs(cls, data: Mapping[str, Any]) -> dict[str, Any]:
         """Extract initializer parameters from a dict created by :meth:`Labware.to_dict()`.
 
         Overrides the superclass method to account for the different initializer signature of troughs.
