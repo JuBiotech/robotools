@@ -1,4 +1,4 @@
-"""Creating worklist files for the Tecan Freedom EVO."""
+"""Creating worklist files for the Tecan Freedom EVO or Fluent liquid handlers."""
 
 import logging
 import math

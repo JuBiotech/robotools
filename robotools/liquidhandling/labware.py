@@ -373,7 +373,7 @@ class Labware:
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a dict of only atomic data types.
 
-        Use :meth:`Labware.from_dict()` to recreate a labware from the dict produced by this method.
+        Use :meth:`Labware.from_dict` to recreate a labware from the dict produced by this method.
         """
         return {
             "name": self.name,
@@ -433,7 +433,7 @@ class Labware:
         Parameters
         ----------
         data
-            Dict created by :meth:`Labware.to_dict()`.
+            Dict created by :meth:`Labware.to_dict`.
         cls_trough
             Optional trough type to use in case the data dict corresponds to a trough labware.
             Defaults to :class:`Trough` with a warning if the main class is not a `Trough` itself.
