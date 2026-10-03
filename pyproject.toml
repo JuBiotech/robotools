@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robotools"
-version = "1.15.0"
+version = "1.16.0"
 description = "Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "GNU Affero General Public License v3"}
 authors = [
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
@@ -15,16 +15,16 @@ authors = [
 classifiers = [
     "Programming Language :: Python",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
     "numpy",
-    "typing_extensions",
 ]
 
 [project.urls]

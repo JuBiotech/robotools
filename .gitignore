@@ -477,3 +477,4 @@ healthchecksdb
 .vscode
 *.gwl
 *Sandbox*.ipynb
+uv.lock
