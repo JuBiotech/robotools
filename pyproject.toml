@@ -8,7 +8,7 @@ version = "1.16.0"
 description = "Pythonic in-silico liquid handling and creation of Tecan FreedomEVO worklists."
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "GNU Affero General Public License v3"}
+license = "AGPL-3.0-or-later"
 authors = [
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
 ]
@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3.15",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
 ]
