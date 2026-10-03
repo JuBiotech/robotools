@@ -1,5 +1,5 @@
 """This module implements functions to create advanced worklist commands."""
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+
 
 import numpy as np
 
@@ -257,7 +257,13 @@ def evo_aspirate(
         max_volume = MAX_DILUTOR_VOLUME
 
     # perform consistency checks
-    (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
+    (
+        wells,
+        labware_position,
+        volume,
+        liquid_class,
+        tips,
+    ) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
         labware_position=labware_position,
         volume=volume,
@@ -334,7 +340,13 @@ def evo_dispense(
         max_volume = MAX_DILUTOR_VOLUME
 
     # perform consistency checks
-    (wells, labware_position, volume, liquid_class, tips,) = prepare_evo_aspirate_dispense_parameters(
+    (
+        wells,
+        labware_position,
+        volume,
+        liquid_class,
+        tips,
+    ) = prepare_evo_aspirate_dispense_parameters(
         wells=wells,
         labware_position=labware_position,
         volume=volume,

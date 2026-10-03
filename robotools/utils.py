@@ -1,6 +1,7 @@
 """Module with robot-agnostic utilities."""
+
 import collections
-from typing import Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy
 

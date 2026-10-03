@@ -1,5 +1,5 @@
-""" Creating worklist files for the Tecan Freedom EVO.
-"""
+"""Creating worklist files for the Tecan Freedom EVO."""
+
 import logging
 import math
 from pathlib import Path

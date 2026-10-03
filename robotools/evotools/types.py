@@ -1,4 +1,5 @@
 """Enums and classes, and related helper functions."""
+
 import enum
 
 __all__ = (
