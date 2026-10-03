@@ -172,12 +172,10 @@ class TestWorklist:
             wl.comment("This is a simple comment")
             with pytest.raises(ValueError):
                 wl.comment("It must not contain ; semicolons")
-            wl.comment(
-                """
+            wl.comment("""
             But it may very well be
             a multiline comment
-            """
-            )
+            """)
             exp = ["C;This is a simple comment", "C;But it may very well be", "C;a multiline comment"]
             assert wl == exp
         return
