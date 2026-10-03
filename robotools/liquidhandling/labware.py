@@ -138,18 +138,18 @@ class Labware:
         # explode convenience parameters
         if initial_volumes is None:
             initial_volumes = 0
-        initial_volumes = np.array(initial_volumes)
-        if initial_volumes.shape == ():
-            initial_volumes = np.full((rows, columns), initial_volumes)
+        ivols = np.array(initial_volumes)
+        if ivols.shape == ():
+            ivols = np.full((rows, columns), ivols)
         else:
-            initial_volumes = initial_volumes.reshape((rows, columns))
-        assert initial_volumes.shape == (
+            ivols = ivols.reshape((rows, columns))
+        assert ivols.shape == (
             rows,
             columns,
-        ), f"Invalid shape of initial_volumes: {initial_volumes.shape}"
-        if np.any(initial_volumes < 0):
+        ), f"Invalid shape of initial_volumes: {ivols.shape}"
+        if np.any(ivols < 0):
             raise ValueError("initial_volume cannot be negative")
-        if np.any(initial_volumes > max_volume):
+        if np.any(ivols > max_volume):
             raise ValueError("initial_volume cannot be above max_volume")
 
         # initialize properties
@@ -176,14 +176,14 @@ class Labware:
             }
 
         # initialize state variables
-        self._volumes = initial_volumes.copy().astype(float)
+        self._volumes = ivols.copy().astype(float)
         self._history: List[np.ndarray] = [self.volumes]
         self._labels: List[Optional[str]] = ["initial"]
         self._composition = get_initial_composition(
             name,
             real_wells=self.wells[[0], :] if virtual_rows else self.wells,
             component_names=component_names or {},
-            initial_volumes=initial_volumes,
+            initial_volumes=ivols,
         )
         super().__init__()
 
