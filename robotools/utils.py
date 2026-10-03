@@ -16,7 +16,7 @@ def get_trough_wells(
 ) -> list[str]:
     """Creates a list that re-uses trough wells if needed.
 
-    When n > trough.virtual_rows, the available wells are repeated.
+    When ``n > trough.virtual_rows``, the available wells are repeated.
 
     Parameters
     ----------
@@ -191,7 +191,7 @@ class DilutionPlan:
         lc_mix: str = "Water_DispZmax-3_AspZmax-5",
         lc_transfer: str = "Water_FD_AspZmax-1",
     ) -> None:
-        """Writes the `DilutionPlan` to a `Worklist`.
+        """Writes the `DilutionPlan` to a :class:`BaseWorklist`.
 
         The stock is assumed to be non-sedimenting (e.g. by stirring), but all aspirations from freshly
         diluted wells are done right away.

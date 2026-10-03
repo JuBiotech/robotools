@@ -569,7 +569,9 @@ def evo_wash(
     fastwash: int = 1,
     low_volume: int = 0,
 ) -> str:
-    """Command for aspirating with the EvoWARE aspirate command. As many wells in one column may be selected as your liquid handling arm has pipettes.
+    """Command for aspirating with the EvoWARE aspirate command.
+
+    As many wells in one column may be selected as your liquid handling arm has pipettes.
     This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string
     specifying the target wells.
 

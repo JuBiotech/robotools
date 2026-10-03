@@ -42,7 +42,9 @@ class EvoWorklist(BaseWorklist):
         label: str | None = None,
         on_underflow: Literal["debug", "warn", "raise"] = "raise",
     ) -> list[float]:
-        """Performs aspiration from the provided labware. Is identical to the aspirate command inside the EvoWARE.
+        """Performs aspiration from the provided labware.
+
+        Is identical to the aspirate command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
 
         Parameters
@@ -111,7 +113,9 @@ class EvoWorklist(BaseWorklist):
         label: str | None = None,
         compositions: Sequence[Mapping[str, float] | None] | None = None,
     ) -> None:
-        """Performs dispensation from the provided labware. Is identical to the dispense command inside the EvoWARE.
+        """Performs dispensation from the provided labware.
+
+        Is identical to the dispense command inside the EvoWARE.
         Thus, several wells in a single column can be targeted.
 
         Parameters
@@ -173,7 +177,9 @@ class EvoWorklist(BaseWorklist):
         fastwash: int = 1,
         low_volume: int = 0,
     ) -> None:
-        """Command for aspirating with the EvoWARE aspirate command. As many wells in one column may be selected as your liquid handling arm has pipettes.
+        """Command for aspirating with the EvoWARE aspirate command.
+
+        As many wells in one column may be selected as your liquid handling arm has pipettes.
         This method generates the full command (as can be observed when opening a .esc file with an editor) and calls upon other functions to create the code string
         specifying the target wells.
 
