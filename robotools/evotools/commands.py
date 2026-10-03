@@ -7,7 +7,7 @@ import numpy.typing as npt
 
 from robotools.evotools.types import Tip, int_to_tip
 from robotools.evotools.utils import to_hex
-from robotools.typing import Strings2D
+from robotools.typing import Bools2D, Strings2D
 from robotools.worklists.exceptions import InvalidOperationError
 
 from .. import transform
@@ -24,7 +24,7 @@ MAX_DILUTOR_VOLUME = 950
 """"Maximum dilutor volume in µL"""
 
 
-def evo_make_selection_array(rows: int, columns: int, wells: Iterable[str] | npt.NDArray[np.str_]) -> np.ndarray:
+def evo_make_selection_array(rows: int, columns: int, wells: Iterable[str] | npt.NDArray[np.str_]) -> Bools2D:
     """Translate well IDs to a numpy array with 1s (selected) and 0s (not selected).
 
     Parameters
@@ -41,17 +41,10 @@ def evo_make_selection_array(rows: int, columns: int, wells: Iterable[str] | npt
     selection_array : np.ndarray
         Numpy array in labware dimensions with selected wells as 1 and others as 0
     """
-    # create array with a shape beffiting the labware dimensions
-    selection_array = np.zeros((rows, columns))
-    # get a dictionary with the "coordinates" of well IDs (A01, B01 etc) as tuples
-    well_index_dict = transform.make_well_index_dict(rows, columns)
-    # insert 1s for all selected wells
-    for well in np.asarray(wells).flatten():
-        selection_array[well_index_dict[well]] = 1
-    return selection_array
+    return np.isin(transform.make_well_array(rows, columns), wells)
 
 
-def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
+def evo_get_selection(rows: int, cols: int, selected: Bools2D) -> str:
     """Function to generate the code string for the well selection of pipetting actions in EvoWare scripts (.esc).
 
     Adapted from the C++ function detailed in the EvoWare manual to Python by Martin Beyß (except the test at the end).
@@ -76,7 +69,7 @@ def evo_get_selection(rows: int, cols: int, selected: np.ndarray) -> str:
     bit_mask = 0
     for x in range(cols):
         for y in range(rows):
-            if selected[y, x] == 1:
+            if selected[y, x]:
                 bit_mask |= 1 << bit_counter
             bit_counter += 1
             if bit_counter > 6:
@@ -205,9 +198,9 @@ def prepare_evo_aspirate_dispense_parameters(
     return wells_list, labware_position, volume_list, liquid_class, tecan_tips
 
 
-def require_single_column_selection(selection: np.ndarray):
+def require_single_column_selection(selection: Bools2D):
     """Raises an error if wells from more than one column are selected."""
-    ncols = np.any(selection > 0, axis=0).sum()
+    ncols = np.any(selection, axis=0).sum()
     if ncols >= 2:
         raise ValueError(
             "Wells from more than one column are selected.\nSelect only wells from one column per pipetting action."
