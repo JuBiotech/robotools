@@ -140,8 +140,18 @@ def prepare_aspirate_dispense_parameters(
 
     # apply rounding and corrections for the right string formatting
     volume_str = f"{numpy.round(volume, decimals=2):.2f}"
-    tip = "" if tip == -1 else tip
-    return rack_label, position, volume_str, liquid_class, tip, rack_id, tube_id, rack_type, forced_rack_type
+    outtip: Literal[""] | int = "" if tip == -1 else int(tip)
+    return (
+        rack_label,
+        position,
+        volume_str,
+        liquid_class,
+        outtip,
+        rack_id,
+        tube_id,
+        rack_type,
+        forced_rack_type,
+    )
 
 
 def optimize_partition_by(

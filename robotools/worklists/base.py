@@ -229,7 +229,7 @@ class BaseWorklist(list[str]):
             position,
             volume_s,
             liquid_class,
-            tip,
+            tipv,
             rack_id,
             tube_id,
             rack_type,
@@ -248,7 +248,7 @@ class BaseWorklist(list[str]):
         )
         tip_type = ""
         self.append(
-            f"A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tip};{forced_rack_type}"
+            f"A;{rack_label};{rack_id};{rack_type};{position};{tube_id};{volume_s};{liquid_class};{tip_type};{tipv};{forced_rack_type}"
         )
         return
 
@@ -537,9 +537,9 @@ class BaseWorklist(list[str]):
         if vtrack is None:
             vtrack = volumes
         else:
-            vtrack = numpy.array(vtrack).flatten("F")
-            if len(vtrack) == 1:
-                vtrack = numpy.repeat(vtrack, len(wells))
+            vtrack_arr = numpy.array(vtrack).flatten("F")
+            if len(vtrack_arr) == 1:
+                vtrack = numpy.repeat(vtrack_arr, len(wells))
 
         labware.add(wells, vtrack, label, compositions=compositions)
         self.comment(label)
