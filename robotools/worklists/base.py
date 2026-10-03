@@ -3,11 +3,10 @@
 import logging
 import math
 from pathlib import Path
-from typing import Iterable, Literal, Mapping, Sequence
+from typing import Iterable, Literal, Mapping, Self, Sequence
 
 import numpy
 import numpy.typing as npt
-from typing_extensions import Self
 
 from robotools import liquidhandling
 from robotools.evotools.types import Tip
