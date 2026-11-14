@@ -18,6 +18,38 @@ class TestEvoWorklist:
             assert wl[-1] == "A;Systemliquid;;;1;;200.00;;;;"
         return
 
+    def test_dispense_systemliquid(self) -> None:
+        A = Labware("A", 3, 4, min_volume=0, max_volume=2000)
+        with EvoWorklist() as wl:
+            wl.dispense_systemliquid(
+                A,
+                "A01",
+                50,
+                liquid_class="SysLiq_FD",
+            )
+            assert len(A.history) == 2
+            wl.dispense_systemliquid(
+                A,
+                ["B01", "B02"],
+                [250, 300],
+                liquid_class="SysLiq_FD",
+                component_name="water",
+            )
+            assert len(A.history) == 3
+            wl.dispense_systemliquid(
+                A,
+                A.wells[-1, :],
+                1500,
+                liquid_class="SysLiq_FD_LVH",
+                wash_scheme=2,
+            )
+            assert len(A.history) == 4
+            assert wl[-1] == "W2;"
+        np.testing.assert_array_equal(A.volumes, [[50, 0, 0, 0], [250, 300, 0, 0], [1500, 1500, 1500, 1500]])
+        assert "systemliquid" in A.get_well_composition("A01")
+        assert "water" in A.get_well_composition("B01")
+        pass
+
     def test_transfer_volumechecks(self) -> None:
         source = Trough(
             "WaterTrough",

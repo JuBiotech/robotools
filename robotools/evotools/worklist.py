@@ -160,6 +160,62 @@ class EvoWorklist(BaseWorklist):
         self.append(cmd)
         return
 
+    def dispense_systemliquid(
+        self,
+        destination: liquidhandling.Labware,
+        wells: str | Sequence[str] | npt.NDArray[np.str_],
+        volume: float | Sequence[float] | npt.NDArray[np.float64],
+        liquid_class: str,
+        component_name: str = "systemliquid",
+        wash_scheme: int = 1,
+    ):
+        """Dispense the currently set system liquid into destination wells.
+
+        Parameters
+        ----------
+        destination
+            The labware to dispense into.
+        wells
+            One or more wells to dispense into.
+        volume
+            The volume to dispense per well.
+            Supports large volume handling.
+        liquid_class
+            Liquid class for aspirating and dispensing system liquid.
+        component_name
+            Name of the system liquid to use in composition tracking.
+        wash_scheme
+            The wash scheme to run when done.
+        """
+        wells = np.atleast_1d(wells).flatten("F").tolist()
+        vols = np.atleast_1d(volume).flatten("F").tolist()
+        if len(vols) == 1:
+            vols = vols * len(wells)
+
+        lvh_vols = [partition_volume(v, max_volume=self.max_volume) if self.auto_split else [v] for v in vols]
+        for well, lvols in zip(wells, lvh_vols):
+            for vol in lvols:
+                self.aspirate_well(
+                    "System",
+                    position=1,
+                    volume=vol,
+                    rack_type="System",
+                    liquid_class=liquid_class,
+                )
+                self.dispense(
+                    destination,
+                    well,
+                    vol,
+                    liquid_class=liquid_class,
+                    compositions=[{component_name: 1}],
+                )
+                self.wash(wash_scheme)
+        destination.condense_log(
+            n=sum(len(lvols) for lvols in lvh_vols),
+            label=f"Dispense system liquid",
+        )
+        return
+
     def evo_wash(
         self,
         *,
