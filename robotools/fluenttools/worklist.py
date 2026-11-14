@@ -36,7 +36,7 @@ class FluentWorklist(BaseWorklist):
     def transfer(
         self,
         source: Labware,
-        source_wells: str | Sequence[str] | np.ndarray[np.str_],
+        source_wells: str | Sequence[str] | npt.NDArray[np.str_],
         destination: Labware,
         destination_wells: str | Sequence[str] | npt.NDArray[np.str_],
         volumes: float | Sequence[float] | npt.NDArray[np.float64],

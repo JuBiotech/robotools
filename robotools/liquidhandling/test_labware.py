@@ -280,6 +280,13 @@ class TestTroughLabware:
             trough.add(["A01", "B01"], 600)
         return
 
+    def test_trough_ivols_shape(self) -> None:
+        with pytest.raises(ValueError, match="Invalid shape"):
+            Trough("C4", 2, 4, min_volume=0, max_volume=10, initial_volumes=[1, 2, 3])
+        t = Trough("C4", 2, 4, min_volume=0, max_volume=10, initial_volumes=[1, 2, 3, 4])
+        np.testing.assert_array_equal(t.volumes, [[1, 2, 3, 4]])
+        return
+
     def test_trough_remove_valid(self) -> None:
         trough = Trough("TestTrough", 3, 4, min_volume=1000, max_volume=30000, initial_volumes=3000)
         # removing from the first column (which is actually one well)

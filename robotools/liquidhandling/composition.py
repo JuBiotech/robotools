@@ -26,8 +26,9 @@ def combine_composition(
 
     Returns
     -------
-    composition : dict
+    composition
         Composition of the new liquid created by mixing the given volumes of A and B
+        Or `None` if either input composition was `None`.
     """
     if composition_A is None or composition_B is None:
         return None
@@ -102,7 +103,7 @@ def get_trough_component_names(
     name: str,
     columns: int,
     column_names: Sequence[str | None],
-    initial_volumes: Sequence[int | float],
+    initial_volumes: Sequence[float] | np.ndarray[tuple[int], np.dtype[np.float64]],
 ) -> dict[str, str | None]:
     """Determines a fully-specified component name dictionary for a trough.
 
@@ -127,9 +128,9 @@ def get_trough_component_names(
     component_names : dict
         The component name dictionary that maps all row A well IDs to component names.
     """
-    if np.shape(column_names) != (columns,):
+    if np.asarray(column_names).shape != (columns,):
         raise ValueError(f"The column names {column_names} don't match the number of columns ({columns}).")
-    if np.shape(initial_volumes) != (columns,):
+    if np.asarray(initial_volumes).shape != (columns,):
         raise ValueError(
             f"The initial volumes {initial_volumes} don't match the number of columns ({columns})."
         )
