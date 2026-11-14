@@ -7,6 +7,6 @@ from typing import TypeAlias
 
 import numpy as np
 
-Bools2D: TypeAlias = np.ndarray[tuple[int, int], np.bool]
-Floats2D: TypeAlias = np.ndarray[tuple[int, int], np.float64]
-Strings2D: TypeAlias = np.ndarray[tuple[int, int], np.str_]
+Bools2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[np.bool]]
+Floats2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[np.float64]]
+Strings2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[np.str_]]

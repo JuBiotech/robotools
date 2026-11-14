@@ -2,7 +2,7 @@
 
 import logging
 import warnings
-from typing import Any, Literal, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -179,7 +179,7 @@ class Labware:
 
         # initialize state variables
         self._volumes = ivols.copy().astype(float)
-        self._history: list[np.ndarray] = [self.volumes]
+        self._history: list[Floats2D] = [self.volumes]
         self._labels: list[str | None] = ["initial"]
         self._composition = get_initial_composition(
             name,
@@ -203,8 +203,6 @@ class Labware:
             Keys: liquid names
             Values: relative amount
         """
-        if self._composition is None:
-            return None
         idx = self.indices[well]
         well_comp = {k: f[idx] for k, f in self.composition.items() if f[idx] > 0}
         return well_comp
@@ -252,7 +250,7 @@ class Labware:
 
             self._volumes[idx] = v_new
 
-            if composition is not None and self._composition is not None:
+            if composition is not None:
                 assert isinstance(composition, dict), "Well compositions must be given as dicts"
                 # update the volumentric composition for this well
                 original_composition = self.get_well_composition(well)
@@ -512,11 +510,20 @@ class Trough(Labware):
         if isinstance(column_names, str):
             column_names = [column_names]
 
+        # For convenience we also accept ivols also as a list,
+        # and if 2D ivols are passed they must be 1-row.
         if isinstance(initial_volumes, (int, float)):
-            initial_volumes = [initial_volumes] * columns
+            ivols = np.repeat(initial_volumes, columns).astype(float)[None, :]
+        else:
+            ivols = np.atleast_2d(initial_volumes).astype(float)
+            if ivols.shape != (1, columns):
+                raise ValueError(
+                    f"Invalid shape of initial volumes: {ivols.shape} for {columns}-column trough."
+                )
+        ivols = cast(Floats2D, ivols)
 
         # Determine component names with a different default pattern compared to Labware
-        component_names = get_trough_component_names(name, columns, column_names, initial_volumes)
+        component_names = get_trough_component_names(name, columns, column_names, ivols[0, :])
 
         super().__init__(
             name=name,
@@ -524,7 +531,7 @@ class Trough(Labware):
             columns=columns,
             min_volume=min_volume,
             max_volume=max_volume,
-            initial_volumes=initial_volumes,
+            initial_volumes=ivols,
             virtual_rows=virtual_rows,
             component_names=component_names,
         )
